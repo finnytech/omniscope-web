@@ -92,9 +92,6 @@
             <button id="btn-reset-panels-layout" class="ops-btn" style="background:rgba(56,189,248,0.22);color:#38bdf8;border:1px solid #0284c7;font-weight:700;" title="Panels & Monitore auf Standard-Layout zurücksetzen (Doppelklick auf Trennbalken funktioniert ebenfalls)">
                 <span>📐 RESET LAYOUT</span>
             </button>
-            <button id="btn-vault" class="ops-btn active" title="API Keys & Secrets Vault">
-                <span>🔑 API VAULT</span>
-            </button>
         </div>
     </header>
 
@@ -114,10 +111,8 @@
             <label style="color:#0284c7;font-weight:700;"><input type="checkbox" id="layer-noaa-stations" checked /> 🇺🇸 NOAA Live USA Wetter</label>
             <label style="color:#f87171;font-weight:700;"><input type="checkbox" id="layer-archive-events" checked /> 🏛️ Archiv Stürme & Tornados</label>
             <label><input type="checkbox" id="layer-alerts" checked /> NOAA Warnings</label>
-            <label><input type="checkbox" id="layer-flights" checked /> Flights (OpenSky Worldwide)</label>
             <label><input type="checkbox" id="layer-vessels" checked /> Schiffsverkehr (AIS Marine)</label>
             <label><input type="checkbox" id="layer-seamarks" /> OpenSeaMap Seezeichen</label>
-            <label><input type="checkbox" id="layer-firms" checked /> Wildfires (NASA FIRMS)</label>
             <label><input type="checkbox" id="layer-quakes" checked /> Earthquakes (USGS)</label>
             <label><input type="checkbox" id="layer-iss" checked /> Space Station (ISS)</label>
             <label><input type="checkbox" id="layer-cams" checked /> 🔵 Echte Webcams (Live)</label>
@@ -216,9 +211,9 @@
                         <span>🌦️</span>
                         <span>140+ WEATHER ENGINES</span>
                     </button>
-                    <button id="btn-toggle-jev-mode" class="ops-btn" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid #a855f7;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Zwischen Live-Sensoren und Jev KI-Vorhersage umschalten">
-                        <span>🔮</span>
-                        <span id="jev-mode-btn-text">JEV 10-DAY FORECAST MODE</span>
+                    <button id="btn-toggle-jev-mode" class="ops-btn" style="background:#000000;color:#64748b;border:1px solid #1e293b;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:not-allowed;" disabled title="Detecting GPU / NPU hardware...">
+                        <span>⚫</span>
+                        <span id="jev-mode-btn-text">NO NPU/GPU DETECTED</span>
                     </button>
                 </div>
                 <div id="map-mode-hint" style="font-size:0.75rem;color:var(--text-muted);">
@@ -243,15 +238,14 @@
                         </select>
                     </div>
 
-                    <!-- Engine Selection: Cloud 26B vs Local 500M -->
+                    <!-- Engine Selection: Local 500M Only (Zero-Key Web Edition) -->
                     <div style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;padding:2px 6px;border-radius:4px;border:1px solid #334155;">
                         <span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">ENGINE:</span>
-                        <select id="jev-engine-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#38bdf8;border-color:rgba(56,189,248,0.6);background:#082f49;font-weight:700;" title="DiffusionGemma 26B Cloud API oder lokale 500M DirectML Inferenz (GTX 1050 Ti)">
-                            <option value="cloud" selected>☁️ CLOUD (Gemma 26B)</option>
-                            <option value="local">💻 LOKAL (500M / 1050 Ti)</option>
+                        <select id="jev-engine-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#c084fc;border-color:rgba(168,85,247,0.6);background:#1e1b4b;font-weight:700;" title="Lokale 500M ONNX WebGPU/WebGL Inferenz">
+                            <option value="local" selected>💻 500M LOCAL (GPU/NPU)</option>
                         </select>
-                        <span id="jev-hardware-badge" class="tag-accent" style="font-size:0.68rem;color:#38bdf8;border-color:rgba(56,189,248,0.5);padding:1px 6px;">
-                            ☁️ Gemma 26B
+                        <span id="jev-hardware-badge" class="tag-accent" style="font-size:0.68rem;color:#c084fc;border-color:rgba(168,85,247,0.5);padding:1px 6px;">
+                            💻 500M Local
                         </span>
                     </div>
                 </div>
@@ -441,18 +435,6 @@
                             <div class="sidebar-hint" style="color:#ef4444;">Warn-Polygone & Sturmzentren</div>
                         </div>
 
-                        <!-- Group 3: Commercial Flights -->
-                        <div class="sidebar-layer-group">
-                            <div class="sidebar-group-header">
-                                <label class="layer-switch-lbl">
-                                    <input type="checkbox" id="side-layer-flights" checked />
-                                    <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#38bdf8;">✈️ FLÜGE (OPENSKY ADS-B)</span>
-                                </label>
-                            </div>
-                            <div class="sidebar-hint" style="color:#38bdf8;">Echtzeit Flugzeuge & Vektoren</div>
-                        </div>
-
                         <!-- Group 4: Marine Vessels (AIS) -->
                         <div class="sidebar-layer-group">
                             <div class="sidebar-group-header">
@@ -475,18 +457,6 @@
                                 </label>
                             </div>
                             <div class="sidebar-hint">Bojen, Leuchttürme & Riffe</div>
-                        </div>
-
-                        <!-- Group 6: NASA FIRMS Wildfires -->
-                        <div class="sidebar-layer-group">
-                            <div class="sidebar-group-header">
-                                <label class="layer-switch-lbl">
-                                    <input type="checkbox" id="side-layer-firms" checked />
-                                    <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#f97316;">🔥 WALDBRÄNDE (FIRMS)</span>
-                                </label>
-                            </div>
-                            <div class="sidebar-hint" style="color:#f97316;">Satelliten-Thermal-Hotspots</div>
                         </div>
 
                         <!-- Group 7: USGS Earthquakes -->
@@ -653,7 +623,7 @@
                     <div style="display:inline-flex;gap:3px;border-right:1px solid #334155;padding-right:6px;margin-right:2px;">
                         <button id="btn-hud-mode-radar" class="ops-btn active" style="padding:2px 6px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="RainViewer Doppler Radar Loop (Live Past 2-4 Hours)">⚡ RADAR (2H)</button>
                         <button id="btn-hud-mode-multiday" class="ops-btn active" style="padding:2px 6px;font-size:0.68rem;background:rgba(250,204,21,0.2);color:#facc15;border:1px solid #facc15;" title="Multi-Day History Timeline (Bis zu 7 Tage)">📅 7 TAGE</button>
-                        <button id="btn-hud-mode-jev" class="ops-btn" style="padding:2px 6px;font-size:0.68rem;background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid #a855f7;" title="Jev KI 10-Tage Prognose (Visual & Text)">🔮 JEV (10 TAGE)</button>
+                        <button id="btn-hud-mode-jev" class="ops-btn" style="padding:2px 6px;font-size:0.68rem;background:#000000;color:#64748b;border:1px solid #1e293b;cursor:not-allowed;" disabled title="Prüfe lokale Hardware (GPU / NPU)...">⚫ NO NPU/GPU DETECTED</button>
                     </div>
 
                     <!-- Mode 1: Doppler Radar Loop (Past 2-4h) -->
@@ -701,9 +671,8 @@
                             <option value="visual">🎨 VISUELL (Radar)</option>
                             <option value="text">📝 TEXT (Dossier)</option>
                         </select>
-                        <select id="map-jev-engine-hud" class="ops-select" style="font-size:0.66rem;padding:1px 5px;color:#38bdf8;border-color:#38bdf8;background:#0f172a;" title="KI Inferenz-Engine">
-                            <option value="cloud">☁️ CLOUD</option>
-                            <option value="local">💻 LOKAL</option>
+                        <select id="map-jev-engine-hud" class="ops-select" style="font-size:0.66rem;padding:1px 5px;color:#c084fc;border-color:#a855f7;background:#0f172a;" title="KI Inferenz-Engine">
+                            <option value="local" selected>💻 500M LOCAL (GPU/NPU)</option>
                         </select>
                     </div>
                 </div>
@@ -796,8 +765,6 @@
                         <option value="mono">⚪ MONO</option>
                     </select>
                     <span id="mon02-active-type-pill" class="tag-accent" style="font-size:0.68rem;padding:2px 6px;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid #0284c7;border-radius:3px;flex-shrink:0;">🔵 LIVE</span>
-                    <button id="btn-open-ai-chat" class="ops-btn" style="padding:2px 7px;font-size:0.7rem;background:rgba(168,85,247,0.22);color:#c084fc;border:1px solid #a855f7;font-weight:700;flex-shrink:0;" title="AI Support Bot">🤖 AI</button>
-                    <button id="btn-toggle-body-pose" class="ops-btn" style="padding:2px 7px;font-size:0.7rem;background:rgba(34,197,94,0.22);color:#4ade80;border:1px solid #22c55e;font-weight:700;flex-shrink:0;" title="3D Body Pose & Skeleton Detection (NVIDIA NIM)">🦴 POSE</button>
                     <button id="btn-toggle-storm-panel" class="ops-btn active" style="padding:2px 7px;font-size:0.7rem;background:rgba(239,68,68,0.22);color:#ef4444;border:1px solid #ef4444;font-weight:700;flex-shrink:0;" title="Live Storm & Tornado Panel ein-/ausklappen">🌪️ STORMS (<span id="storm-active-count-badge">0</span>)</button>
                     <button id="btn-cam-popup" class="ops-btn" style="padding:2px 7px;font-size:0.7rem;flex-shrink:0;" title="In externem Fenster öffnen">🔗 POPUP</button>
                 </div>
@@ -841,17 +808,6 @@
             </div>
             <div class="monitor-body player-viewport" id="cam-player">
                 <div class="video-stream-container player-container" id="player-container" style="position:relative;">
-                    <div id="body-pose-hud" style="display:none;position:absolute;top:8px;right:8px;z-index:40;background:rgba(3,7,18,0.85);border:1px solid #22c55e;border-radius:4px;padding:4px 8px;font-family:var(--font-mono);font-size:0.68rem;gap:8px;align-items:center;">
-                        <span style="color:#22c55e;font-weight:bold;">🦴 NVIDIA BODY POSE:</span>
-                        <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;color:#38bdf8;">
-                            <input type="checkbox" id="chk-layer-knochen" checked /> Knochen
-                        </label>
-                        <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;color:#f59e0b;">
-                            <input type="checkbox" id="chk-layer-kasten" checked /> Kasten
-                        </label>
-                        <span id="pose-count-badge" style="background:#15803d;color:#fff;padding:1px 5px;border-radius:2px;font-weight:bold;">0 Erkannt</span>
-                    </div>
-                    <canvas id="body-pose-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:35;"></canvas>
                     <div id="webcam-player-container" style="width:100%;height:100%;display:flex;flex-direction:column;position:relative;">
                         <div style="color:var(--text-muted);font-size:0.8rem;margin:auto;">ACQUIRING LIVE FEED...</div>
                     </div>
@@ -1555,172 +1511,7 @@
         </div>
     </div>
 
-    <!-- API Key Vault & Registration Guidance Modal -->
-    <div id="vault-modal" class="ops-modal-backdrop hidden">
-        <div class="ops-modal-window">
-            <div class="ops-modal-header">
-                <span>AUTHENTICATED API KEYS & CREDENTIALS VAULT</span>
-                <button id="vault-close" class="ops-btn" style="padding:2px 8px;">✕</button>
-            </div>
-            <div class="ops-modal-body">
-                <p style="color:var(--text-muted);margin-bottom:12px;">
-                    All authentic API keys are verified and stored securely on your local system on drive <code>D:\</code>.
-                </p>
 
-                <!-- Google Maps & Google Earth Key Section with Step-by-Step Instructions -->
-                <div class="vault-field" style="border:1px solid #38bdf8;padding:12px;border-radius:6px;background:rgba(56,189,248,0.06);margin-bottom:16px;">
-                    <label>
-                        <span style="color:#38bdf8;font-weight:700;">Google Maps & Earth Platform API Key</span>
-                        <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" style="color:#38bdf8;font-weight:bold;">[Google Cloud Console ↗]</a>
-                    </label>
-                    <input type="password" id="key-google-maps" placeholder="AIzaSy... (Hier deinen Google Maps Key einfügen)" style="margin-top:4px;" />
-                    <div style="background:#090e17;border:1px solid #1e293b;border-radius:4px;padding:8px 10px;font-size:0.75rem;color:#cbd5e1;line-height:1.45;margin-top:6px;">
-                        <strong style="color:#38bdf8;">Schritt-für-Schritt Anleitung für Google Maps & Earth (Kostenlos):</strong><br>
-                        1. Klicke oben rechts auf <code>[Google Cloud Console ↗]</code>.<br>
-                        2. Melde dich mit deinem Google-Konto an & wähle oder erstelle ein Projekt.<br>
-                        3. Aktiviere in der API-Bibliothek: <strong>Maps JavaScript API</strong> und <strong>Map Tiles API (Photorealistic 3D Tiles)</strong>.<br>
-                        4. Klicke links auf <strong>Anmeldedaten (Credentials)</strong> → <strong>+ Anmeldedaten erstellen</strong> → <strong>API-Schlüssel</strong>.<br>
-                        5. Kopiere den Schlüssel (beginnt mit <code>AIzaSy...</code>) und füge ihn hier ein.<br>
-                        <span style="color:#10b981;">● <strong>Vorteil:</strong> Google schenkt jedem Account 200 $ monatliches Startguthaben – für private Nutzung komplett kostenlos!</span>
-                    </div>
-                </div>
-
-                <div class="vault-field">
-                    <label>
-                        <span>Windy Webcams API Key</span>
-                        <a href="https://api.windy.com/webcams" target="_blank">[Open Windy Registration]</a>
-                    </label>
-                    <input type="password" id="key-windy" placeholder="Paste Windy Webcams Key here..." />
-                    <div style="background:#090e17;border:1px solid #1e293b;border-radius:4px;padding:8px;font-size:0.76rem;color:#cbd5e1;line-height:1.4;margin-top:4px;">
-                        <strong>Windy Formular-Anleitung (Kostenlos):</strong><br>
-                        • <strong>Domain restrictions</strong>: LEER LASSEN (Optional, keine Domain nötig!)<br>
-                        • <strong>Project identification</strong>: <code>http://localhost:8888</code> oder <code>org.surveillance.app</code><br>
-                        • <strong>API service</strong>: Wähle <strong>Webcams API</strong>
-                    </div>
-                </div>
-
-                <div class="vault-field">
-                    <label>
-                        <span>Mapbox Access Token</span>
-                        <a href="https://account.mapbox.com/auth/signup/" target="_blank">[Mapbox Portal]</a>
-                    </label>
-                    <input type="password" id="key-mapbox" placeholder="Mapbox Token..." />
-                </div>
-
-                <div class="vault-field">
-                    <label>
-                        <span>NASA FIRMS MAP KEY (Live Thermal Satellite)</span>
-                        <a href="https://firms.modaps.eosdis.nasa.gov/api/map_key/" target="_blank">[NASA FIRMS Key]</a>
-                    </label>
-                    <input type="password" id="key-firms" placeholder="NASA FIRMS Map Key..." />
-                </div>
-
-                <div class="vault-field">
-                    <label>
-                        <span>OpenWeatherMap API Key</span>
-                        <a href="https://openweathermap.org/api" target="_blank">[OpenWeatherMap]</a>
-                    </label>
-                    <input type="password" id="key-owm" placeholder="OpenWeatherMap Key..." />
-                </div>
-
-                <div class="vault-field">
-                    <label>
-                        <span>OpenSky Network Client ID & Secret</span>
-                        <a href="https://opensky-network.org/" target="_blank">[OpenSky Network]</a>
-                    </label>
-                    <div style="display:flex;gap:6px;">
-                        <input type="text" id="key-opensky-id" placeholder="Client ID..." style="flex:1;" />
-                        <input type="password" id="key-opensky-secret" placeholder="Client Secret..." style="flex:1;" />
-                    </div>
-                </div>
-
-                <!-- JEV AI ENGINE & CODIV CLOUD SECTION -->
-                <div style="margin-top:16px;padding:12px;border:1px solid #7c3aed;background:rgba(124,58,237,0.08);border-radius:4px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="color:#c084fc;font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:6px;">
-                            <span>🔮</span> JEV AI PROGNOSE-ENGINE // MODELL-AUSWAHL
-                        </span>
-                        <span style="font-size:0.68rem;color:#38bdf8;background:rgba(56,189,248,0.15);padding:2px 8px;border-radius:3px;border:1px solid rgba(56,189,248,0.3);">
-                            TYPESAFE CODIV SYSTEM-ONE
-                        </span>
-                    </div>
-                    <div style="font-size:0.73rem;color:var(--text-muted);margin-bottom:10px;line-height:1.4;">
-                        Wähle die primäre KI-Inferenz für Jev 10-Tage Prognosen & Unwetter-Entscheidungen:
-                    </div>
-                    
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-                        <label style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid rgba(56,189,248,0.4);border-radius:4px;background:rgba(15,23,42,0.8);cursor:pointer;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <input type="radio" name="jev_default_engine" id="engine-cloud" value="cloud" checked />
-                                <strong style="color:#38bdf8;font-size:0.78rem;">☁️ GEMMA 26B (Cloud)</strong>
-                            </div>
-                            <span style="font-size:0.68rem;color:var(--text-dim);margin-left:20px;">
-                                DiffusionGemma 26B-A4B (NVFP4) via Codiv API. Hochpräzise stochastische Denoising-Entscheidungen.
-                            </span>
-                        </label>
-                        <label style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid rgba(168,85,247,0.4);border-radius:4px;background:rgba(15,23,42,0.8);cursor:pointer;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <input type="radio" name="jev_default_engine" id="engine-local" value="local" />
-                                <strong style="color:#c084fc;font-size:0.78rem;">💻 LOKAL (1050 Ti DirectML)</strong>
-                            </div>
-                            <span style="font-size:0.68rem;color:var(--text-dim);margin-left:20px;">
-                                Lokales 500M ONNX-Modell mit RLCD-Temperaturkalibrierung. Läuft direkt auf deiner NVIDIA GTX 1050 Ti.
-                            </span>
-                        </label>
-                    </div>
-
-                    <div class="vault-field" style="margin-bottom:0;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                            <label style="margin-bottom:0;">
-                                <span style="color:#f8fafc;font-weight:600;font-size:0.75rem;">Codiv / OpenJev Cloud API Key</span>
-                                <a href="https://api.codiv.ai" target="_blank" style="color:#38bdf8;font-size:0.7rem;text-decoration:none;">[Codiv Portal ↗]</a>
-                            </label>
-                            <button type="button" class="btn-test" data-service="codiv" style="background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;padding:2px 8px;font-size:0.68rem;border-radius:3px;cursor:pointer;">TEST</button>
-                        </div>
-                        <input type="password" id="key-codiv" placeholder="sk-codiv-..." style="width:100%;padding:6px;background:#020617;border:1px solid #334155;color:#f8fafc;border-radius:3px;font-family:monospace;font-size:0.75rem;" />
-                    </div>
-                </div>
-
-                <!-- ALTERNATIVE FREE PROVIDERS (NO CREDIT CARD REQUIRED) -->
-                <div style="margin-top:16px;padding-top:12px;border-top:1px solid #1e293b;">
-                    <div style="margin-bottom:6px;">
-                        <span style="color:#10b981;font-weight:700;font-size:0.82rem;">ALTERNATIVE FREE KARTEN-PROVIDER (100% KOSTENLOS // KEINE KREDITKARTE NÖTIG)</span>
-                    </div>
-                    <p style="color:var(--text-muted);font-size:0.74rem;line-height:1.4;margin-bottom:10px;">
-                        Falls die Google Cloud Kontoeinrichtung scheitert: Die Karten <strong>ESRI Satellit HD</strong>, <strong>CartoDB Dark</strong>, <strong>NASA Orbit</strong> und <strong>OpenStreetMap</strong> laufen bereits <strong>dauerhaft kostenlos ohne jeden Key</strong> im Dropdown oben! Für zusätzliche Vektorkarten & Geocoding kannst du diese kostenlosen Sofort-Keys nutzen:
-                    </p>
-
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                        <a href="https://cloud.maptiler.com/auth/signup" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
-                            <strong style="color:#38bdf8;">MapTiler Cloud ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">100.000 Tiles/Mo (Sofort frei)</span>
-                        </a>
-                        <a href="https://myprojects.geoapify.com/" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
-                            <strong style="color:#10b981;">Geoapify ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">3.000 Suchen/Tag (Sofort frei)</span>
-                        </a>
-                        <a href="https://locationiq.com/register" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
-                            <strong style="color:#f59e0b;">LocationIQ ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">5.000 Suchen/Tag (Sofort frei)</span>
-                        </a>
-                        <a href="https://client.stadiamaps.com/signup/" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
-                            <strong style="color:#a855f7;">Stadia Maps ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">200.000 Tiles/Mo (Sofort frei)</span>
-                        </a>
-                    </div>
-
-                    <div class="vault-field">
-                        <label>
-                            <span>MapTiler API Key (Optional für Custom Vektorkarten & 3D)</span>
-                            <a href="https://cloud.maptiler.com/auth/signup" target="_blank">[MapTiler Free Key holen ↗]</a>
-                        </label>
-                        <input type="password" id="key-maptiler" placeholder="Hier MapTiler Key einfügen..." />
-                    </div>
-                </div>
-
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-                    <span id="vault-status" style="color:var(--success);font-weight:600;"></span>
-                    <button id="vault-save" class="ops-btn active" style="padding:6px 14px;">SAVE & APPLY SETTINGS</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- 140+ WEATHER ENGINES & MULTI-MODEL CONSENSUS MODAL -->
     <div id="weather-engines-modal" class="vault-modal hidden">
@@ -2007,45 +1798,7 @@
         </div>
     </div>
 
-    <!-- AI SUPPORT BOT MODAL (NVIDIA NIM DEEPSEEK v4.1 FLASH) -->
-    <div id="ai-support-bot-modal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(5px);">
-        <div style="background:#090d16;border:1px solid #a855f7;box-shadow:0 0 35px rgba(168,85,247,0.3);border-radius:8px;width:92%;max-width:680px;height:80vh;max-height:680px;display:flex;flex-direction:column;overflow:hidden;font-family:var(--font-sans);">
-            <!-- Modal Header -->
-            <div style="padding:12px 16px;background:rgba(168,85,247,0.12);border-bottom:1px solid #7e22ce;display:flex;align-items:center;justify-content:space-between;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:1.3rem;">🤖</span>
-                    <div>
-                        <div style="font-size:0.92rem;font-weight:900;color:#c084fc;letter-spacing:1px;font-family:var(--font-mono);">
-                            CYBER-SPECTRE TACTICAL AI SUPPORT BOT
-                        </div>
-                        <div style="font-size:0.68rem;color:#a855f7;display:flex;align-items:center;gap:6px;">
-                            <span>🟢 POWERED BY NVIDIA NIM</span> • <span>deepseek-v4.1-flash</span> • <span>nemotron-3-ultra</span>
-                        </div>
-                    </div>
-                </div>
-                <button id="btn-close-ai-bot" class="ops-btn" style="padding:2px 8px;font-size:1rem;color:#c084fc;border-color:#7e22ce;cursor:pointer;">✕</button>
-            </div>
 
-            <!-- Quick Suggestion Prompt Chips -->
-            <div style="padding:8px 12px;background:#050811;border-bottom:1px solid #1e293b;display:flex;gap:6px;overflow-x:auto;white-space:nowrap;">
-                <button class="ai-chip-btn" data-prompt="Wie ist die aktuelle Tornado- und Sturm-Gefahrenlage im Sektor?" style="padding:3px 9px;font-size:0.7rem;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid #ef4444;border-radius:4px;cursor:pointer;white-space:nowrap;">🌪️ Aktuelle Sturmlage</button>
-                <button class="ai-chip-btn" data-prompt="Erkläre die Doppler-Radar-Modi: dBZ Reflectivity vs Radial Velocity vs Echo Tops" style="padding:3px 9px;font-size:0.7rem;background:rgba(56,189,248,0.15);color:#7dd3fc;border:1px solid #0284c7;border-radius:4px;cursor:pointer;white-space:nowrap;">📡 Doppler Radar Hilfe</button>
-                <button class="ai-chip-btn" data-prompt="Berechne die schnellste Fluchtroute (Escape Corridor) weg vom Sturm" style="padding:3px 9px;font-size:0.7rem;background:rgba(34,197,94,0.15);color:#86efac;border:1px solid #16a34a;border-radius:4px;cursor:pointer;white-space:nowrap;">🏃 Fluchtroute (cuOpt)</button>
-                <button class="ai-chip-btn" data-prompt="Berechne den optimalen Abfangkorridor (Intercept) zur Annäherung" style="padding:3px 9px;font-size:0.7rem;background:rgba(245,158,11,0.15);color:#fde047;border:1px solid #d97706;border-radius:4px;cursor:pointer;white-space:nowrap;">🎯 Abfangkorridor</button>
-            </div>
-
-            <!-- Chat Message History Scrollable Container -->
-            <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;background:#03060d;">
-                <!-- Messages appended dynamically by AiAssistantController -->
-            </div>
-
-            <!-- Chat Input Area -->
-            <div style="padding:10px 14px;background:#070b16;border-top:1px solid #1e293b;display:flex;gap:8px;align-items:center;">
-                <input type="text" id="ai-input-field" class="ops-input" placeholder="Frage zu Wetter, Radar, Fluchtrouten oder Sensoren stellen..." style="flex:1;padding:8px 12px;font-size:0.82rem;background:#030712;border:1px solid #3b4252;color:#f8fafc;border-radius:4px;" autocomplete="off" />
-                <button id="btn-ai-send" class="ops-btn" style="background:#7e22ce;color:#fff;border:none;padding:8px 16px;font-weight:bold;cursor:pointer;border-radius:4px;">SENDEN</button>
-            </div>
-        </div>
-    </div>
 
     <!-- SITREP TACTICAL DOSSIER MODAL (Feature 07) -->
     <div id="modal-sitrep" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(2,6,17,0.88);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:20px;">

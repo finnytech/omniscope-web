@@ -3317,6 +3317,10 @@ class OperationsMap {
             if (data.status === 'omitted') {
                 this.isFlightsEnabled = false;
                 if (this.flightsLayer) this.flightsLayer.clearLayers();
+                const tbody = document.getElementById('flights-table-body');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;font-size:0.75rem;padding:20px 0;">✈️ SERVERLESS WEB EDITION // OPENSKY AUTHENTICATION OMITTED (ZERO-FAKE POLICY)</td></tr>';
+                const badge = document.getElementById('flight-count-badge');
+                if (badge) badge.innerText = 'KEYLESS (OMITTED)';
                 return;
             }
             const flights = data.flights || data.states || [];
@@ -3671,6 +3675,14 @@ class OperationsMap {
             // Real NASA FIRMS live thermal satellite data
             const res = await fetch('/api/telemetry/firms');
             const data = await res.json();
+            if (data.status === 'omitted') {
+                if (this.firmsLayer) this.firmsLayer.clearLayers();
+                const tbody = document.getElementById('firms-table-body');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b;font-size:0.75rem;padding:20px 0;">🔥 SERVERLESS WEB EDITION // NASA FIRMS KEY OMITTED (ZERO-FAKE POLICY)</td></tr>';
+                const badge = document.getElementById('firms-count-badge');
+                if (badge) badge.innerText = 'KEYLESS (OMITTED)';
+                return;
+            }
             const hotspots = data.hotspots || [];
             this.rawFires = hotspots;
             this.renderFires(hotspots, this.currentTemporalHours);
@@ -4501,17 +4513,20 @@ class OperationsMap {
             aiModeHud.onchange = () => this.setJevAiMode(aiModeHud.value);
         }
 
-        // JEV AI engine selector (cloud Gemma 26B vs local 500M DirectML): synced across Top Bar and Bottom HUD
-        const initialEngine = localStorage.getItem('csn_jev_engine') || 'cloud';
-        if (engineTop) engineTop.value = initialEngine;
-        if (engineHud) engineHud.value = initialEngine;
-        this.updateJevHardwareBadge(initialEngine);
+        // JEV AI engine selector: On Web edition, strictly 500M Local (Keyless)
+        const initialEngine = 'local';
+        localStorage.setItem('csn_jev_engine', 'local');
+        if (engineTop) engineTop.value = 'local';
+        if (engineHud) engineHud.value = 'local';
+
+        // Client-side GPU / NPU hardware detection
+        this.detectClientGpuNpu();
 
         if (engineTop) {
-            engineTop.onchange = () => this.setJevEngine(engineTop.value);
+            engineTop.onchange = () => this.setJevEngine('local');
         }
         if (engineHud) {
-            engineHud.onchange = () => this.setJevEngine(engineHud.value);
+            engineHud.onchange = () => this.setJevEngine('local');
         }
     }
 
@@ -4625,19 +4640,162 @@ class OperationsMap {
         this.runJevBoxScan(bounds);
     }
 
+    async detectClientGpuNpu() {
+        let hasHardwareGpu = false;
+        let hardwareName = "";
+
+        // 1. WebGPU Check (navigator.gpu)
+        try {
+            if (navigator.gpu && typeof navigator.gpu.requestAdapter === 'function') {
+                const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
+                if (adapter) {
+                    hasHardwareGpu = true;
+                    if (adapter.info) {
+                        const vendor = adapter.info.vendor || '';
+                        const arch = adapter.info.architecture || '';
+                        const desc = adapter.info.description || '';
+                        hardwareName = [vendor, arch, desc].filter(Boolean).join(' ') || 'WebGPU Hardware Device';
+                    } else if (typeof adapter.requestAdapterInfo === 'function') {
+                        const info = await adapter.requestAdapterInfo();
+                        hardwareName = info.description || info.vendor || 'WebGPU Hardware Device';
+                    } else {
+                        hardwareName = 'WebGPU Hardware Device';
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[Jev Hardware Check] WebGPU detection error:', e);
+        }
+
+        // 2. WebGL 2 / WebGL Hardware Check
+        if (!hasHardwareGpu) {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
+                        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || '';
+                        const rLower = renderer.toLowerCase();
+                        const isSoftware = rLower.includes('swiftshader') ||
+                                           rLower.includes('llvmpipe') ||
+                                           rLower.includes('software') ||
+                                           rLower.includes('basic render driver') ||
+                                           rLower.includes('microsoft basic') ||
+                                           rLower.includes('mesa offscreen');
+
+                        if (!isSoftware && (
+                            rLower.includes('nvidia') || rLower.includes('geforce') || rLower.includes('rtx') || rLower.includes('gtx') ||
+                            rLower.includes('amd') || rLower.includes('radeon') ||
+                            rLower.includes('intel') || rLower.includes('iris') || rLower.includes('arc') || rLower.includes('uhd') ||
+                            rLower.includes('apple') || rLower.includes('m1') || rLower.includes('m2') || rLower.includes('m3') || rLower.includes('m4') ||
+                            rLower.includes('adreno') || rLower.includes('mali') || rLower.includes('powervr') ||
+                            rLower.includes('qualcomm') || rLower.includes('npu') || rLower.includes('tensor') ||
+                            renderer.length > 3
+                        )) {
+                            hasHardwareGpu = true;
+                            hardwareName = renderer;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('[Jev Hardware Check] WebGL detection error:', e);
+            }
+        }
+
+        // 3. WebNN / NPU Check
+        if (!hasHardwareGpu && navigator.ml) {
+            hasHardwareGpu = true;
+            hardwareName = "WebNN Neural Processing Unit (NPU)";
+        }
+
+        this.hasGpuDetected = hasHardwareGpu;
+        this.gpuDeviceName = hardwareName;
+
+        const hudModeJevBtn = document.getElementById('btn-hud-mode-jev');
+        const toggleBtn = document.getElementById('btn-toggle-jev-mode');
+        const btnText = document.getElementById('jev-mode-btn-text');
+        const badge = document.getElementById('jev-hardware-badge');
+
+        if (hasHardwareGpu) {
+            console.log('[Jev 500M] Hardware GPU/NPU Detected:', hardwareName);
+            if (hudModeJevBtn) {
+                hudModeJevBtn.disabled = false;
+                hudModeJevBtn.innerText = '🔮 JEV 500M (GPU/NPU)';
+                hudModeJevBtn.style.background = 'rgba(168, 85, 247, 0.2)';
+                hudModeJevBtn.style.color = '#c084fc';
+                hudModeJevBtn.style.border = '1px solid #a855f7';
+                hudModeJevBtn.style.cursor = 'pointer';
+                hudModeJevBtn.style.pointerEvents = 'auto';
+                hudModeJevBtn.title = `Jev 500M KI-Inferenz aktiv (${hardwareName})`;
+            }
+            if (toggleBtn) {
+                toggleBtn.disabled = false;
+                toggleBtn.style.background = 'rgba(168, 85, 247, 0.15)';
+                toggleBtn.style.color = '#c084fc';
+                toggleBtn.style.border = '1px solid #a855f7';
+                toggleBtn.style.cursor = 'pointer';
+                toggleBtn.style.pointerEvents = 'auto';
+                toggleBtn.title = `Jev 500M KI-Inferenz aktiv (${hardwareName})`;
+            }
+            if (btnText) {
+                btnText.innerText = 'JEV 500M (GPU/NPU)';
+            }
+            if (badge) {
+                badge.innerText = `⚡ ${hardwareName.split('/')[0].slice(0, 20)} (500M)`;
+                badge.style.color = '#c084fc';
+                badge.style.borderColor = 'rgba(168, 85, 247, 0.5)';
+                badge.style.background = 'rgba(168, 85, 247, 0.15)';
+            }
+        } else {
+            console.warn('[Jev 500M] No dedicated GPU/NPU detected. Rendering black button state.');
+            if (hudModeJevBtn) {
+                hudModeJevBtn.disabled = true;
+                hudModeJevBtn.innerText = '⚫ NO NPU/GPU DETECTED';
+                hudModeJevBtn.style.background = '#000000';
+                hudModeJevBtn.style.color = '#64748b';
+                hudModeJevBtn.style.border = '1px solid #1e293b';
+                hudModeJevBtn.style.cursor = 'not-allowed';
+                hudModeJevBtn.style.pointerEvents = 'none';
+                hudModeJevBtn.style.boxShadow = 'none';
+                hudModeJevBtn.title = 'Keine dedizierte GPU oder NPU im Browser erkannt. Jev 500M deaktiviert.';
+            }
+            if (toggleBtn) {
+                toggleBtn.disabled = true;
+                toggleBtn.style.background = '#000000';
+                toggleBtn.style.color = '#64748b';
+                toggleBtn.style.border = '1px solid #1e293b';
+                toggleBtn.style.cursor = 'not-allowed';
+                toggleBtn.style.pointerEvents = 'none';
+                toggleBtn.style.boxShadow = 'none';
+                toggleBtn.title = 'Keine dedizierte GPU oder NPU im Browser erkannt. Jev 500M deaktiviert.';
+            }
+            if (btnText) {
+                btnText.innerText = 'NO NPU/GPU DETECTED';
+            }
+            if (badge) {
+                badge.innerText = '⚫ NO GPU/NPU DETECTED';
+                badge.style.color = '#64748b';
+                badge.style.borderColor = '#334155';
+                badge.style.background = '#000000';
+            }
+        }
+    }
+
     updateJevHardwareBadge(engine) {
         const badge = document.getElementById('jev-hardware-badge');
         if (!badge) return;
-        if (engine === 'local') {
-            badge.innerText = '⚡ GTX 1050 Ti (Local)';
+        if (this.hasGpuDetected) {
+            badge.innerText = `⚡ ${this.gpuDeviceName ? this.gpuDeviceName.split('/')[0].slice(0, 20) : 'GPU/NPU'} (500M)`;
             badge.style.color = '#c084fc';
             badge.style.borderColor = 'rgba(168, 85, 247, 0.5)';
             badge.style.background = 'rgba(168, 85, 247, 0.15)';
         } else {
-            badge.innerText = '☁️ Gemma 26B (Cloud)';
-            badge.style.color = '#38bdf8';
-            badge.style.borderColor = 'rgba(56, 189, 248, 0.5)';
-            badge.style.background = 'rgba(56, 189, 248, 0.15)';
+            badge.innerText = '⚫ NO GPU/NPU DETECTED';
+            badge.style.color = '#64748b';
+            badge.style.borderColor = '#334155';
+            badge.style.background = '#000000';
         }
     }
 
@@ -4672,6 +4830,14 @@ class OperationsMap {
     }
 
     toggleJevMode(forceState) {
+        if (!this.hasGpuDetected && (forceState === true || (!this.isJevForecastMode && forceState === undefined))) {
+            const hint = document.getElementById('map-mode-hint');
+            if (hint) {
+                hint.innerHTML = '<span style="color:#ef4444;font-weight:bold;">⚫ JEV 500M DEAKTIVIERT:</span> Keine dedizierte GPU oder NPU im Browser erkannt.';
+            }
+            return;
+        }
+
         this.isJevForecastMode = forceState !== undefined ? forceState : !this.isJevForecastMode;
 
         const toggleBtn = document.getElementById('btn-toggle-jev-mode');
@@ -4693,7 +4859,7 @@ class OperationsMap {
                 toggleBtn.style.borderColor = '#c084fc';
                 toggleBtn.style.boxShadow = '0 0 14px rgba(168, 85, 247, 0.6)';
             }
-            if (btnText) btnText.innerText = '🔮 JEV: AKTIV';
+            if (btnText) btnText.innerText = '🔮 JEV 500M: AKTIV';
             if (topBar) topBar.style.display = 'flex';
 
             if (hudModeJevBtn) {
@@ -4709,7 +4875,7 @@ class OperationsMap {
             if (multidaySubgroup) multidaySubgroup.style.display = 'none';
 
             if (hint) {
-                hint.innerText = '🔮 JEV PROGNOSE-MODUS AKTIV: Wähle Tag (LIVE bis +10d), ändere Modus/Engine oder ziehe ein Rechteck auf der Karte';
+                hint.innerText = '🔮 JEV 500M PROGNOSE-MODUS AKTIV: Wähle Tag (LIVE bis +10d), ändere Modus oder ziehe ein Rechteck auf der Karte';
                 hint.style.color = '#c084fc';
             }
             if (mapContainer) mapContainer.classList.add('jev-cursor-crosshair');
@@ -4726,17 +4892,33 @@ class OperationsMap {
             this.runJevCurrentSelection();
         } else {
             if (toggleBtn) {
-                toggleBtn.style.background = 'rgba(168, 85, 247, 0.15)';
-                toggleBtn.style.borderColor = '#a855f7';
+                if (this.hasGpuDetected) {
+                    toggleBtn.style.background = 'rgba(168, 85, 247, 0.15)';
+                    toggleBtn.style.borderColor = '#a855f7';
+                    toggleBtn.style.color = '#c084fc';
+                } else {
+                    toggleBtn.style.background = '#000000';
+                    toggleBtn.style.borderColor = '#1e293b';
+                    toggleBtn.style.color = '#64748b';
+                }
                 toggleBtn.style.boxShadow = 'none';
             }
-            if (btnText) btnText.innerText = '🔮 JEV 10-DAY FORECAST MODE';
+            if (btnText) btnText.innerText = this.hasGpuDetected ? '🔮 JEV 500M (GPU/NPU)' : 'NO NPU/GPU DETECTED';
             if (topBar) topBar.style.display = 'none';
 
             if (hudModeJevBtn) {
                 hudModeJevBtn.classList.remove('active');
-                hudModeJevBtn.style.background = 'rgba(168, 85, 247, 0.15)';
-                hudModeJevBtn.style.borderColor = '#a855f7';
+                if (this.hasGpuDetected) {
+                    hudModeJevBtn.style.background = 'rgba(168, 85, 247, 0.15)';
+                    hudModeJevBtn.style.borderColor = '#a855f7';
+                    hudModeJevBtn.style.color = '#c084fc';
+                    hudModeJevBtn.innerText = '🔮 JEV 500M (GPU/NPU)';
+                } else {
+                    hudModeJevBtn.style.background = '#000000';
+                    hudModeJevBtn.style.borderColor = '#1e293b';
+                    hudModeJevBtn.style.color = '#64748b';
+                    hudModeJevBtn.innerText = '⚫ NO NPU/GPU DETECTED';
+                }
             }
             if (hudModeRadarBtn) hudModeRadarBtn.classList.add('active');
 
@@ -4816,22 +4998,21 @@ class OperationsMap {
         const dateSelect = document.getElementById('jev-forecast-date');
         const targetDate = dateSelect ? dateSelect.value : null;
 
-        const engine = localStorage.getItem('csn_jev_engine') || 'cloud';
-        const isCloud = (engine === 'cloud');
+        const engine = 'local';
 
         if (hud && content) {
             hud.classList.remove('hidden');
             hud.classList.remove('minimized');
             content.innerHTML = `
-                <div style="padding:16px;text-align:center;color:${isCloud ? '#38bdf8' : '#c084fc'};">
-                    <div class="pulse-dot" style="background:${isCloud ? '#38bdf8' : '#a855f7'};width:12px;height:12px;margin:0 auto 10px auto;"></div>
-                    <div style="font-weight:bold;font-size:0.82rem;margin-bottom:6px;color:${isCloud ? '#38bdf8' : '#c084fc'};">
-                        ${isCloud ? '☁️ JEV AI CLOUD (GEMMA 26B) ZONE SCANNING...' : '🔮 JEV SYSTEM-1 (500M DIRECTML) ZONE SCANNING...'}
+                <div style="padding:16px;text-align:center;color:#c084fc;">
+                    <div class="pulse-dot" style="background:#a855f7;width:12px;height:12px;margin:0 auto 10px auto;"></div>
+                    <div style="font-weight:bold;font-size:0.82rem;margin-bottom:6px;color:#c084fc;">
+                        🔮 JEV SYSTEM-1 (500M GPU/NPU) ZONE SCANNING...
                     </div>
                     <div style="color:#94a3b8;font-size:0.7rem;">Sammle meteorologische Parameter (CAPE, Barometer, Taupunkt, Böen)...</div>
                     <div style="color:#38bdf8;font-size:0.68rem;margin-top:4px;">Fusioniere alle Bodenwetterstationen im gewählten Rechteck...</div>
-                    <div style="color:${isCloud ? '#38bdf8' : '#a855f7'};font-size:0.65rem;margin-top:6px;font-weight:600;">
-                        ${isCloud ? '☁️ KI-Engine: Cloud Neural Cluster (DiffusionGemma 26B // Codiv System-One API)' : '⚡ Hardware-Beschleunigung: NVIDIA GeForce GTX 1050 Ti (DirectML)'}
+                    <div style="color:#c084fc;font-size:0.65rem;margin-top:6px;font-weight:600;">
+                        ⚡ Hardware-Beschleunigung: ${this.gpuDeviceName || 'Client GPU/NPU'} (500M Local)
                     </div>
                 </div>
             `;
