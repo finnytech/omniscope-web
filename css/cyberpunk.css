@@ -1,0 +1,3471 @@
+/* =====================================================================
+   DEFENSE & SECURITY OPERATIONS CENTER (SOC) - TACTICAL COMMAND STYLES
+   High-contrast, professional dark theme with zero cartoonish scanlines.
+   ===================================================================== */
+
+:root {
+    --bg-base: #080c14;
+    --bg-surface: #0e1524;
+    --bg-card: #131b2e;
+    --border-subtle: #1e293b;
+    --border-strong: #334155;
+    --border-accent: #38bdf8;
+    
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    
+    --accent: #38bdf8;
+    --accent-blue: #2563eb;
+    --alert: #ef4444;
+    --warn: #f59e0b;
+    --success: #10b981;
+    
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+/* GLOBAL TEXT SELECTION & COPY-PASTE UNLOCK: All UI text is freely selectable and copyable */
+*, *::before, *::after {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+/* Maintain non-selectable interactions only for leaflet canvas rendering */
+.leaflet-container canvas {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* Header / Operations Bar */
+.ops-header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-strong);
+    padding: 6px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1000;
+    flex-wrap: nowrap;
+    min-height: 44px;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.ops-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.ops-logo {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.ops-logo span {
+    color: var(--accent);
+}
+
+.ops-badge {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: var(--success);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+}
+
+.ops-center-clocks {
+    display: flex;
+    gap: 16px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.ops-center-clocks strong {
+    color: #fff;
+    margin-left: 4px;
+}
+
+.ops-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ops-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text-main);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.ops-btn:hover {
+    background: #1e293b;
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.ops-btn.active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.ops-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: var(--text-main);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+}
+
+.ops-select option {
+    background: var(--bg-surface);
+}
+
+/* Secondary Map & Layer Control Bar */
+.ops-subbar {
+    background: #0b111e;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 6px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+}
+
+.layer-toggles {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.layer-toggles label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.layer-toggles input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.coords-hud {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 0.75rem;
+    background: rgba(15, 23, 42, 0.8);
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border-subtle);
+}
+
+/* Multi-Monitor Operations Grid (24-Column Precision Architecture) */
+.monitors-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(24, minmax(0, 1fr));
+    gap: 10px;
+    padding: 10px;
+    overflow-y: auto;
+    height: calc(100vh - 84px);
+}
+
+/* Dedicated Monitor Panel Containers */
+.monitor-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    min-height: 320px;
+}
+
+/* Interactive Top Monitors Row with Smooth Draggable Resizer Dividers */
+.top-monitors-row {
+    grid-column: span 24;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 590px;
+    height: 590px;
+    width: 100%;
+    position: relative;
+    gap: 0;
+    overflow: hidden;
+}
+
+.top-monitors-row > .monitor-card {
+    height: 100%;
+    min-height: 100%;
+    border-radius: 4px;
+    position: relative;
+}
+
+#card-map { 
+    flex: 0 0 46%; 
+    min-width: 300px;
+    min-height: 590px; 
+}
+
+#card-live-storm {
+    flex: 0 0 22%;
+    min-width: 280px;
+    min-height: 590px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-color: rgba(239, 68, 68, 0.45);
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.12), 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+#card-live-storm.collapsed {
+    display: none !important;
+}
+
+#card-webcam, [data-monitor="mon-02"], .mon-02-card {
+    flex: 1 1 0;
+    min-width: 300px;
+    min-height: 590px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    box-sizing: border-box;
+}
+
+#card-webcam .monitor-header {
+    min-width: 0;
+    overflow: hidden;
+    padding: 4px 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+#card-webcam .monitor-header-left {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#cam-active-title {
+    min-width: 0;
+    flex: 1 1 auto;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 210px;
+    display: inline-block;
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.mon02-header-controls {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.mon02-header-controls::-webkit-scrollbar {
+    display: none;
+}
+
+.mon02-header-controls .ops-btn,
+.mon02-header-controls .ops-select {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Draggable Splitter Divider with Neon Cyan/Red Glow & Tactile Grip Handle */
+.panel-resizer-divider {
+    width: 10px;
+    flex: 0 0 10px;
+    cursor: col-resize;
+    position: relative;
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #080d1a;
+    border-left: 1px solid rgba(56, 189, 248, 0.25);
+    border-right: 1px solid rgba(56, 189, 248, 0.25);
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+}
+
+.panel-resizer-divider:hover,
+.panel-resizer-divider.dragging {
+    background: rgba(56, 189, 248, 0.35);
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+}
+
+.resizer-grip-line {
+    width: 2px;
+    height: 38px;
+    background: #475569;
+    border-radius: 2px;
+    pointer-events: none;
+    transition: all 0.15s ease;
+}
+
+.panel-resizer-divider:hover .resizer-grip-line,
+.panel-resizer-divider.dragging .resizer-grip-line {
+    height: 54px;
+    background: #38bdf8;
+    box-shadow: 0 0 10px #38bdf8;
+}
+
+#resizer-map-storm:hover, #resizer-map-storm.dragging {
+    border-color: #38bdf8;
+}
+
+#resizer-storm-webcam:hover, #resizer-storm-webcam.dragging {
+    background: rgba(239, 68, 68, 0.35);
+    border-color: #ef4444;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+}
+
+#resizer-storm-webcam:hover .resizer-grip-line,
+#resizer-storm-webcam.dragging .resizer-grip-line {
+    background: #ef4444;
+    box-shadow: 0 0 10px #ef4444;
+}
+
+/* MON-02 Viewport & Cyberpunk Tactical Scrollbar Architecture */
+#card-webcam .player-viewport,
+#card-webcam #cam-player {
+    flex: 1 1 auto;
+    min-height: 280px;
+    height: 100%;
+    position: relative;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#card-webcam .video-stream-container,
+#card-webcam #player-container,
+#card-webcam #webcam-player-container {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    position: relative;
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    scrollbar-color: #00f0ff rgba(6, 10, 18, 0.85);
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+}
+
+#card-webcam #webcam-player-container > div,
+#card-webcam #webcam-player-container > iframe,
+#card-webcam #webcam-player-container > video {
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.tactical-telemetry-scroll-wrapper,
+.flock-recon-container,
+.flock-inspector-wrapper,
+.sector-telemetry-wrapper {
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    scrollbar-color: #00f0ff rgba(6, 10, 18, 0.85);
+}
+
+/* Custom 5px Tactical Cyberpunk Scrollbar with Neon Cyan (#00f0ff) and Neon Pink (#ec4899) Accent */
+#player-container::-webkit-scrollbar,
+#cam-player::-webkit-scrollbar,
+#webcam-player-container::-webkit-scrollbar,
+.player-viewport::-webkit-scrollbar,
+.tactical-telemetry-scroll-wrapper::-webkit-scrollbar,
+.flock-recon-container::-webkit-scrollbar,
+.flock-inspector-wrapper::-webkit-scrollbar,
+.sector-telemetry-wrapper::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+#player-container::-webkit-scrollbar-track,
+#cam-player::-webkit-scrollbar-track,
+#webcam-player-container::-webkit-scrollbar-track,
+.player-viewport::-webkit-scrollbar-track,
+.tactical-telemetry-scroll-wrapper::-webkit-scrollbar-track,
+.flock-recon-container::-webkit-scrollbar-track,
+.flock-inspector-wrapper::-webkit-scrollbar-track,
+.sector-telemetry-wrapper::-webkit-scrollbar-track {
+    background: rgba(6, 10, 18, 0.85);
+    border-radius: 2px;
+}
+
+#player-container::-webkit-scrollbar-thumb,
+#cam-player::-webkit-scrollbar-thumb,
+#webcam-player-container::-webkit-scrollbar-thumb,
+.player-viewport::-webkit-scrollbar-thumb,
+.tactical-telemetry-scroll-wrapper::-webkit-scrollbar-thumb,
+.flock-recon-container::-webkit-scrollbar-thumb,
+.flock-inspector-wrapper::-webkit-scrollbar-thumb,
+.sector-telemetry-wrapper::-webkit-scrollbar-thumb {
+    background: #00f0ff;
+    box-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
+    border-radius: 3px;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+#player-container::-webkit-scrollbar-thumb:hover,
+#cam-player::-webkit-scrollbar-thumb:hover,
+#webcam-player-container::-webkit-scrollbar-thumb:hover,
+.player-viewport::-webkit-scrollbar-thumb:hover,
+.tactical-telemetry-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+.flock-recon-container::-webkit-scrollbar-thumb:hover,
+.flock-inspector-wrapper::-webkit-scrollbar-thumb:hover,
+.sector-telemetry-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #ec4899;
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.9);
+}
+
+#card-iss { grid-column: span 8; min-height: 440px; }
+#card-nexus-ops { grid-column: span 8; min-height: 440px; border: 1px solid #0e7490; }
+#card-flights { grid-column: span 8; min-height: 440px; }
+#card-storm { grid-column: span 8; min-height: 360px; }
+#card-volcano { grid-column: span 8; min-height: 360px; }
+#card-firms { grid-column: span 8; min-height: 440px; }
+#card-quakes { grid-column: span 8; min-height: 440px; }
+#card-airspace-scope { grid-column: span 12; min-height: 360px; }
+#card-intelligence-log { grid-column: span 12; min-height: 360px; }
+#card-google-earth { grid-column: span 12; min-height: 480px; height: 480px; }
+#card-vessels { grid-column: span 12; min-height: 480px; height: 480px; }
+#card-osint-news { grid-column: span 12; min-height: 440px; }
+#card-space-weather { grid-column: span 12; min-height: 440px; }
+#card-air-quality { grid-column: span 12; min-height: 440px; }
+
+/* NEXUS-OPS Middle Panel Styling */
+#card-nexus-ops .monitor-body::-webkit-scrollbar { width: 4px; }
+#card-nexus-ops .monitor-body::-webkit-scrollbar-thumb { background: #0e7490; border-radius: 2px; }
+#card-nexus-ops .nx-sec-title {
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 2px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+#card-nexus-ops .nx-row { display: flex; justify-content: space-between; gap: 6px; margin: 2px 0; }
+#card-nexus-ops label { display: flex; align-items: center; gap: 5px; margin: 2px 0; cursor: pointer; }
+#card-nexus-ops .nx-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+#card-nexus-ops .ops-btn.nx-on { background: #0e7490; color: #fff; box-shadow: 0 0 8px rgba(14, 116, 144, 0.8); }
+
+#nx-note {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 10px;
+    z-index: 1250;
+    background: rgba(5, 9, 20, 0.94);
+    border: 1px solid #0e7490;
+    color: #67e8f9;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    display: none;
+    box-shadow: 0 0 12px rgba(8, 145, 178, 0.45);
+    pointer-events: none;
+}
+
+
+/* OSINT News Ticker & Crisis Radar (MON-13) */
+.osint-item {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid #1e293b;
+    border-left: 3px solid #38bdf8;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--font-mono);
+    transition: all 0.15s ease;
+}
+.osint-item:hover {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: #38bdf8;
+}
+.osint-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.68rem;
+}
+.osint-title {
+    font-size: 0.76rem;
+    color: #f1f5f9;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+}
+.osint-title:hover {
+    color: #38bdf8;
+}
+
+/* Space Weather (MON-14) */
+.swpc-gauge-box {
+    background: #090e17;
+    border: 1px solid #1e293b;
+    border-radius: 5px;
+    padding: 10px;
+    text-align: center;
+}
+.swpc-gauge-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+}
+
+/* Air Quality Matrix (MON-15) */
+.aqi-circle-badge {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+}
+.aqi-num {
+    font-size: 1.8rem;
+    font-weight: 900;
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+
+/* Rail Transit Table (MON-16) */
+.rail-row:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+
+/* Google 5-in-1 Tactical Monitor */
+.g-mode-group {
+    display: flex;
+    gap: 3px;
+    background: #090e17;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.g-mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+}
+
+.g-mode-btn:hover {
+    color: #fff;
+    background: rgba(56, 189, 248, 0.12);
+}
+
+.g-mode-btn.active {
+    background: #1e293b;
+    color: var(--accent);
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.35);
+}
+
+.g-control-bar {
+    background: #0c1424;
+    border-bottom: 1px solid var(--border-strong);
+    padding: 5px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.g-search-box {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+    min-width: 220px;
+}
+
+.g-timeline-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #080d17;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+}
+
+.g-timeline-slider {
+    width: 130px;
+    accent-color: #38bdf8;
+    cursor: pointer;
+}
+
+.g-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.g-container.hidden {
+    display: none !important;
+}
+
+.g-places-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+    padding: 10px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.g-place-card {
+    background: #0a1120;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.g-place-card:hover {
+    border-color: var(--accent);
+    background: #101c33;
+}
+
+/* View Mode Toggles (CAM / DATA / SPLIT) */
+.view-mode-group {
+    display: flex;
+    gap: 3px;
+    background: #0a0f1c;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.view-mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.65rem;
+    font-family: var(--font-mono);
+    padding: 2px 6px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s ease;
+}
+
+.view-mode-btn:hover {
+    color: #fff;
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.view-mode-btn.active {
+    background: #1e293b;
+    color: var(--accent);
+    font-weight: 700;
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.3);
+}
+
+.split-stream-box {
+    width: 100%;
+    height: 200px;
+    flex-shrink: 0;
+    background: #000;
+    position: relative;
+}
+
+.split-table-box {
+    flex: 1;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-strong);
+}
+
+.monitor-card.mode-cam .split-stream-box {
+    height: 100%;
+    flex: 1;
+}
+.monitor-card.mode-cam .split-table-box {
+    display: none !important;
+}
+
+.monitor-card.mode-data .split-stream-box {
+    display: none !important;
+}
+.monitor-card.mode-data .split-table-box {
+    display: block !important;
+    height: 100%;
+    flex: 1;
+    border-top: none;
+}
+
+.monitor-card.mode-split .split-stream-box {
+    height: 190px;
+    display: block !important;
+}
+.monitor-card.mode-split .split-table-box {
+    display: block !important;
+    flex: 1;
+}
+
+/* MON-12 Maritime AIS Layout & Horizontal Split View */
+#card-vessels .vessels-body-container {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+#card-vessels.mode-split .vessels-body-container {
+    flex-direction: row;
+}
+
+#card-vessels.mode-split .split-stream-box {
+    width: 50%;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column;
+    border-right: 1px solid var(--border-strong);
+    border-bottom: none;
+    flex-shrink: 0;
+}
+
+#card-vessels.mode-split .split-stream-box .video-stream-container {
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    position: relative;
+}
+
+#card-vessels.mode-split .split-stream-box .cam-telemetry-banner {
+    flex-shrink: 0;
+}
+
+#card-vessels.mode-split .split-table-box {
+    width: 50%;
+    height: 100% !important;
+    flex: 1;
+    border-top: none;
+    display: block !important;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+#card-vessels.mode-cam .vessels-body-container {
+    flex-direction: column;
+}
+
+#card-vessels.mode-cam .split-stream-box {
+    width: 100%;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column;
+}
+
+#card-vessels.mode-cam .split-stream-box .video-stream-container {
+    flex: 1;
+}
+
+#card-vessels.mode-cam .split-table-box {
+    display: none !important;
+}
+
+#card-vessels.mode-data .vessels-body-container {
+    flex-direction: column;
+}
+
+#card-vessels.mode-data .split-stream-box {
+    display: none !important;
+}
+
+#card-vessels.mode-data .split-table-box {
+    width: 100%;
+    height: 100% !important;
+    flex: 1;
+    border-top: none;
+    display: block !important;
+    overflow-y: auto;
+}
+
+/* MON-07 Severe Weather & NOAA Radar Layout */
+#card-storm .storm-body-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#card-storm.mode-split .split-stream-box {
+    height: 180px;
+    flex-shrink: 0;
+    display: flex !important;
+    flex-direction: column;
+}
+
+#card-storm.mode-split .split-stream-box .video-stream-container {
+    flex: 1;
+    min-height: 0;
+}
+
+#card-storm.mode-split .split-table-box {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-strong);
+    display: block !important;
+}
+
+#card-storm.mode-cam .split-stream-box {
+    height: 100% !important;
+    flex: 1;
+    display: flex !important;
+    flex-direction: column;
+}
+
+#card-storm.mode-cam .split-stream-box .video-stream-container {
+    flex: 1;
+}
+
+#card-storm.mode-cam .split-table-box {
+    display: none !important;
+}
+
+#card-storm.mode-data .split-stream-box {
+    display: none !important;
+}
+
+#card-storm.mode-data .split-table-box {
+    height: 100% !important;
+    flex: 1;
+    display: block !important;
+    border-top: none;
+    overflow-y: auto;
+}
+
+/* MON-11 3D WebGL Globe Canvas */
+#globe-3d-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: #02040a;
+    overflow: hidden;
+}
+
+#globe-3d-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+}
+
+#globe-3d-canvas:active {
+    cursor: grabbing;
+}
+
+@media (max-width: 1400px) {
+    #card-map { grid-column: span 24; min-height: 520px; }
+    #card-live-storm { grid-column: span 10; min-height: 550px; }
+    #card-webcam, [data-monitor="mon-02"], .mon-02-card { grid-column: span 14; min-height: 550px; }
+    #card-iss, #card-nexus-ops, #card-storm, #card-volcano, #card-flights, #card-firms, #card-quakes { grid-column: span 12; }
+    #card-airspace-scope, #card-intelligence-log { grid-column: span 12; }
+    #card-google-earth, #card-vessels { grid-column: span 24; height: 480px; min-height: 480px; }
+    #card-osint-news, #card-space-weather, #card-air-quality { grid-column: span 24; min-height: 440px; }
+}
+
+@media (max-width: 900px) {
+    #card-map, #card-live-storm, #card-webcam, [data-monitor="mon-02"], .mon-02-card { grid-column: span 24; }
+    #card-iss, #card-nexus-ops, #card-storm, #card-volcano, #card-flights, #card-firms, #card-quakes { grid-column: span 24; }
+    #card-airspace-scope, #card-intelligence-log { grid-column: span 24; }
+}
+
+.monitor-header {
+    background: #111a2e;
+    border-bottom: 1px solid var(--border-strong);
+    padding: 6px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: 0.5px;
+}
+
+.monitor-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.monitor-id {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+}
+
+.monitor-body {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #070a10;
+    display: flex;
+    flex-direction: column;
+}
+
+.monitor-body.scrollable {
+    overflow-y: auto;
+}
+
+/* Interactive Map Container */
+#map {
+    width: 100%;
+    height: 100%;
+    background: #070a10;
+}
+
+.radar-hud-controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 1000;
+    background: rgba(15, 23, 42, 0.97);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.radar-hud-controls input[type="range"] {
+    accent-color: var(--accent);
+}
+
+/* ==========================================================================
+   TACTICAL MAP SENSORS & WEATHER COLOR SIDEBAR
+   ========================================================================== */
+.map-sidebar-toggle-btn {
+    position: absolute;
+    top: 10px;
+    right: 280px;
+    z-index: 1002;
+    background: rgba(11, 17, 30, 0.95);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 5px 9px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.map-sidebar-toggle-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: #fff;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+}
+
+.map-sidebar-toggle-btn.collapsed {
+    right: 10px;
+}
+
+.map-tactical-sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 275px;
+    z-index: 1001;
+    background: rgba(8, 14, 26, 0.99);
+    border-left: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    box-shadow: -6px 0 24px rgba(0, 0, 0, 0.65);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.map-tactical-sidebar.collapsed {
+    transform: translateX(100%);
+}
+
+.map-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #0d1527;
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.map-sidebar-title {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: 0.5px;
+}
+
+.hud-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    display: inline-block;
+    animation: pulse-dot 1.8s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.map-sidebar-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.sidebar-mini-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    padding: 2px 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sidebar-mini-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.map-sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.map-sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+.map-sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 2px;
+}
+
+.sidebar-layer-group {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 4px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: border-color 0.2s ease;
+}
+
+.sidebar-layer-group:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.sidebar-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.layer-switch-lbl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: text;
+    width: 100%;
+}
+
+.layer-switch-lbl input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+}
+
+.layer-name {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.sidebar-hint {
+    font-size: 0.63rem;
+    color: #64748b;
+    font-family: var(--font-mono);
+    padding-left: 23px;
+}
+
+.sidebar-sub-panel {
+    margin-top: 4px;
+    padding: 6px 8px;
+    background: rgba(8, 12, 22, 0.85);
+    border: 1px solid #1e293b;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.68rem;
+}
+
+.sub-ctrl-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.sub-lbl {
+    font-family: var(--font-mono);
+    color: #94a3b8;
+    font-size: 0.65rem;
+    font-weight: 600;
+}
+
+.sidebar-select {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #38bdf8;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    outline: none;
+    cursor: pointer;
+    max-width: 140px;
+}
+
+.sidebar-select:focus {
+    border-color: var(--accent);
+}
+
+.sub-slider {
+    accent-color: var(--accent);
+    width: 100px;
+    cursor: pointer;
+}
+
+/* Tactical Vector Ship Markers */
+.tactical-vessel-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.tactical-vessel-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.tactical-vessel-icon:hover {
+    transform: scale(1.35) !important;
+}
+
+/* Dedicated Live Video Stream Display */
+.video-stream-container {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.video-stream-container video,
+.video-stream-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: cover;
+}
+
+/* Telemetry Data Tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.76rem;
+    font-family: var(--font-mono);
+}
+
+.data-table th {
+    background: #111a2e;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border-strong);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.data-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #141f33;
+    color: var(--text-main);
+    white-space: nowrap;
+}
+
+.data-table tr:hover {
+    background: rgba(56, 189, 248, 0.08);
+    cursor: pointer;
+}
+
+.tag-alert {
+    color: var(--alert);
+    font-weight: 700;
+}
+
+.tag-warn {
+    color: var(--warn);
+    font-weight: 700;
+}
+
+.tag-success {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.tag-accent {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+/* Camera Switcher Controls in Monitor 2 */
+.cam-switcher-bar {
+    background: #111a2e;
+    padding: 6px 8px;
+    display: flex;
+    gap: 6px;
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.cam-search-input {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: #fff;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+    border-radius: 4px;
+    outline: none;
+}
+
+.cam-search-input:focus {
+    border-color: var(--accent);
+}
+
+.cam-telemetry-banner {
+    background: #0b111e;
+    border-top: 1px solid var(--border-strong);
+    padding: 4px 8px;
+    font-size: 0.73rem;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Modals */
+.ops-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ops-modal-backdrop.hidden {
+    display: none;
+}
+
+.ops-modal-window {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    width: 650px;
+    max-width: 95vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.ops-modal-header {
+    background: #111a2e;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-strong);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.ops-modal-body {
+    padding: 16px;
+    overflow-y: auto;
+    font-size: 0.82rem;
+    color: var(--text-main);
+}
+
+.vault-field {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vault-field label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.vault-field a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.78rem;
+}
+
+.vault-field a:hover {
+    text-decoration: underline;
+}
+
+.vault-field input {
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    outline: none;
+}
+
+.vault-field input:focus {
+    border-color: var(--accent);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #080c14;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* Timeline Bar & Adaptive Horizon Buttons */
+.cam-timeline-bar {
+    background: #090e18;
+    border-bottom: 1px solid var(--border-strong);
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.timeline-btn {
+    background: #111a2e;
+    border: 1px solid #1e293b;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.timeline-btn:hover {
+    background: #1e293b;
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.timeline-btn.active {
+    background: rgba(56, 189, 248, 0.2);
+    color: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+}
+
+/* Custom 24/7 Stream URL Input Group */
+.stream-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #0b111e;
+    padding: 3px 6px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.stream-url-input {
+    flex: 1;
+    background: #080c14;
+    border: 1px solid var(--border-strong);
+    color: #fff;
+    padding: 3px 8px;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    border-radius: 3px;
+    outline: none;
+}
+
+.stream-url-input:focus {
+    border-color: var(--accent);
+}
+
+/* Master Temporal Timeline Scrubber in Subbar */
+.master-timeline-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #101726;
+    border: 1px solid var(--border-strong);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.master-timeline-slider {
+    width: 140px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Tactical Intelligence Dossier Modal */
+.hidden {
+    display: none !important;
+}
+
+.dossier-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 7, 13, 0.9);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dossier-backdrop.hidden {
+    display: none !important;
+}
+
+.dossier-window {
+    background: #0b1220;
+    border: 1px solid var(--accent);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), 0 0 25px rgba(56, 189, 248, 0.25);
+    width: 620px;
+    max-width: 92vw;
+    max-height: 88vh;
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: modal-fade-in 0.2s ease-out;
+    pointer-events: auto;
+    position: relative;
+    z-index: 10001;
+}
+
+.dossier-header {
+    background: #111b30;
+    border-bottom: 1px solid var(--border-strong);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent);
+    letter-spacing: 0.8px;
+}
+
+.dossier-body {
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dossier-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.dossier-stat-box {
+    background: #070b13;
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 8px 10px;
+}
+
+.dossier-stat-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.dossier-stat-val {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Event Intelligence Log Streaming View */
+.event-log-container {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+}
+
+.event-log-row {
+    background: #080d17;
+    border: 1px solid #172235;
+    border-radius: 3px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.event-log-row:hover {
+    background: #131d30;
+    border-color: var(--accent);
+}
+
+.event-sev-critical { border-left: 3px solid #ef4444; color: #fca5a5; }
+.event-sev-warning  { border-left: 3px solid #f59e0b; color: #fde68a; }
+.event-sev-info     { border-left: 3px solid #38bdf8; color: #bae6fd; }
+
+/* =====================================================================
+   JEV AI SYSTEM-1 NEURAL FORECAST HUD & TOOLBAR (GTX 1050 Ti DIRECTML)
+   ===================================================================== */
+.jev-forecast-hud {
+    position: absolute;
+    top: 12px;
+    left: 54px; /* Placed cleanly on left, clear of both zoom buttons & right sensors sidebar */
+    width: 420px;
+    max-width: calc(100% - 75px);
+    max-height: calc(100% - 24px);
+    background: rgba(8, 12, 22, 0.99);
+    border: 1px solid rgba(168, 85, 247, 0.85);
+    box-shadow: 0 12px 42px rgba(0, 0, 0, 0.92), 0 0 30px rgba(168, 85, 247, 0.35);
+    border-radius: 6px;
+    z-index: 1100;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-mono);
+    animation: jevSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.jev-forecast-hud.hidden {
+    display: none !important;
+}
+
+.jev-forecast-hud.minimized {
+    max-height: 40px;
+    overflow: hidden;
+}
+
+.jev-forecast-hud.minimized .jev-hud-body {
+    display: none !important;
+}
+
+@keyframes jevSlideIn {
+    from { opacity: 0; transform: translateX(-12px) scale(0.97); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.jev-hud-header {
+    padding: 8px 12px;
+    background: rgba(32, 16, 52, 0.96);
+    border-bottom: 1px solid rgba(168, 85, 247, 0.45);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: default;
+    user-select: text;
+}
+
+.jev-hud-body {
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.74rem;
+    color: #e2e8f0;
+}
+
+.jev-metric-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 8px 10px;
+}
+
+.jev-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.jev-stat-row:last-child {
+    margin-bottom: 0;
+}
+
+.jev-target-pulse {
+    border-radius: 50%;
+    animation: jevPulse 1.8s infinite ease-out;
+}
+
+@keyframes jevPulse {
+    0% { transform: scale(0.9); opacity: 0.9; }
+    50% { transform: scale(1.05); opacity: 0.4; }
+    100% { transform: scale(0.9); opacity: 0.9; }
+}
+
+/* Jev crosshair mode cursor */
+.leaflet-container.jev-cursor-crosshair {
+    cursor: crosshair !important;
+}
+
+/* Drawing Box Floating Coordinate Tooltip */
+.jev-draw-tooltip {
+    position: absolute;
+    z-index: 1200;
+    pointer-events: none;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #a855f7;
+    color: #c084fc;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+
+/* Dedicated JEV Top Control & Status Bar */
+.jev-active-top-bar {
+    background: rgba(15, 23, 42, 0.96);
+    border-bottom: 2px solid #a855f7;
+    box-shadow: 0 4px 18px rgba(168, 85, 247, 0.3);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    z-index: 1001;
+    font-size: 0.75rem;
+    animation: jevBarSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes jevBarSlideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-top-jev-preset, .btn-hud-jev-preset {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-top-jev-preset:hover, .btn-hud-jev-preset:hover {
+    color: #c084fc;
+    border-color: #a855f7;
+}
+
+.btn-top-jev-preset.active, .btn-hud-jev-preset.active {
+    background: rgba(168, 85, 247, 0.35) !important;
+    color: #f8fafc !important;
+    border-color: #c084fc !important;
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
+/* JEV AI Tactical Drag-to-Select Neon Pink HUD & Tooltips */
+.leaflet-tooltip.jev-drag-pink-tooltip {
+    background: rgba(15, 23, 42, 0.94) !important;
+    border: 2px solid #ec4899 !important;
+    color: #f43f5e !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    font-family: var(--font-mono, monospace) !important;
+    padding: 5px 12px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 0 18px rgba(236, 72, 153, 0.65), inset 0 0 8px rgba(236, 72, 153, 0.25) !important;
+    text-shadow: 0 0 8px #ec4899 !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+}
+
+.leaflet-tooltip.jev-drag-pink-tooltip::before {
+    display: none !important;
+}
+
+.jev-drag-pink-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #f43f5e;
+}
+
+.jev-area-badge {
+    background: rgba(236, 72, 153, 0.25);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid #ec4899;
+    font-size: 0.72rem;
+}
+
+.jev-drag-pink-box {
+    filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.8));
+    animation: jevPinkPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes jevPinkPulse {
+    0%, 100% { stroke-opacity: 0.85; fill-opacity: 0.20; }
+    50% { stroke-opacity: 1.0; fill-opacity: 0.32; }
+}
+
+/* Weather Engine Tactical Map Markers */
+.tactical-weather-engine-marker {
+    background: transparent;
+    border: none;
+}
+
+.weather-engine-pin-wrap {
+    transition: transform 0.2s ease;
+}
+
+.weather-engine-pin-wrap:hover > div:first-child {
+    transform: scale(1.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Transit Engine Tactical Map Markers */
+.tactical-transit-marker {
+    background: transparent;
+    border: none;
+}
+
+.transit-pin-wrap {
+    transition: transform 0.2s ease;
+}
+
+.transit-pin-wrap:hover > div:first-child {
+    transform: scale(1.22);
+    box-shadow: 0 0 18px currentColor, inset 0 0 8px currentColor !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ==========================================================================
+   EXTREME RAM & YOUTUBE STREAM GARBAGE CLEANER STYLES
+   ========================================================================== */
+.ram-cleaner-group {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: #090e17;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: 4px;
+    padding: 2px 8px;
+    box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.08);
+}
+
+.ram-cleaner-group:hover {
+    border-color: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2), inset 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+#ram-telemetry-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: #10b981;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+#btn-flush-ram-extreme {
+    padding: 2px 7px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+#btn-flush-ram-extreme:hover {
+    background: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 8px #ef4444;
+    color: #fff;
+}
+
+#ram-governor-mode {
+    padding: 1px 4px;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    background: #0b1320;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #94a3b8;
+    border-radius: 3px;
+    cursor: pointer;
+    outline: none;
+}
+
+#ram-governor-mode:focus {
+    border-color: #10b981;
+}
+
+/* Cyber Standby Card (Zero-RAM Placeholder for YouTube streams) */
+.ram-standby-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 140px;
+    background: radial-gradient(circle at center, #0a1120 0%, #030712 100%);
+    border: 1px dashed rgba(56, 189, 248, 0.3);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    user-select: text;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ram-standby-placeholder:hover {
+    border-color: #38bdf8;
+    box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.1);
+}
+
+.standby-scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent);
+    animation: standbyScan 3s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes standbyScan {
+    0% { top: 0%; opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+.standby-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+}
+
+.standby-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
+    box-shadow: 0 0 6px #f59e0b;
+    animation: reticle-pulse 1.8s infinite;
+}
+
+.standby-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: #f59e0b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.standby-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 5px;
+    z-index: 2;
+    margin: auto 0;
+}
+
+.standby-icon {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+    margin-bottom: 2px;
+}
+
+.standby-name {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.standby-stat {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.btn-resume-stream {
+    background: rgba(56, 189, 248, 0.2) !important;
+    border: 1px solid #38bdf8 !important;
+    color: #38bdf8 !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    transition: all 0.2s ease !important;
+}
+
+.btn-resume-stream:hover {
+    background: #38bdf8 !important;
+    color: #030712 !important;
+    box-shadow: 0 0 16px #38bdf8 !important;
+    transform: scale(1.03);
+}
+
+.standby-footer {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: #64748b;
+    text-align: center;
+    z-index: 2;
+    letter-spacing: 0.3px;
+}
+
+/* =========================================================================
+   ULTRA 100+ FPS HARDWARE COMPOSITING & LEAFLET GPU ACCELERATION
+   ========================================================================= */
+
+#operations-map,
+.leaflet-container,
+.leaflet-pane,
+.leaflet-tile-pane,
+.leaflet-marker-pane,
+.leaflet-overlay-pane {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* CSS containment to eliminate browser layout reflows during marker interaction.
+   NOTE: will-change / translateZ / backface-visibility are intentionally NOT set on
+   individual markers. With thousands of live pins those hints force a separate GPU
+   compositing layer per marker (layer explosion), which tanks the frame rate. The
+   pane-level hints below are enough; markers stay on the pane's single layer. */
+.tactical-cam-pin,
+.custom-cam-pin,
+.real-camera-pin,
+.telemetry-triangle-pin,
+.flock-pink-square-pin,
+.tactical-station-pin,
+.tactical-transit-marker,
+.plane-marker,
+.tactical-vessel-marker,
+.tactical-weather-engine-marker {
+    contain: layout style;
+}
+
+/* Real Camera Pin: High-tech Cyan/Blue Circular Lens */
+.real-camera-pin {
+    transition: transform 0.15s ease-out;
+}
+.real-camera-pin:hover {
+    transform: scale(1.3) translateZ(0);
+    z-index: 9999 !important;
+}
+
+/* Telemetry Node Pin: High-tech Yellow Triangle */
+.telemetry-triangle-pin {
+    transition: transform 0.15s ease-out;
+}
+.telemetry-triangle-pin:hover {
+    transform: scale(1.35) translateZ(0);
+    z-index: 9999 !important;
+}
+
+/* Flock Safety ALPR Pin: Pink Square Marker (Strict 100+ FPS GPU Accelerated) */
+.flock-pink-square-pin {
+    width: 14px;
+    height: 14px;
+    border-radius: 0px !important;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+    cursor: pointer;
+}
+.flock-pink-square-pin:hover {
+    transform: scale(1.4) translateZ(0);
+    z-index: 9999 !important;
+    filter: drop-shadow(0 0 10px #ec4899);
+}
+
+.tactical-station-pin {
+    transition: transform 0.15s ease-out;
+}
+.tactical-station-pin:hover {
+    transform: scale(1.3) translateZ(0);
+    z-index: 9999 !important;
+}
+
+/* MON-02 Omni View Monitor: High-Tech Tabs & Flock ALPR Inspector */
+.omni-tab-btn {
+    padding: 2px 8px;
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+    transform: translateZ(0);
+}
+.omni-tab-btn:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px) translateZ(0);
+}
+.omni-tab-btn.active[data-omni-tab="webcams"] {
+    background: rgba(0, 240, 255, 0.2);
+    border-color: #00f0ff !important;
+    color: #00f0ff !important;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+.omni-tab-btn.active[data-omni-tab="telemetry"] {
+    background: rgba(250, 204, 21, 0.2);
+    border-color: #facc15 !important;
+    color: #facc15 !important;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+}
+.omni-tab-btn.active[data-omni-tab="flock"] {
+    background: rgba(236, 72, 153, 0.25);
+    border-color: #ec4899 !important;
+    color: #ec4899 !important;
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+}
+.omni-tab-btn.active[data-omni-tab="mapinfo"] {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+
+/* Flock ALPR Tactical Plate Badge */
+.flock-plate-badge {
+    display: inline-flex;
+    align-items: center;
+    background: #f8fafc;
+    color: #090d16;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-weight: 900;
+    font-size: 1.15rem;
+    letter-spacing: 3px;
+    padding: 4px 14px;
+    border-radius: 4px;
+    border: 2px solid #334155;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4), 0 0 12px rgba(236,72,153,0.6);
+    position: relative;
+    user-select: all;
+}
+.flock-plate-badge::before {
+    content: "ALPR";
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    font-size: 0.45rem;
+    color: #64748b;
+    letter-spacing: 0;
+}
+
+/* Tactical Optical Feed HUD overlay */
+.flock-hud-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px;
+    font-family: var(--font-mono);
+    contain: strict;
+    transform: translateZ(0);
+}
+
+/* Bounding box tracking reticle */
+.flock-bbox {
+    position: absolute;
+    border: 1.5px solid #ec4899;
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.6), inset 0 0 8px rgba(236, 72, 153, 0.2);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: translateZ(0);
+}
+.flock-bbox-corner-tl {
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: 6px;
+    height: 6px;
+    border-top: 3px solid #fff;
+    border-left: 3px solid #fff;
+}
+.flock-bbox-corner-tr {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 6px;
+    height: 6px;
+    border-top: 3px solid #fff;
+    border-right: 3px solid #fff;
+}
+.flock-bbox-corner-bl {
+    position: absolute;
+    bottom: -2px;
+    left: -2px;
+    width: 6px;
+    height: 6px;
+    border-bottom: 3px solid #fff;
+    border-left: 3px solid #fff;
+}
+.flock-bbox-corner-br {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 6px;
+    height: 6px;
+    border-bottom: 3px solid #fff;
+    border-right: 3px solid #fff;
+}
+
+/* Rolling Vehicle Recon Log Table */
+.flock-recon-container {
+    width: 100%;
+    background: #060913;
+    border-top: 1px solid #1e293b;
+    font-family: var(--font-mono);
+    contain: layout style;
+    transform: translateZ(0);
+}
+.flock-recon-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+}
+.flock-recon-table th {
+    background: #090f1e;
+    color: #64748b;
+    padding: 4px 8px;
+    text-align: left;
+    font-size: 0.65rem;
+    border-bottom: 1px solid #1e293b;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.flock-recon-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+    color: #cbd5e1;
+}
+@keyframes flockRowSlideIn {
+    0% { background: rgba(236, 72, 153, 0.4); transform: translateY(-4px) translateZ(0); }
+    100% { background: transparent; transform: translateY(0) translateZ(0); }
+}
+.flock-log-row-new {
+    animation: flockRowSlideIn 1.2s ease-out;
+}
+
+/* Real-time GPU / Compositor FPS Telemetry HUD */
+.fps-telemetry-badge {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    color: #34d399 !important;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.5px;
+}
+
+/* =========================================================================
+   JEV AI VISUAL WEATHER MAP RADAR OVERLAYS (NO TEXT MENU // MAP-FIRST)
+   ========================================================================= */
+.jev-weather-tag-container {
+    background: transparent !important;
+    border: none !important;
+}
+
+.jev-weather-tag {
+    background: rgba(2, 6, 23, 0.94);
+    backdrop-filter: blur(8px);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--font-mono);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    white-space: nowrap;
+    pointer-events: auto;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jev-weather-tag:hover {
+    transform: translate(-50%, -55%) scale(1.04);
+}
+
+.jev-weather-symbol {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: jevWeatherFloat 3s ease-in-out infinite alternate;
+}
+
+@keyframes jevWeatherFloat {
+    0% { transform: translateY(0px) scale(1); }
+    100% { transform: translateY(-4px) scale(1.08); }
+}
+
+.jev-weather-cloud-patch {
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    opacity: 0.85;
+    animation: jevCloudDrift 6s ease-in-out infinite alternate;
+}
+
+@keyframes jevCloudDrift {
+    0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.7; }
+    50% { transform: translate(-45%, -55%) scale(1.08); opacity: 0.95; }
+    100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.7; }
+}
+
+/* Zone Pulse Borders */
+.jev-zone-pulsing-red {
+    animation: jevPulseRed 2.2s infinite ease-in-out;
+}
+@keyframes jevPulseRed {
+    0% { stroke-opacity: 0.8; fill-opacity: 0.22; }
+    50% { stroke-opacity: 1; fill-opacity: 0.40; }
+    100% { stroke-opacity: 0.8; fill-opacity: 0.22; }
+}
+
+.jev-zone-pulsing-blue {
+    animation: jevPulseBlue 2.6s infinite ease-in-out;
+}
+@keyframes jevPulseBlue {
+    0% { stroke-opacity: 0.8; fill-opacity: 0.20; }
+    50% { stroke-opacity: 1; fill-opacity: 0.36; }
+    100% { stroke-opacity: 0.8; fill-opacity: 0.20; }
+}
+
+.jev-zone-pulsing-pink {
+    animation: jevPulsePink 2.2s infinite ease-in-out;
+}
+@keyframes jevPulsePink {
+    0% { stroke-opacity: 0.8; fill-opacity: 0.22; }
+    50% { stroke-opacity: 1; fill-opacity: 0.40; }
+    100% { stroke-opacity: 0.8; fill-opacity: 0.22; }
+}
+
+.jev-zone-pulsing-amber {
+    animation: jevPulseAmber 2.4s infinite ease-in-out;
+}
+@keyframes jevPulseAmber {
+    0% { stroke-opacity: 0.8; fill-opacity: 0.20; }
+    50% { stroke-opacity: 1; fill-opacity: 0.35; }
+    100% { stroke-opacity: 0.8; fill-opacity: 0.20; }
+}
+
+/* ==========================================================================
+   NOAA LIVE USA WEATHER & NEXRAD DOPPLER RADAR MAP STYLES
+   ========================================================================== */
+.noaa-weather-pin-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.94);
+    border: 1px solid #0284c7;
+    box-shadow: 0 0 10px rgba(2, 132, 199, 0.5);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #f8fafc;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: translate(-50%, -50%);
+}
+
+.noaa-weather-pin-wrap:hover {
+    transform: translate(-50%, -50%) scale(1.12);
+    border-color: #38bdf8;
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.85);
+    z-index: 9999 !important;
+}
+
+.noaa-temp-tag {
+    background: rgba(2, 132, 199, 0.25);
+    color: #38bdf8;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.noaa-city-label {
+    font-weight: 600;
+    color: #f8fafc;
+    letter-spacing: 0.3px;
+}
+
+/* ==========================================================================
+   HISTORICAL WEATHER & TORNADO ARCHIVE MAP STYLES
+   ========================================================================== */
+.archive-tornado-pin-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(30, 10, 20, 0.95);
+    border: 2px solid #ef4444;
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.7), inset 0 0 8px rgba(239, 68, 68, 0.3);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #fee2e2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: translate(-50%, -50%);
+    animation: pulseTornadoGlow 1.8s infinite alternate;
+}
+
+@keyframes pulseTornadoGlow {
+    0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); }
+    100% { box-shadow: 0 0 22px rgba(239, 68, 68, 1.0), 0 0 35px rgba(185, 28, 28, 0.7); }
+}
+
+.archive-tornado-pin-wrap:hover {
+    transform: translate(-50%, -50%) scale(1.18);
+    border-color: #f87171;
+    z-index: 10000 !important;
+}
+
+.archive-tornado-tag {
+    background: #ef4444;
+    color: #0f172a;
+    font-weight: 900;
+    padding: 1px 4px;
+    border-radius: 2px;
+}
+
+.archive-wind-pin-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(10, 25, 45, 0.92);
+    border: 1px solid #06b6d4;
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #cffafe;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: translate(-50%, -50%);
+}
+
+.archive-wind-pin-wrap:hover {
+    transform: translate(-50%, -50%) scale(1.15);
+    border-color: #22d3ee;
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.85);
+    z-index: 9999 !important;
+}
+
+.archive-wind-tag {
+    background: rgba(6, 182, 212, 0.25);
+    color: #22d3ee;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(34, 211, 238, 0.4);
+}
+
+.archive-hail-pin-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(20, 25, 40, 0.92);
+    border: 1px solid #a855f7;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.45);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: #f3e8ff;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+}
+
+.archive-preset-chip {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid #334155;
+    color: #94a3b8;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.archive-preset-chip:hover, .archive-preset-chip.active {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+    color: #f87171;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.archive-stat-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+/* ==========================================================================
+   TACTICAL SEVERE WEATHER ALARM BANNER (STROBE & EAS WARNING)
+   ========================================================================== */
+@keyframes alarm-strobe-pulse {
+    0% {
+        background: rgba(220, 38, 38, 0.85);
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.4);
+    }
+    50% {
+        background: rgba(127, 29, 29, 0.95);
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4), inset 0 0 5px rgba(0, 0, 0, 0.5);
+    }
+    100% {
+        background: rgba(220, 38, 38, 0.85);
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.4);
+    }
+}
+
+.tactical-alarm-banner {
+    display: none;
+    animation: alarm-strobe-pulse 1.2s infinite ease-in-out;
+    border: 2px solid #f87171;
+    color: #ffffff;
+    padding: 8px 16px;
+    margin: 4px 8px 8px 8px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 9999;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tactical-alarm-banner.active {
+    display: flex !important;
+}
+
+.alarm-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.alarm-badge-pulse {
+    background: #ffffff;
+    color: #b91c1c;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 900;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.alarm-jump-btn {
+    background: #ffffff !important;
+    color: #b91c1c !important;
+    font-weight: 900 !important;
+    border: none !important;
+    padding: 4px 14px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.8) !important;
+    transition: transform 0.1s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.alarm-jump-btn:hover {
+    transform: scale(1.05);
+}
+
+.alarm-dismiss-btn {
+    background: rgba(0, 0, 0, 0.4) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    padding: 4px 10px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+}
+
+/* Polling Control Group */
+.polling-ctrl-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #090e1a;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #1e293b;
+}
+
+.polling-countdown-ticker {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: #38bdf8;
+    font-weight: 700;
+    min-width: 42px;
+}
+
+/* ==========================================================================
+   GLOBAL LIVE STORM & TORNADO DEDICATED MONITOR (MON-STORM)
+   ========================================================================== */
+
+.storm-monitor-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    background: rgba(6, 11, 20, 0.95);
+    scrollbar-width: thin;
+    scrollbar-color: #ef4444 rgba(6, 11, 20, 0.95);
+    padding: 0;
+}
+
+.storm-monitor-body::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.storm-monitor-body::-webkit-scrollbar-track {
+    background: rgba(6, 11, 20, 0.95);
+    border-radius: 2px;
+}
+
+.storm-monitor-body::-webkit-scrollbar-thumb {
+    background: #ef4444;
+    border-radius: 3px;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+}
+
+.storm-monitor-body::-webkit-scrollbar-thumb:hover {
+    background: #f87171;
+    box-shadow: 0 0 10px rgba(248, 113, 113, 0.9);
+}
+
+.storm-telemetry-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #060b14;
+    border-top: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 4px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+}
+
+.storm-panel-header {
+    background: #080f1e;
+    border-bottom: 1px solid #1e293b;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.storm-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 8px #ef4444;
+    animation: stormPulseDot 1.5s infinite;
+}
+
+@keyframes stormPulseDot {
+    0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+    70% { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.storm-panel-title {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #f87171;
+    letter-spacing: 0.5px;
+}
+
+.storm-poll-pill {
+    background: #090e1a;
+    border: 1px solid #334155;
+    color: #38bdf8;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+}
+
+.storm-poll-pill strong {
+    color: #facc15;
+}
+
+.storm-mini-btn {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #cbd5e1;
+    padding: 2px 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: all 0.15s ease;
+}
+
+.storm-mini-btn:hover {
+    background: #1e293b;
+    color: #fff;
+    border-color: #38bdf8;
+}
+
+/* Multi-Weather Teamwork Consensus Bar */
+.storm-teamwork-bar {
+    background: linear-gradient(90deg, rgba(2, 132, 199, 0.15), rgba(168, 85, 247, 0.12));
+    border-bottom: 1px solid #1e293b;
+    padding: 4px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+.storm-teamwork-bar span {
+    font-weight: 700;
+}
+
+/* Hero Pinned Threat Box */
+.storm-pinned-box {
+    margin: 6px 8px 4px 8px;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    border-radius: 4px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: stormPinGlow 2s infinite alternate;
+}
+
+.storm-pinned-box.empty {
+    border-color: #1e293b;
+    background: rgba(15, 23, 42, 0.4);
+    animation: none;
+}
+
+@keyframes stormPinGlow {
+    0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.2); }
+    100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+}
+
+.pinned-box-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.25);
+    padding-bottom: 3px;
+}
+
+.pinned-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #ef4444;
+}
+
+.pinned-time-readout {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: #94a3b8;
+}
+
+.pinned-idle-msg {
+    font-size: 0.68rem;
+    color: #64748b;
+    line-height: 1.3;
+    padding: 4px 0;
+}
+
+.pinned-threat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: var(--font-mono);
+}
+
+.pinned-threat-title {
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: #f87171;
+    line-height: 1.25;
+}
+
+.pinned-metrics-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    font-size: 0.68rem;
+    color: #cbd5e1;
+    margin-top: 2px;
+}
+
+.pinned-metric-pill {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid #334155;
+}
+
+.pinned-metric-pill.danger {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #fca5a5;
+    font-weight: 700;
+}
+
+.pinned-path-info {
+    font-size: 0.65rem;
+    color: #38bdf8;
+    background: rgba(2, 132, 199, 0.1);
+    padding: 3px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.pinned-actions-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.pinned-action-btn {
+    flex: 1;
+    padding: 3px 5px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    transition: all 0.12s ease;
+}
+
+.pinned-action-btn.target {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+    color: #fff;
+}
+.pinned-action-btn.target:hover {
+    background: #ef4444;
+}
+
+.pinned-action-btn.cam {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: #0284c7;
+    color: #38bdf8;
+}
+.pinned-action-btn.cam:hover {
+    background: #0284c7;
+    color: #fff;
+}
+
+.pinned-action-btn.stn {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #6ee7b7;
+}
+.pinned-action-btn.stn:hover {
+    background: #10b981;
+    color: #fff;
+}
+
+/* Storm List Section */
+.storm-list-section-header {
+    background: #090e1a;
+    border-top: 1px solid #1e293b;
+    border-bottom: 1px solid #1e293b;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.storm-count-tag {
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #f87171;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.62rem;
+}
+
+.live-storms-list {
+    flex: 1 1 auto;
+    overflow-y: visible;
+    padding: 6px 8px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.storm-item-card {
+    background: #080e1c;
+    border: 1px solid #1e293b;
+    border-radius: 4px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.storm-item-card:hover {
+    background: #0f1930;
+    border-color: #ef4444;
+}
+
+.storm-item-card.is-active-pinned {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+}
+
+.storm-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.storm-tag-badge {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 2px;
+}
+
+.storm-tag-badge.tornado {
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+.storm-tag-badge.supercell {
+    background: #7e22ce;
+    color: #ffffff;
+}
+
+.storm-tag-badge.severe {
+    background: #b45309;
+    color: #ffffff;
+}
+
+.storm-item-coords {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: #38bdf8;
+}
+
+.storm-item-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    line-height: 1.25;
+}
+
+.storm-item-metrics {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: #94a3b8;
+}
+
+.storm-item-actions {
+    display: flex;
+    gap: 4px;
+    margin-top: 3px;
+}
+
+.btn-card-anvisieren {
+    flex: 1;
+    background: rgba(239, 68, 68, 0.18);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 2px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.12s ease;
+}
+
+.btn-card-anvisieren:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* ==========================================================================
+   ROTATING RED CIRCLE TORNADO VORTEX MARKER
+   ========================================================================== */
+
+.tornado-vortex-circle-wrap {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.tornado-circle-spin-outer {
+    position: absolute;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 3px dashed #ef4444;
+    border-top: 3px solid #ffffff;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.9), inset 0 0 8px rgba(239, 68, 68, 0.4);
+    animation: tornadoCircleSpin 1.8s linear infinite;
+}
+
+@keyframes tornadoCircleSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.tornado-vortex-core {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #dc2626 40%, #7f1d1d 100%);
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    z-index: 2;
+    animation: tornadoCorePulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes tornadoCorePulse {
+    0% { transform: scale(0.92); box-shadow: 0 0 6px rgba(239, 68, 68, 0.6); }
+    100% { transform: scale(1.15); box-shadow: 0 0 18px rgba(239, 68, 68, 1); }
+}
+
+.tornado-heading-tick {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 3;
+}
+
+.tornado-heading-tick span {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 900;
+    transform: translateY(-8px);
+    filter: drop-shadow(0 0 3px #000);
+}
+
+.tornado-vortex-tag {
+    position: absolute;
+    bottom: -18px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #ef4444;
+    color: #ffffff;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+    z-index: 4;
+}
+
+/* ==========================================================================
+   CYCLONIC HURRICANE SPIRAL VORTEX MARKER
+   ========================================================================== */
+
+.hurricane-cyclone-wrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.hurricane-spiral-spin-outer {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 3px double #38bdf8;
+    border-top: 4px solid #ef4444;
+    border-right: 3px solid #f97316;
+    border-bottom: 2px dashed #38bdf8;
+    border-left: 4px solid #ffffff;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), inset 0 0 12px rgba(56, 189, 248, 0.5);
+    animation: hurricaneSpiralSpin 2.4s linear infinite;
+}
+
+.hurricane-spiral-arms {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(239,68,68,0.85) 0deg, rgba(249,115,22,0.4) 60deg, transparent 120deg, rgba(56,189,248,0.8) 180deg, rgba(239,68,68,0.3) 240deg, transparent 300deg);
+    opacity: 0.85;
+    animation: hurricaneSpiralSpin 2.4s linear infinite;
+    mix-blend-mode: screen;
+}
+
+@keyframes hurricaneSpiralSpin {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.hurricane-eye-core {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #0284c7 20%, #0f172a 100%);
+    border: 2px solid #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 900;
+    z-index: 2;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.9);
+}
+
+.hurricane-vortex-tag {
+    position: absolute;
+    bottom: -18px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #38bdf8;
+    color: #ffffff;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+    z-index: 4;
+}
+
+/* ==========================================================================
+/* ==========================================================================
+   WEATHER WARNING ZONES & SEVERE STORM HAZARD POLYGONS
+   Enable full clickability on both fill & stroke so clicking danger zones opens dossiers
+   ========================================================================== */
+
+.leaflet-pane path.severe-alert-polygon,
+.leaflet-pane path.tornado-hazard-polygon,
+.leaflet-pane path.alert-zone-pass-through,
+.leaflet-overlay-pane path.severe-alert-polygon,
+.leaflet-overlay-pane path.tornado-hazard-polygon,
+.leaflet-overlay-pane path.alert-zone-pass-through,
+path.severe-alert-polygon,
+path.tornado-hazard-polygon,
+path.alert-zone-pass-through {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* ==========================================================================
+   AI SUPPORT BOT & BODY POSE STYLES
+   ========================================================================== */
+.ai-msg-row {
+    display: flex;
+    width: 100%;
+    margin-bottom: 8px;
+}
+.ai-msg-row.user {
+    justify-content: flex-end;
+}
+.ai-msg-row.bot {
+    justify-content: flex-start;
+}
+.ai-msg-bubble {
+    max-width: 82%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    word-break: break-word;
+}
+.ai-msg-bubble.user {
+    background: #4338ca;
+    color: #fff;
+    border-bottom-right-radius: 2px;
+    box-shadow: 0 2px 8px rgba(67, 56, 202, 0.4);
+}
+.ai-msg-bubble.bot {
+    background: #111827;
+    color: #f1f5f9;
+    border: 1px solid #374151;
+    border-bottom-left-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.ai-chip-btn:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   FEATURE 01: MULTI-CAM GRID & FEATURE 51: OPTICAL SHADERS
+   ========================================================================== */
+.filter-nvg img, .filter-nvg video, .filter-nvg iframe {
+    filter: brightness(1.25) contrast(1.65) hue-rotate(85deg) saturate(3) drop-shadow(0 0 5px rgba(34, 197, 94, 0.7)) !important;
+}
+.filter-flir img, .filter-flir video, .filter-flir iframe {
+    filter: invert(1) contrast(2.3) hue-rotate(185deg) saturate(3.5) drop-shadow(0 0 6px rgba(249, 115, 22, 0.8)) !important;
+}
+.filter-mono img, .filter-mono video, .filter-mono iframe {
+    filter: grayscale(1) contrast(2.2) brightness(0.9) !important;
+}
+
+.cam-grid-container {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    gap: 4px;
+    background: #020611;
+    padding: 4px;
+    box-sizing: border-box;
+}
+.cam-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+.cam-grid-9 {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+}
+.cam-grid-cell {
+    position: relative;
+    background: #070d1a;
+    border: 1px solid #1e293b;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 2px;
+}
+.cam-grid-cell:hover {
+    border-color: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+}
+.cam-grid-cell img, .cam-grid-cell iframe, .cam-grid-cell video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    flex: 1;
+    display: block;
+    background: #000;
+}
+.cam-grid-cell-title {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(3, 7, 18, 0.88);
+    color: #e2e8f0;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 2px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-top: 1px solid rgba(56, 189, 248, 0.3);
+    pointer-events: none;
+}
+.cam-grid-cell-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: rgba(14, 116, 144, 0.9);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+
+
+
+
+
+
+

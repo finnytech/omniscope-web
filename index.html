@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>OMNISCOPE WEB // OPEN SENSOR & RADAR COMMAND GRID</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23030712' stroke='%2338bdf8' stroke-width='6'/><circle cx='50' cy='50' r='20' fill='none' stroke='%2306b6d4' stroke-width='4'/><line x1='50' y1='5' x2='50' y2='95' stroke='%2338bdf8' stroke-width='3'/><line x1='5' y1='50' x2='95' y2='50' stroke='%2338bdf8' stroke-width='3'/></svg>" />
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/cyberpunk.css?v=6.0" />
+</head>
+<body>
+    <!-- Top Operations Header -->
+    <header class="ops-header">
+        <div class="ops-title-group">
+            <div class="ops-logo">
+                <span>OMNI</span>SCOPE // WEB-GRID
+            </div>
+            <div class="ops-badge">
+                <span class="status-dot"></span>
+                <span id="system-status-text">LIVE SENSORS CONNECTED</span>
+            </div>
+            <div class="ops-badge" id="ops-network-badge" title="508,474 REAL WEBCAMS & TRAFFIC CAMS // 505,000 VERIFIED WEATHER STATIONS // 1,013,474 REAL NODES // ZERO SIMULATION" style="background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:var(--accent);letter-spacing:0.5px;font-weight:600;white-space:nowrap;flex-shrink:0;">
+                508k REAL CAMS // 505k WEATHER // 1.01M NODES // ZERO SIMULATION
+            </div>
+            <div class="ops-badge fps-telemetry-badge" id="fps-telemetry-badge" title="Echtzeit GPU / Browser Framerate">
+                <span class="status-dot" style="background:#10b981;box-shadow:0 0 6px #10b981;" id="fps-dot"></span>
+                <span id="fps-counter-val">120 FPS</span>
+            </div>
+        </div>
+
+        <div class="ops-center-clocks">
+            <div>UTC:<strong id="clock-utc">--:--:--</strong></div>
+            <div>LOCAL:<strong id="clock-local">--:--:--</strong></div>
+        </div>
+
+        <div class="ops-toolbar">
+            <!-- LIVE POLLING FREQUENCY SELECTOR & COUNTDOWN TICKER -->
+            <div class="polling-ctrl-group" title="Live-Abfrageintervall für Unwetter-Alarme, Radar & Sensoren (1m - 20m)">
+                <span style="font-size:0.68rem;color:#94a3b8;font-weight:700;">POLL:</span>
+                <select id="select-polling-interval" class="ops-select" style="padding:1px 4px;font-size:0.7rem;height:22px;background:#030712;border:1px solid #334155;">
+                    <option value="60">1 Min</option>
+                    <option value="120">2 Min</option>
+                    <option value="300" selected>5 Min</option>
+                    <option value="600">10 Min</option>
+                    <option value="1200">20 Min</option>
+                </select>
+                <span id="polling-countdown" class="polling-countdown-ticker">05:00</span>
+                <button id="btn-poll-now" class="ops-btn" style="padding:1px 6px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="Sofortige Live-Aktualisierung">⚡ SCAN</button>
+            </div>
+
+            <!-- SEVERE WEATHER ALARM CONFIGURATION BUTTON -->
+            <button id="btn-weather-alarm-cfg" class="ops-btn" style="background:rgba(239,68,68,0.22);color:#ef4444;border:1px solid #ef4444;font-weight:700;display:flex;align-items:center;gap:4px;" title="Taktische Unwetter-, Tornado- & Touchdown-Alarme konfigurieren">
+                <span>🚨</span>
+                <span>UNWETTER-ALARM</span>
+            </button>
+
+            <select id="map-style-select" class="ops-select" title="Map Tile Style">
+                <option value="esri-hybrid" selected>ESRI Satellit Hybrid (HD + Labels) [FREE]</option>
+                <option value="maptiler-streets">MapTiler Streets HD [KEY AKTIV]</option>
+                <option value="maptiler-sat">MapTiler Satellite [KEY AKTIV]</option>
+                <option value="maptiler-topo">MapTiler Topo Gelände [KEY AKTIV]</option>
+                <option value="maptiler-dark">MapTiler Dataviz Dark [KEY AKTIV]</option>
+                <option value="esri-sat">ESRI World Imagery (High-Res Sat) [FREE]</option>
+                <option value="carto-dark">CartoDB Dark Matter (Tactical HUD) [FREE]</option>
+                <option value="nasa-night">NASA Earth at Night (Orbit Night) [FREE]</option>
+                <option value="esri-topo">ESRI Topo & Relief (Gelände) [FREE]</option>
+                <option value="opentopomap">OpenTopoMap (Höhenlinien) [FREE]</option>
+                <option value="osm-hot">OpenStreetMap Humanitarian [FREE]</option>
+                <option value="mapbox-dark">Mapbox Dark (Key)</option>
+                <option value="mapbox-sat">Mapbox High-Res Satellite (Key)</option>
+            </select>
+            <!-- EXTREME RAM & YOUTUBE STREAM GARBAGE CLEANER WIDGET -->
+            <div class="ram-cleaner-group" title="Extreme RAM Cleaner & Stream Concurrency Governor">
+                <span id="ram-indicator-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
+                <span id="ram-telemetry-badge">RAM: -- MB | 1/7 ACTIVE (ECO)</span>
+                <button id="btn-flush-ram-extreme" title="Alle inaktiven YouTube-Streams beenden, Decoder killen & RAM sofort leeren">
+                    🧹 FLUSH RAM
+                </button>
+                <select id="ram-governor-mode" title="RAM Governor Modus für Video-Streams">
+                    <option value="eco" selected>⚡ ECO (Max 2 Streams)</option>
+                    <option value="strict">🛡️ STRICT (Max 1 Stream)</option>
+                    <option value="unlimited">🔥 UNLIMITED (Alle Streams)</option>
+                </select>
+            </div>
+            <button id="btn-popout" class="ops-btn" title="Open multi-window layout on second monitor">
+                <span>[+] DETACH WINDOW</span>
+            </button>
+            <button id="btn-reset-panels-layout" class="ops-btn" style="background:rgba(56,189,248,0.22);color:#38bdf8;border:1px solid #0284c7;font-weight:700;" title="Panels & Monitore auf Standard-Layout zurücksetzen (Doppelklick auf Trennbalken funktioniert ebenfalls)">
+                <span>📐 RESET LAYOUT</span>
+            </button>
+            <button id="btn-vault" class="ops-btn active" title="API Keys & Secrets Vault">
+                <span>🔑 API VAULT</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Subbar: Real-Time Layer Toggles, Master Timeline & Coordinates HUD -->
+    <div class="ops-subbar">
+        <!-- IMMUTABLE FIXED RESET BUTTON OVER MON-01 -->
+        <div class="fixed-monitors-reset-bar" style="display:inline-flex;align-items:center;margin-right:10px;padding-right:10px;border-right:1px solid #334155;flex-shrink:0;">
+            <button id="btn-reset-top-monitors-bar" class="ops-btn" onclick="window.resetMonitorsLayout && window.resetMonitorsLayout()" style="background:#0284c7;color:#ffffff;border:1px solid #38bdf8;box-shadow:0 0 10px rgba(56,189,248,0.5);font-weight:800;padding:3px 12px;font-size:0.75rem;cursor:pointer;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;border-radius:3px;" title="MON-01 & MON-02 Standard-Aufteilung (50/50) sofort wiederherstellen">
+                <span>📐</span>
+                <span>RESET MONITORS</span>
+            </button>
+        </div>
+        <div class="layer-toggles">
+            <span style="font-weight:700;color:#fff;">MAP LAYERS:</span>
+            <label><input type="checkbox" id="layer-radar" checked /> Doppler Radar (RainViewer)</label>
+            <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-noaa-radar" checked /> 🇺🇸 NOAA NEXRAD USA Radar</label>
+            <label style="color:#0284c7;font-weight:700;"><input type="checkbox" id="layer-noaa-stations" checked /> 🇺🇸 NOAA Live USA Wetter</label>
+            <label style="color:#f87171;font-weight:700;"><input type="checkbox" id="layer-archive-events" checked /> 🏛️ Archiv Stürme & Tornados</label>
+            <label><input type="checkbox" id="layer-alerts" checked /> NOAA Warnings</label>
+            <label><input type="checkbox" id="layer-flights" checked /> Flights (OpenSky Worldwide)</label>
+            <label><input type="checkbox" id="layer-vessels" checked /> Schiffsverkehr (AIS Marine)</label>
+            <label><input type="checkbox" id="layer-seamarks" /> OpenSeaMap Seezeichen</label>
+            <label><input type="checkbox" id="layer-firms" checked /> Wildfires (NASA FIRMS)</label>
+            <label><input type="checkbox" id="layer-quakes" checked /> Earthquakes (USGS)</label>
+            <label><input type="checkbox" id="layer-iss" checked /> Space Station (ISS)</label>
+            <label><input type="checkbox" id="layer-cams" checked /> 🔵 Echte Webcams (Live)</label>
+            <label><input type="checkbox" id="layer-telemetry" checked /> ▲ Verkehrs-Telemetrie (Autobahn & DOT)</label>
+            <label><input type="checkbox" id="layer-weather-engines" checked /> ⬟ Wetter-Stationen (DWD / NOAA / WMO)</label>
+            <label><input type="checkbox" id="layer-transit-engines" checked /> 🚀 Globaler Transit (Flug / Schiff / Bahn)</label>
+        </div>
+        <div class="weather-mode-ctrl" style="display:inline-flex;align-items:center;gap:4px;background:#090e1a;padding:2px 8px;border-radius:4px;border:1px solid #1e293b;">
+            <span style="font-size:0.7rem;color:#94a3b8;font-weight:700;">WETTER-ANZEIGE:</span>
+            <button class="ops-btn active" id="btn-weather-mode-global" data-weather-mode="global" style="padding:2px 8px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="Wetterstationen weltweit auf der Karte anzeigen">🌍 GLOBAL</button>
+            <button class="ops-btn" id="btn-weather-mode-sector" data-weather-mode="sector" style="padding:2px 8px;font-size:0.68rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Wetterstationen nur im aktiven Sektor / lokalen Fokus anzeigen">📍 LOKAL (SEKTOR)</button>
+            <button class="ops-btn" id="btn-weather-mode-off" data-weather-mode="off" style="padding:2px 8px;font-size:0.68rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Wetterstationen auf der Karte ausblenden">❌ AUS</button>
+        </div>
+        <div class="master-timeline-ctrl">
+            <span style="color:var(--text-dim);font-weight:700;">TEMPORAL SCRUBBER (7 TAGE):</span>
+            <input type="range" id="master-timeline-slider" class="master-timeline-slider" min="0" max="168" value="168" title="Scrub through telemetry up to 7 days (168 hours)" />
+            <div class="multiday-presets" style="display:inline-flex;gap:3px;">
+                <button class="ops-btn btn-preset-day active" data-hours="0" style="padding:1px 5px;font-size:0.65rem;">LIVE</button>
+                <button class="ops-btn btn-preset-day" data-hours="6" style="padding:1px 5px;font-size:0.65rem;">-6h</button>
+                <button class="ops-btn btn-preset-day" data-hours="24" style="padding:1px 5px;font-size:0.65rem;">-1d</button>
+                <button class="ops-btn btn-preset-day" data-hours="72" style="padding:1px 5px;font-size:0.65rem;">-3d</button>
+                <button class="ops-btn btn-preset-day" data-hours="168" style="padding:1px 5px;font-size:0.65rem;">-7d</button>
+            </div>
+            <span id="master-timeline-label" style="color:var(--accent);font-family:var(--font-mono);font-weight:700;">LIVE</span>
+            <button id="btn-timeline-replay" class="ops-btn" style="padding:1px 6px;font-size:0.7rem;">PLAY</button>
+        </div>
+        <div class="coords-hud" id="coords-hud">
+            CURSOR: LAT --.----° | LON --.----° | ZOOM 3
+        </div>
+    </div>
+
+    <!-- TACTICAL SEVERE WEATHER ALARM BANNER (STROBE & EAS WARNING) -->
+    <div id="tactical-alarm-banner" class="tactical-alarm-banner">
+        <div class="alarm-banner-left">
+            <span class="alarm-badge-pulse" id="alarm-banner-badge">🚨 TORNADO EMERGENCY</span>
+            <span id="alarm-banner-text">CONFIRMED TORNADO ON THE GROUND: EF-4 IN OKLAHOMA SECTOR // IMMEDIATE ROTATION DETECTED</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <button id="btn-alarm-jump-feed" class="alarm-jump-btn">
+                <span>📹</span>
+                <span id="alarm-jump-btn-text">JUMP TO TOUCHDOWN FEED</span>
+            </button>
+            <button id="btn-alarm-silence" class="alarm-dismiss-btn" title="Alarm stummschalten">
+                🔇 STUMM
+            </button>
+            <button id="btn-alarm-dismiss" class="alarm-dismiss-btn" title="Banner schließen">
+                ✖
+            </button>
+        </div>
+    </div>
+
+    <!-- Multi-Monitor Dedicated Grid: Every provider has its permanent running monitor -->
+    <main class="monitors-grid" id="monitors-grid">
+
+        <!-- TOP INTERACTIVE MULTI-MONITOR ROW WITH DYNAMIC DRAGGABLE DIVIDERS -->
+        <div class="top-monitors-row" id="top-monitors-row">
+
+            <!-- MONITOR 1: Tactical World Map (Large Primary) -->
+            <div class="monitor-card span-col" id="card-map">
+            <div class="monitor-header" style="flex-wrap:wrap;gap:8px;">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-01</span>
+                    <span>GLOBAL TACTICAL RADAR & SATELLITE MAP</span>
+                    <button id="btn-reset-monitors-header" class="ops-btn" onclick="window.resetMonitorsLayout && window.resetMonitorsLayout()" style="background:rgba(56,189,248,0.22);color:#38bdf8;border:1px solid #0284c7;font-weight:700;padding:2px 8px;font-size:0.7rem;cursor:pointer;margin-left:6px;" title="MON-01 & MON-02 Standard-Aufteilung wiederherstellen">📐 RESET LAYOUT</button>
+                </div>
+                <!-- Jev AI System-1 Forecast Tool Bar & 30 Weather Engines Inspector -->
+                <div class="jev-toolbar" style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
+                    <button id="btn-weather-archive-modal" class="ops-btn" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid #ef4444;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Historisches Wetter-, Tornado- & Extremwetter-Archiv (NOAA & Global)">
+                        <span>🏛️</span>
+                        <span>WETTER- & TORNADO-ARCHIV</span>
+                    </button>
+                    <button id="btn-focus-noaa-usa" class="ops-btn" style="background:rgba(2,132,199,0.22);color:#38bdf8;border:1px solid #0284c7;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Direkt auf USA / CONUS zentrieren & NOAA NEXRAD Doppler Radar fokussieren">
+                        <span>🇺🇸</span>
+                        <span>NOAA USA RADAR</span>
+                    </button>
+                    <!-- DOPPLER RADAR PROVIDER & VIEW MODE SELECTOR -->
+                    <div class="radar-viewmode-toolbar" style="display:inline-flex;align-items:center;gap:5px;background:rgba(15,23,42,0.85);padding:2px 8px;border-radius:4px;border:1px solid #0284c7;">
+                        <span style="color:#38bdf8;font-size:0.7rem;font-weight:700;">📡 RADAR:</span>
+                        <select id="select-radar-provider" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#38bdf8;border-color:#0284c7;background:#0f172a;" title="Radar Provider / Netzwerk">
+                            <option value="rainviewer" selected>RainViewer Global</option>
+                            <option value="nexrad">🇺🇸 NOAA NEXRAD (USA)</option>
+                            <option value="dwd">🇩🇪 DWD (Deutschland)</option>
+                            <option value="owm_rain">🌧️ OWM Live Regen</option>
+                            <option value="owm_wind">💨 OWM Windströmung</option>
+                            <option value="satellite">🛰️ Infrarot Satellit</option>
+                        </select>
+                        <select id="select-radar-mode" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#10b981;border-color:#10b981;background:#0f172a;" title="Radar Darstellungsmodus">
+                            <option value="composite" selected>dBZ Reflektivität</option>
+                            <option value="velocity">Doppler Radial-Wind</option>
+                            <option value="rain_rate">Niederschlagsrate</option>
+                            <option value="echo_tops">Echohöhe (Echo Tops)</option>
+                            <option value="infrared">IR Satelliten-Wolken</option>
+                        </select>
+                    </div>
+                    <button id="btn-weather-engines-modal" class="ops-btn" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid #38bdf8;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="140+ Open Weather Engines Inspector & Consensus Comparison">
+                        <span>🌦️</span>
+                        <span>140+ WEATHER ENGINES</span>
+                    </button>
+                    <button id="btn-toggle-jev-mode" class="ops-btn" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid #a855f7;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Zwischen Live-Sensoren und Jev KI-Vorhersage umschalten">
+                        <span>🔮</span>
+                        <span id="jev-mode-btn-text">JEV 10-DAY FORECAST MODE</span>
+                    </button>
+                </div>
+                <div id="map-mode-hint" style="font-size:0.75rem;color:var(--text-muted);">
+                    CLICK ANYWHERE ON MAP TO LOCK NEAREST WEBCAM & WEATHER
+                </div>
+            </div>
+
+            <!-- DEDICATED FULL-WIDTH JEV ACTIVE TOP BAR -->
+            <div id="jev-active-top-bar" class="jev-active-top-bar" style="display:none;">
+                <div style="display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(168,85,247,0.2);padding:2px 8px;border-radius:4px;border:1px solid #c084fc;">
+                        <span class="pulse-dot" style="background:#c084fc;"></span>
+                        <span style="color:#f8fafc;font-weight:bold;font-size:0.75rem;letter-spacing:0.5px;">🔮 JEV SYSTEM-1 PROGNOSE</span>
+                    </div>
+
+                    <!-- Mode Selection: Visual vs Classical Text -->
+                    <div style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;padding:2px 6px;border-radius:4px;border:1px solid #334155;">
+                        <span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">MODUS:</span>
+                        <select id="jev-ai-mode-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#c084fc;border-color:rgba(168,85,247,0.6);background:#1e1b4b;font-weight:700;" title="Zwischen visueller Wetter-Radar Prognose und klassischem Text-Dossier wechseln">
+                            <option value="visual" selected>🎨 VISUELL (Wetter-Radar & Zonen)</option>
+                            <option value="text">📝 ALTER TEXT-MODUS (System-1 Dossier)</option>
+                        </select>
+                    </div>
+
+                    <!-- Engine Selection: Cloud 26B vs Local 500M -->
+                    <div style="display:inline-flex;align-items:center;gap:4px;background:#0f172a;padding:2px 6px;border-radius:4px;border:1px solid #334155;">
+                        <span style="color:#94a3b8;font-size:0.68rem;font-weight:700;">ENGINE:</span>
+                        <select id="jev-engine-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#38bdf8;border-color:rgba(56,189,248,0.6);background:#082f49;font-weight:700;" title="DiffusionGemma 26B Cloud API oder lokale 500M DirectML Inferenz (GTX 1050 Ti)">
+                            <option value="cloud" selected>☁️ CLOUD (Gemma 26B)</option>
+                            <option value="local">💻 LOKAL (500M / 1050 Ti)</option>
+                        </select>
+                        <span id="jev-hardware-badge" class="tag-accent" style="font-size:0.68rem;color:#38bdf8;border-color:rgba(56,189,248,0.5);padding:1px 6px;">
+                            ☁️ Gemma 26B
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Center: Time Scrubber (LIVE bis +10d) -->
+                <div style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <span style="color:#c084fc;font-size:0.68rem;font-weight:bold;">ZEITRAUM:</span>
+                    <select id="jev-forecast-date" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#c084fc;border-color:rgba(168,85,247,0.5);max-width:180px;background:#0f172a;" title="Prognosetag wählen (0 bis 10 Tage in die Zukunft)">
+                        <!-- Populated dynamically up to +10 days -->
+                    </select>
+                    <div style="display:inline-flex;gap:2px;">
+                        <button class="ops-btn btn-top-jev-preset active" data-day="0" style="padding:2px 5px;font-size:0.65rem;">LIVE</button>
+                        <button class="ops-btn btn-top-jev-preset" data-day="1" style="padding:2px 5px;font-size:0.65rem;">+1d</button>
+                        <button class="ops-btn btn-top-jev-preset" data-day="2" style="padding:2px 5px;font-size:0.65rem;">+2d</button>
+                        <button class="ops-btn btn-top-jev-preset" data-day="3" style="padding:2px 5px;font-size:0.65rem;">+3d</button>
+                        <button class="ops-btn btn-top-jev-preset" data-day="5" style="padding:2px 5px;font-size:0.65rem;">+5d</button>
+                        <button class="ops-btn btn-top-jev-preset" data-day="7" style="padding:2px 5px;font-size:0.65rem;">+7d</button>
+                        <button class="ops-btn btn-top-jev-preset" data-day="10" style="padding:2px 5px;font-size:0.65rem;">+10d</button>
+                    </div>
+                </div>
+
+                <!-- Live Neon Pink Selection Dimension Badge -->
+                <div id="jev-selection-badge" style="display:none;align-items:center;gap:6px;background:rgba(236,72,153,0.18);border:1px solid #ec4899;padding:2px 10px;border-radius:4px;box-shadow:0 0 10px rgba(236,72,153,0.35);">
+                    <span style="color:#ec4899;font-weight:bold;font-size:0.75rem;letter-spacing:0.4px;" id="jev-selection-badge-text">📐 ZONE: 0 km × 0 km</span>
+                </div>
+
+                <!-- Right: Actions -->
+                <div style="display:inline-flex;align-items:center;gap:6px;">
+                    <button id="btn-jev-draw-box" class="ops-btn" style="background:rgba(168,85,247,0.25);border:1px solid #c084fc;color:#fff;font-size:0.72rem;padding:3px 8px;font-weight:700;display:flex;align-items:center;gap:4px;" title="Klicke & ziehe mit gedrückter Maustaste ein beliebiges Rechteck auf der Karte">
+                        <span>📐</span>
+                        <span id="btn-jev-draw-box-text">ZONE ZIEHEN (BOX)</span>
+                    </button>
+                    <button id="btn-jev-rescan" class="ops-btn" style="background:rgba(56,189,248,0.2);border:1px solid #38bdf8;color:#38bdf8;font-size:0.72rem;padding:3px 8px;font-weight:700;display:flex;align-items:center;gap:4px;" title="Aktuelle Kartenzone erneut mit Jev KI berechnen">
+                        <span>🔄</span>
+                        <span>NEU BERECHNEN</span>
+                    </button>
+                    <button id="btn-jev-exit-mode" class="ops-btn" style="background:rgba(239,68,68,0.2);border:1px solid #ef4444;color:#fca5a5;font-size:0.72rem;padding:3px 8px;font-weight:700;display:flex;align-items:center;gap:4px;" title="Jev KI-Vorhersage beenden und zu Live-Sensoren zurückkehren">
+                        <span>✕</span>
+                        <span>JEV BEENDEN</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="monitor-body" style="position:relative;">
+                <div id="map"></div>
+
+                <!-- Jev AI Forecast Floating Dossier HUD -->
+                <div id="jev-forecast-hud" class="jev-forecast-hud hidden">
+                    <div class="jev-hud-header">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="pulse-dot" style="background:#a855f7;"></span>
+                            <span style="font-weight:bold;color:#c084fc;font-size:0.78rem;letter-spacing:0.5px;">🔮 JEV SYSTEM-1 // 10-DAY NEURAL PROGNOSIS</span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <button id="jev-hud-min" style="color:#94a3b8;background:none;border:none;cursor:pointer;font-size:0.9rem;padding:0 5px;" title="HUD minimieren/aufklappen">&#x2212;</button>
+                            <button id="jev-hud-close" class="dossier-close" style="font-size:1rem;color:#94a3b8;cursor:pointer;background:none;border:none;" title="HUD schließen">&times;</button>
+                        </div>
+                    </div>
+                    <div class="jev-hud-body" id="jev-hud-content">
+                        <!-- Populated dynamically by map.js -->
+                    </div>
+                </div>
+
+                <!-- Map Sidebar Toggle Button (Docked on Side) -->
+                <button id="btn-map-sidebar-toggle" class="map-sidebar-toggle-btn" title="Sensoren & Layer Steuerung ein/ausklappen">
+                    <span id="map-sidebar-arrow">▶</span>
+                    <span>SENSORS</span>
+                </button>
+
+                <!-- Tactical Layer & Weather Color Sidebar -->
+                <aside id="map-tactical-sidebar" class="map-tactical-sidebar">
+                    <div class="map-sidebar-header">
+                        <div class="map-sidebar-title">
+                            <span class="hud-status-dot"></span>
+                            <span>TACTICAL SENSORS</span>
+                        </div>
+                        <div class="map-sidebar-actions">
+                            <button id="btn-layers-all-on" class="sidebar-mini-btn" title="Alle Layer aktivieren">ALL ON</button>
+                            <button id="btn-layers-all-off" class="sidebar-mini-btn" title="Alle Layer deaktivieren">ALL OFF</button>
+                        </div>
+                    </div>
+
+                    <div class="map-sidebar-scroll">
+                        <!-- Group 1: Doppler Radar & Colors -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-radar" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#38bdf8;">📡 DOPPLER RADAR</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <div class="sub-ctrl-row">
+                                    <span class="sub-lbl">FARBE / COLOR:</span>
+                                    <select id="radar-color-scheme" class="sidebar-select" title="Wetter Doppler Farbpalette wechseln">
+                                        <option value="2" selected>Universal Blue (Standard)</option>
+                                        <option value="6">NEXRAD (Severe Weather)</option>
+                                        <option value="7">RAINBOW (High Contrast)</option>
+                                        <option value="3">TITAN (Storm Spectrum)</option>
+                                        <option value="1">Original (Meteo DWD)</option>
+                                        <option value="0">Monochrome (B&W)</option>
+                                        <option value="8">Dark Sky (Stealth)</option>
+                                    </select>
+                                </div>
+                                <div class="sub-ctrl-row">
+                                    <span class="sub-lbl">TRANSPARENZ:</span>
+                                    <input type="range" id="side-radar-opacity" min="0.1" max="1" step="0.05" value="0.75" class="sub-slider" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Group 1B: Live Weather Stations & Display Mode (Global / Lokal / Aus) -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-weather-engines" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#38bdf8;">🌦️ WETTER-STATIONEN</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel" style="display:flex;flex-direction:column;gap:5px;padding:5px 0;">
+                                <span class="sub-lbl" style="font-size:0.68rem;color:#94a3b8;font-weight:700;">WETTER ANZEIGE-MODUS:</span>
+                                <div style="display:flex;gap:4px;">
+                                    <button class="ops-btn active side-weather-mode-btn" id="side-weather-mode-global" data-weather-mode="global" style="flex:1;padding:3px 2px;font-size:0.65rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="Weltweit alle Wetterstationen anzeigen">🌍 GLOBAL</button>
+                                    <button class="ops-btn side-weather-mode-btn" id="side-weather-mode-sector" data-weather-mode="sector" style="flex:1;padding:3px 2px;font-size:0.65rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Nur im aktiven Kartenausschnitt">📍 LOKAL</button>
+                                    <button class="ops-btn side-weather-mode-btn" id="side-weather-mode-off" data-weather-mode="off" style="flex:1;padding:3px 2px;font-size:0.65rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Wetterstationen ausblenden">❌ AUS</button>
+                                </div>
+                                <div class="sidebar-hint" style="color:#64748b;font-size:0.65rem;">505k+ Bodenstationen & Messnetzwerke</div>
+                            </div>
+                        </div>
+
+                        <!-- Group 1C: 🇺🇸 NOAA NEXRAD Live Radar & USA Weather Feed -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #0284c7;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-noaa-radar" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#38bdf8;">🇺🇸 NOAA NEXRAD RADAR (USA)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <div class="sub-ctrl-row">
+                                    <label class="layer-switch-lbl" style="font-size:0.68rem;">
+                                        <input type="checkbox" id="side-layer-noaa-stations" checked />
+                                        <span class="switch-custom"></span>
+                                        <span class="layer-name" style="color:#0284c7;">🇺🇸 NOAA US-WETTERSTATIONEN</span>
+                                    </label>
+                                </div>
+                                <div class="sub-ctrl-row" style="margin-top:4px;">
+                                    <span class="sub-lbl">RADAR DECKKRAFT:</span>
+                                    <input type="range" id="side-noaa-radar-opacity" min="0.1" max="1" step="0.05" value="0.82" class="sub-slider" />
+                                </div>
+                                <button id="side-btn-focus-noaa-usa" class="ops-btn" style="width:100%;margin-top:6px;padding:3px 6px;font-size:0.68rem;background:rgba(2,132,199,0.25);border:1px solid #0284c7;color:#38bdf8;font-weight:bold;">
+                                    🇺🇸 ZENTRIERE USA // CONUS RADAR
+                                </button>
+                            </div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">Echtzeit Doppler composite (dBZ) über USA</div>
+                        </div>
+
+                        <!-- Group 1D: 🏛️ NOAA & Globales Wetter-Archiv -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #ef4444;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-archive-events" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#f87171;">🏛️ HISTORISCHE STÜRME & TORNADOS</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <button id="side-btn-open-archive" class="ops-btn" style="width:100%;padding:4px 6px;font-size:0.68rem;background:rgba(239,68,68,0.25);border:1px solid #ef4444;color:#f87171;font-weight:bold;">
+                                    🏛️ ARCHIV-EXPLORER ÖFFNEN
+                                </button>
+                            </div>
+                            <div class="sidebar-hint" style="color:#f87171;">NOAA Tornado-Touchdowns & historische Windspitzen</div>
+                        </div>
+
+                        <!-- Group 2: Tornados & NOAA Warnings -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-alerts" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#ef4444;">🌪️ TORNADOS & NOAA</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#ef4444;">Warn-Polygone & Sturmzentren</div>
+                        </div>
+
+                        <!-- Group 3: Commercial Flights -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-flights" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#38bdf8;">✈️ FLÜGE (OPENSKY ADS-B)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">Echtzeit Flugzeuge & Vektoren</div>
+                        </div>
+
+                        <!-- Group 4: Marine Vessels (AIS) -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-vessels" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#06b6d4;">🚢 SCHIFFE (AIS MARINE)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#06b6d4;">Taktische Vektor-Silhouetten</div>
+                        </div>
+
+                        <!-- Group 5: OpenSeaMap Seamarks -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-seamarks" />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#0ea5e9;">🌊 SEEMARKEN (OPENSEAMAP)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint">Bojen, Leuchttürme & Riffe</div>
+                        </div>
+
+                        <!-- Group 6: NASA FIRMS Wildfires -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-firms" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#f97316;">🔥 WALDBRÄNDE (FIRMS)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#f97316;">Satelliten-Thermal-Hotspots</div>
+                        </div>
+
+                        <!-- Group 7: USGS Earthquakes -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-quakes" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#eab308;">🌋 ERDBEBEN (USGS)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#eab308;">Seismische Verwerfungen & Stärke</div>
+                        </div>
+
+                        <!-- Group 8: ISS Space Station -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-iss" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#a855f7;">🛰️ RAUMSTATION (ISS)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#a855f7;">Orbitale Flugbahn in Echtzeit</div>
+                        </div>
+
+                        <!-- Group 9: Public Webcams & Telemetry Nodes -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-cams" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#00f0ff;">🔵 ECHTE WEBCAMS</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">508k+ verifizierte Live-Streams</div>
+                            <div class="sidebar-group-header" style="margin-top:6px;">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-telemetry" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#38bdf8;">📹 VERKEHRS- & HIGHWAY-CAMS</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">Autobahn & State DOT Kameras (Echte Streams)</div>
+                        </div>
+
+
+                        <!-- Group 10: Rail Transit -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-trains" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#a78bfa;">🚆 RAIL TRANSIT</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#a78bfa;">European ICE/TGV/SBB Live</div>
+                        </div>
+
+                        <!-- Group 11: 140+ Global Weather Engines -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header" style="justify-content:space-between;">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-weather-engines" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#38bdf8;font-weight:bold;font-size:0.75rem;">🌦️ WETTER-STATIONEN & DIENSTE (140+ GLOBAL)</span>
+                                </label>
+                                <button id="btn-sidebar-weather-consensus" class="sidebar-mini-btn" style="color:#38bdf8;border-color:#38bdf8;cursor:pointer;" title="Multi-Model Consensus berechnen">CONSENSUS</button>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <select id="sidebar-weather-provider-select" class="sidebar-select" style="font-size:0.7rem;margin-bottom:4px;width:100%;">
+                                    <option value="bright_sky">🇩🇪 Bright Sky (DWD)</option>
+                                    <option value="dwd_mosmix_hub">🇩🇪 DWD MOSMIX Guidance</option>
+                                    <option value="geosphere_austria">🇦🇹 GeoSphere Austria TAWES</option>
+                                    <option value="zamg_geosphere_alpine">🇦🇹 GeoSphere Alpine Center (ZAMG)</option>
+                                    <option value="meteoswiss_stac">🇨🇭 MeteoSwiss STAC Alpine</option>
+                                    <option value="met_norway">🇳🇴 MET Norway (Yr.no)</option>
+                                    <option value="smhi">🇸🇪 SMHI Open Data</option>
+                                    <option value="fmi_finland">🇫🇮 FMI Finland WFS</option>
+                                    <option value="dmi_open_geo">🇩🇰 DMI Denmark Open Data</option>
+                                    <option value="rmi_belgium">🇧🇪 RMI Belgium (KMI / IRM)</option>
+                                    <option value="knmi_dataplatform">🇳🇱 KNMI Open Data Platform</option>
+                                    <option value="knmi_radar_composites">🇳🇱 KNMI Doppler Radar Grid</option>
+                                    <option value="meteofrance_synop">🇫🇷 Météo-France Synop Portal</option>
+                                    <option value="meteofrance_vigilance">🇫🇷 Météo-France Vigilance</option>
+                                    <option value="aemet_clima">🇪🇸 AEMET OpenData Clima</option>
+                                    <option value="aemet_opendata_radar">🇪🇸 AEMET Radar & Lightning</option>
+                                    <option value="ipma_portugal">🇵🇹 IPMA Portugal Municipal</option>
+                                    <option value="ipma_seismic_weather">🇵🇹 IPMA Azores & Madeira</option>
+                                    <option value="meteoam_italy">🇮🇹 MeteoAM Italian Air Force</option>
+                                    <option value="imgw_poland">🇵🇱 IMGW-PIB Poland</option>
+                                    <option value="chmi_czechia">🇨🇿 CHMI Czechia Hydromet</option>
+                                    <option value="shmu_slovakia">🇸🇰 SHMÚ Slovakia Tatras</option>
+                                    <option value="hungaromet">🇭🇺 HungaroMet (OMSZ)</option>
+                                    <option value="arso_slovenia">🇸🇮 ARSO Slovenia Open Data</option>
+                                    <option value="dhmz_croatia">🇭🇷 DHMZ Croatia Bura Warnings</option>
+                                    <option value="hnms_greece">🇬🇷 HNMS Greece (ΕΜΥ)</option>
+                                    <option value="eccc_msc_canada">🇨🇦 ECCC Meteorological Service</option>
+                                    <option value="nws_central_region">🇺🇸 NWS Central Region (Tornado Alley)</option>
+                                    <option value="nws_southern_region">🇺🇸 NWS Southern Region (Gulf/TX)</option>
+                                    <option value="nws_western_region">🇺🇸 NWS Western Region (Pacific/Rockies)</option>
+                                    <option value="nws_eastern_region">🇺🇸 NWS Eastern Region (Atlantic)</option>
+                                    <option value="spc_noaa_severestorms">🇺🇸 NOAA Storm Prediction Center</option>
+                                    <option value="nhc_noaa_hurricanes">🇺🇸 National Hurricane Center (NHC)</option>
+                                    <option value="openmeteo_ecmwf">🌍 ECMWF IFS (0.25° Mesh)</option>
+                                    <option value="ecmwf_open_data">🌍 ECMWF Open Data WMO</option>
+                                    <option value="openmeteo_ecmwf_aifs">🧠 ECMWF AIFS (Neural AI)</option>
+                                    <option value="openmeteo_gfs">🇺🇸 NOAA GFS (0.13°)</option>
+                                    <option value="openmeteo_hrrr">🇺🇸 NOAA HRRR (3km Rapid)</option>
+                                    <option value="openmeteo_icon_d2">🇩🇪 ICON-D2 (2.2km)</option>
+                                    <option value="openmeteo_icon_eu">🇪🇺 ICON-EU (7km)</option>
+                                    <option value="openmeteo_arome">🇫🇷 AROME (1.3km)</option>
+                                    <option value="openmeteo_ukmo">🇬🇧 UK Met Office Seamless</option>
+                                    <option value="bom_australia">🇦🇺 BOM Australia AWS</option>
+                                    <option value="bom_tropical_cyclone">🇦🇺 BOM Tropical Cyclone Center</option>
+                                    <option value="metservice_nz">🇳🇿 MetService New Zealand</option>
+                                    <option value="jma">🇯🇵 JMA Japan Tokyo</option>
+                                    <option value="jma_typhoon_center">🇯🇵 RSMC Tokyo Typhoon Center</option>
+                                    <option value="kma_supercomputing">🇰🇷 KMA Supercomputing Center</option>
+                                    <option value="cwa_taiwan">🇹🇼 CWA Taiwan Central Weather</option>
+                                    <option value="cwa_radar_taiwan">🇹🇼 CWA Taiwan Doppler Radar</option>
+                                    <option value="hko">🇭🇰 Hong Kong Observatory</option>
+                                    <option value="cma_nmc_china">🇨🇳 CMA National Center Beijing</option>
+                                    <option value="tmd_thailand">🇹🇭 TMD Thailand Meteorology</option>
+                                    <option value="imd_india_mausam">🇮🇳 IMD India (Mausam)</option>
+                                    <option value="singapore_nea">🇸🇬 Singapore NEA Weather</option>
+                                    <option value="bmkg_indonesia">🇮🇩 BMKG Indonesia Meteorology</option>
+                                    <option value="pagasa_typhoon">🇵🇭 PAGASA Typhoon Warning Center</option>
+                                    <option value="cptec_brazil">🇧🇷 CPTEC INPE Brazil Weather</option>
+                                    <option value="smn_argentina">🇦🇷 SMN Argentina Weather</option>
+                                    <option value="meteochile_dmc">🇨🇱 MeteoChile (DMC) Santiago</option>
+                                    <option value="saws_southafrica">🇿🇦 SAWS South Africa Weather</option>
+                                    <option value="eumetsat_view">🛰️ EUMETSAT Geostationary</option>
+                                    <option value="copernicus_c3s">🌐 Copernicus C3S Climate</option>
+                                    <option value="noaa_swpc">☀️ NOAA SWPC Space Weather</option>
+                                    <option value="waqi_air">💨 WAQI Global Air Quality</option>
+                                </select>
+                                <button id="btn-sidebar-inspect-engine" class="sidebar-mini-btn" style="width:100%;margin-top:2px;cursor:pointer;">INSPECT LIVE FEED ↗</button>
+                            </div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">100% Keyless • 140+ weltweite Wetterdienste & Nationalagenturen</div>
+                        </div>
+
+                        <!-- Group 12: 350+ Global Transit Feeds & Highway Authorities -->
+                        <div class="sidebar-layer-group">
+                            <div class="sidebar-group-header" style="justify-content:space-between;">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-transit-engines" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#f59e0b;font-weight:bold;font-size:0.75rem;">🚀 GLOBAL TRANSIT (350+ FEEDS)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <div style="font-size:0.68rem;color:#cbd5e1;line-height:1.4;">
+                                    ✈️ 100 Flugsicherungen • 🚢 100 Häfen/AIS • 🚄 100 Bahnen • 🛣️ 56 Highway- & Verkehrsbehörden
+                                </div>
+                            </div>
+                            <div class="sidebar-hint" style="color:#f59e0b;">100% Keyless • 356 weltweite Transit-Anbieter & Verkehrsbehörden</div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Interactive Doppler Radar HUD Controls & Multi-Day Map Timeline -->
+                <div class="radar-hud-controls" id="map-bottom-hud-ctrls" style="flex-wrap:wrap;gap:8px;">
+                    <div style="display:inline-flex;gap:3px;border-right:1px solid #334155;padding-right:6px;margin-right:2px;">
+                        <button id="btn-hud-mode-radar" class="ops-btn active" style="padding:2px 6px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="RainViewer Doppler Radar Loop (Live Past 2-4 Hours)">⚡ RADAR (2H)</button>
+                        <button id="btn-hud-mode-multiday" class="ops-btn active" style="padding:2px 6px;font-size:0.68rem;background:rgba(250,204,21,0.2);color:#facc15;border:1px solid #facc15;" title="Multi-Day History Timeline (Bis zu 7 Tage)">📅 7 TAGE</button>
+                        <button id="btn-hud-mode-jev" class="ops-btn" style="padding:2px 6px;font-size:0.68rem;background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid #a855f7;" title="Jev KI 10-Tage Prognose (Visual & Text)">🔮 JEV (10 TAGE)</button>
+                    </div>
+
+                    <!-- Mode 1: Doppler Radar Loop (Past 2-4h) -->
+                    <div id="radar-ctrl-subgroup" style="display:inline-flex;align-items:center;gap:6px;">
+                        <button id="radar-play" class="ops-btn" style="padding:2px 6px;font-size:0.7rem;">PAUSE</button>
+                        <span style="font-size:0.68rem;">RADAR:</span>
+                        <input type="range" id="radar-timeline" min="0" max="100" value="100" style="width:90px;" />
+                        <span id="radar-time-label" style="font-family:var(--font-mono);color:#38bdf8;font-weight:bold;font-size:0.7rem;">LIVE</span>
+                    </div>
+
+                    <div id="multiday-ctrl-divider" style="width:1px;height:18px;background:#334155;"></div>
+
+                    <!-- Mode 2: Multi-Day Timeline Scrubber (0 to 168h / 7 Days) -->
+                    <div id="multiday-ctrl-subgroup" style="display:inline-flex;align-items:center;gap:6px;">
+                        <button id="btn-map-multiday-replay" class="ops-btn" style="padding:2px 6px;font-size:0.7rem;">PLAY</button>
+                        <span style="font-size:0.68rem;color:#facc15;">ZEITLEISTE (7 TAGE):</span>
+                        <input type="range" id="map-multiday-slider" min="0" max="168" value="168" style="width:110px;" />
+                        <div style="display:inline-flex;gap:2px;">
+                            <button class="ops-btn btn-hud-day-preset active" data-hours="0" style="padding:1px 4px;font-size:0.62rem;">LIVE</button>
+                            <button class="ops-btn btn-hud-day-preset" data-hours="24" style="padding:1px 4px;font-size:0.62rem;">-1d</button>
+                            <button class="ops-btn btn-hud-day-preset" data-hours="72" style="padding:1px 4px;font-size:0.62rem;">-3d</button>
+                            <button class="ops-btn btn-hud-day-preset" data-hours="168" style="padding:1px 4px;font-size:0.62rem;">-7d</button>
+                        </div>
+                        <span id="map-multiday-label" style="font-family:var(--font-mono);color:#facc15;font-weight:bold;font-size:0.7rem;">LIVE</span>
+                    </div>
+
+                    <!-- Mode 3: Jev AI 10-Day Forecast Scrubber (0 to 10 Days) -->
+                    <div id="jev-ctrl-subgroup" style="display:none;align-items:center;gap:6px;">
+                        <button id="btn-map-jev-replay" class="ops-btn" style="padding:2px 6px;font-size:0.7rem;background:rgba(168,85,247,0.25);color:#c084fc;border:1px solid #a855f7;" title="Automatischen 10-Tage Prognose-Durchlauf starten/stoppen">PLAY</button>
+                        <span style="font-size:0.68rem;color:#c084fc;font-weight:700;">🔮 JEV (10 TAGE):</span>
+                        <input type="range" id="map-jev-slider" min="0" max="10" value="0" style="width:100px;accent-color:#c084fc;" title="Jev Vorhersagetag (0=Live, bis +10 Tage)" />
+                        <div style="display:inline-flex;gap:2px;">
+                            <button class="ops-btn btn-hud-jev-preset active" data-day="0" style="padding:1px 4px;font-size:0.62rem;">LIVE</button>
+                            <button class="ops-btn btn-hud-jev-preset" data-day="1" style="padding:1px 4px;font-size:0.62rem;">+1d</button>
+                            <button class="ops-btn btn-hud-jev-preset" data-day="2" style="padding:1px 4px;font-size:0.62rem;">+2d</button>
+                            <button class="ops-btn btn-hud-jev-preset" data-day="3" style="padding:1px 4px;font-size:0.62rem;">+3d</button>
+                            <button class="ops-btn btn-hud-jev-preset" data-day="5" style="padding:1px 4px;font-size:0.62rem;">+5d</button>
+                            <button class="ops-btn btn-hud-jev-preset" data-day="7" style="padding:1px 4px;font-size:0.62rem;">+7d</button>
+                            <button class="ops-btn btn-hud-jev-preset" data-day="10" style="padding:1px 4px;font-size:0.62rem;">+10d</button>
+                        </div>
+                        <span id="map-jev-label" style="font-family:var(--font-mono);color:#c084fc;font-weight:bold;font-size:0.7rem;">HEUTE // LIVE</span>
+                        <div style="width:1px;height:16px;background:#334155;margin:0 2px;"></div>
+                        <!-- Quick HUD Mode & Engine toggles -->
+                        <select id="map-jev-mode-hud" class="ops-select" style="font-size:0.66rem;padding:1px 5px;color:#c084fc;border-color:#a855f7;background:#0f172a;" title="Jev Darstellungsmodus">
+                            <option value="visual">🎨 VISUELL (Radar)</option>
+                            <option value="text">📝 TEXT (Dossier)</option>
+                        </select>
+                        <select id="map-jev-engine-hud" class="ops-select" style="font-size:0.66rem;padding:1px 5px;color:#38bdf8;border-color:#38bdf8;background:#0f172a;" title="KI Inferenz-Engine">
+                            <option value="cloud">☁️ CLOUD</option>
+                            <option value="local">💻 LOKAL</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESIZER 1: DRAGGABLE DIVIDER (MAP <-> STORM) -->
+        <div class="panel-resizer-divider" id="resizer-map-storm" title="◀ Linksklick halten & ziehen zum Anpassen der Breite ▶">
+            <div class="resizer-grip-line"></div>
+        </div>
+
+        <!-- MONITOR STORM: DEDICATED LIVE STORM & TORNADO INTERCEPT PANEL -->
+        <div class="monitor-card" id="card-live-storm" data-monitor="mon-storm">
+            <div class="monitor-header">
+                <div class="monitor-header-left" style="display:flex;align-items:center;gap:6px;">
+                    <span class="monitor-id" style="background:#b91c1c;color:#fff;border-color:#ef4444;">STORM</span>
+                    <span class="storm-pulse-dot"></span>
+                    <span class="storm-panel-title">LIVE STORM INTERCEPT</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span id="storm-poll-countdown-pill" class="storm-poll-pill" title="Automatischer Live-Poll alle 30 Sekunden">
+                        ⏱️ <strong id="storm-poll-countdown">30s</strong>
+                    </span>
+                    <button id="btn-refresh-storms-now" class="storm-mini-btn" title="Jetzt sofort aktualisieren">🔄</button>
+                </div>
+            </div>
+
+            <!-- MULTI-WEATHER TEAMWORK CONSENSUS BAR -->
+            <div id="storm-teamwork-badge" class="storm-teamwork-bar" title="Alle Wetterdienste arbeiten synchron im Teamwork">
+                <span style="color:#38bdf8;">🤝 TEAMWORK:</span>
+                <span>NOAA</span> • <span>OPEN-METEO</span> • <span>DWD</span> • <span>ECMWF</span>
+            </div>
+
+            <!-- DEDICATED SCROLLABLE BODY (Scrolls effortlessly with mouse wheel) -->
+            <div class="monitor-body storm-monitor-body" id="live-storm-side-panel">
+                <!-- HERO PINNED THREAT BOX -->
+                <div id="storm-pinned-threat-box" class="storm-pinned-box empty">
+                    <div class="pinned-box-header">
+                        <span class="pinned-badge">📌 GEPINPOINTETER STURM // LIVE TRACKING</span>
+                        <span id="pinned-storm-time" class="pinned-time-readout">BEREIT</span>
+                    </div>
+                    <div id="pinned-storm-content" class="pinned-content">
+                        <div class="pinned-idle-msg">
+                            Klicke auf ein Unwetter oder warte auf einen automatischen Wetteralarm, um einen Sturm live zu tracken.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIVE STORMS & TORNADOES FEED LIST -->
+                <div class="storm-list-section-header">
+                    <span>AKTIVE TORNADOS & SUPERZELLEN</span>
+                    <span id="storm-list-count" class="storm-count-tag">0 ERKANNT</span>
+                </div>
+                <div id="live-storms-list" class="live-storms-list">
+                    <div style="color:#64748b;font-size:0.72rem;text-align:center;padding:15px;">
+                        Lade NOAA & globale Unwetterdaten...
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER BANNER -->
+            <div class="cam-telemetry-banner storm-telemetry-banner">
+                <span style="color:#ef4444;font-weight:700;">DOPPLER HOOK & VORTEX TRACKER</span>
+                <span style="color:#38bdf8;">STATUS: LIVE SCANNING</span>
+            </div>
+        </div>
+
+        <!-- RESIZER 2: DRAGGABLE DIVIDER (STORM <-> WEBCAM) -->
+        <div class="panel-resizer-divider" id="resizer-storm-webcam" title="◀ Linksklick halten & ziehen zum Anpassen der Breite ▶">
+            <div class="resizer-grip-line"></div>
+        </div>
+
+        <!-- MONITOR 2: GLOBAL LIVE WEBCAM & SURVEILLANCE FEED (OMNI-INSPECTOR) -->
+        <div class="monitor-card mon-02-card" id="card-webcam" data-monitor="mon-02">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id" id="mon-02-badge">MON-02</span>
+                    <span id="cam-active-title" title="GLOBAL LIVE WEBCAM & SURVEILLANCE FEED">GLOBAL LIVE WEBCAM & SURVEILLANCE FEED</span>
+                </div>
+                <div class="mon02-header-controls">
+                    <div class="cam-grid-toggle" style="display:inline-flex;gap:2px;background:#030712;border:1px solid #1e293b;border-radius:3px;padding:1px;flex-shrink:0;">
+                        <button class="ops-btn active" id="btn-cam-view-1x1" data-grid="1" style="padding:1px 5px;font-size:0.68rem;" title="Einzelbild (1x1)">1x1</button>
+                        <button class="ops-btn" id="btn-cam-view-2x2" data-grid="4" style="padding:1px 5px;font-size:0.68rem;" title="Quad Multi-Cam (2x2)">2x2</button>
+                        <button class="ops-btn" id="btn-cam-view-3x3" data-grid="9" style="padding:1px 5px;font-size:0.68rem;" title="Matrix Multi-Cam (3x3)">3x3</button>
+                    </div>
+                    <select id="cam-shader-filter" class="ops-select" style="font-size:0.68rem;padding:2px 4px;background:#050914;color:#22d3ee;border-color:#0891b2;flex-shrink:0;" title="Optische Sensor-Filter (NVG Nachtsicht, FLIR Wärmebild)">
+                        <option value="normal" selected>👁️ NORMAL</option>
+                        <option value="nvg">🟢 NVG</option>
+                        <option value="flir">🔥 FLIR</option>
+                        <option value="mono">⚪ MONO</option>
+                    </select>
+                    <span id="mon02-active-type-pill" class="tag-accent" style="font-size:0.68rem;padding:2px 6px;background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid #0284c7;border-radius:3px;flex-shrink:0;">🔵 LIVE</span>
+                    <button id="btn-open-ai-chat" class="ops-btn" style="padding:2px 7px;font-size:0.7rem;background:rgba(168,85,247,0.22);color:#c084fc;border:1px solid #a855f7;font-weight:700;flex-shrink:0;" title="AI Support Bot">🤖 AI</button>
+                    <button id="btn-toggle-body-pose" class="ops-btn" style="padding:2px 7px;font-size:0.7rem;background:rgba(34,197,94,0.22);color:#4ade80;border:1px solid #22c55e;font-weight:700;flex-shrink:0;" title="3D Body Pose & Skeleton Detection (NVIDIA NIM)">🦴 POSE</button>
+                    <button id="btn-toggle-storm-panel" class="ops-btn active" style="padding:2px 7px;font-size:0.7rem;background:rgba(239,68,68,0.22);color:#ef4444;border:1px solid #ef4444;font-weight:700;flex-shrink:0;" title="Live Storm & Tornado Panel ein-/ausklappen">🌪️ STORMS (<span id="storm-active-count-badge">0</span>)</button>
+                    <button id="btn-cam-popup" class="ops-btn" style="padding:2px 7px;font-size:0.7rem;flex-shrink:0;" title="In externem Fenster öffnen">🔗 POPUP</button>
+                </div>
+            </div>
+            <div class="cam-switcher-bar">
+                <input type="text" id="cam-search" class="cam-search-input" placeholder="Search 86 webcam networks (Miami, Alps, Tokyo, Hawaii, Berlin, Seaports, DOT)..." />
+                <button id="btn-search-windy" class="ops-btn active" style="padding:2px 8px;font-size:0.72rem;flex-shrink:0;">SEARCH</button>
+            </div>
+            <!-- 94 HYBRID WEBCAM PROVIDER NETWORK SWITCHER -->
+            <div id="cam-hybrid-provider-bar" style="background:#070d18;border-bottom:1px solid var(--border-strong);padding:3px 6px;display:flex;align-items:center;gap:6px;overflow-x:auto;white-space:nowrap;font-size:0.7rem;">
+                <span id="cam-networks-label" style="color:#64748b;font-weight:bold;font-family:var(--font-mono);font-size:0.66rem;flex-shrink:0;">NETWORKS:</span>
+                <div id="cam-node-type-filters" style="display:inline-flex;gap:4px;margin-right:4px;border-right:1px solid #334155;padding-right:4px;flex-shrink:0;">
+                    <button class="ops-btn active" id="btn-filter-real-cams" style="padding:2px 6px;font-size:0.66rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;cursor:pointer;">🔵 ECHTE CAMS</button>
+                    <button class="ops-btn" id="btn-filter-telemetry-nodes" style="padding:2px 6px;font-size:0.66rem;background:transparent;color:#facc15;border:1px solid #854d0e;cursor:pointer;">▲ VERKEHR & TELEMETRIE</button>
+                    <button class="ops-btn" id="btn-filter-all-nodes" style="padding:2px 6px;font-size:0.66rem;background:transparent;color:#94a3b8;border:1px solid #334155;cursor:pointer;">ALLE LIVE-STREAMS</button>
+                </div>
+                <div id="cam-dynamic-provider-pills" style="display:inline-flex;gap:4px;align-items:center;flex-shrink:0;">
+                    <button class="provider-pill-btn active" data-provider="all" style="padding:2px 7px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #38bdf8;background:rgba(56,189,248,0.15);color:#38bdf8;font-weight:bold;">ALL WEBCAMS</button>
+                </div>
+            </div>
+            <!-- Dynamic Zoom & Spatial Cluster HUD Bar -->
+            <div id="cam-zoom-hud" style="background:#050914;border-bottom:1px solid #1e293b;padding:2px 6px;font-family:var(--font-mono);font-size:0.66rem;display:flex;align-items:center;justify-content:space-between;gap:6px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><span style="color:#f59e0b;font-weight:bold;">[ZOOM-BASED CLUSTERING]</span> ZOOM IN (10+) TO RESOLVE INDIVIDUAL WEBCAMS</span>
+                <span style="color:#38bdf8;font-size:0.64rem;flex-shrink:0;">// ANTI-CLUTTER LOD</span>
+            </div>
+            <!-- Dynamic Available Cameras Selector Bar -->
+            <div id="available-cams-bar" style="background:#0b111e;border-bottom:1px solid var(--border-strong);padding:3px 6px;display:flex;align-items:center;gap:6px;overflow-x:auto;white-space:nowrap;font-size:0.72rem;">
+                <span style="color:var(--text-dim);font-weight:700;flex-shrink:0;">SECTOR CAMS:</span>
+                <div id="available-cams-list" style="display:flex;gap:5px;">
+                    <span style="color:var(--text-dim);">CLICK ON MAP TO QUERY ACTIVE WEBCAMS</span>
+                </div>
+            </div>
+            <!-- Adaptive Timeline Horizons Bar (LIVE, 24H, 30D, 1Y, LIFETIME) -->
+            <div id="cam-timeline-bar" class="cam-timeline-bar" style="padding:3px 6px;gap:4px;">
+                <button class="timeline-btn active" data-timeline="live">🔴 LIVE</button>
+                <button class="timeline-btn" data-timeline="timelapse">⚡ TIMELAPSE</button>
+                <button class="timeline-btn" data-timeline="day">24H</button>
+                <button class="timeline-btn" data-timeline="month">30D</button>
+                <button class="timeline-btn" data-timeline="year">1Y</button>
+                <button class="timeline-btn" data-timeline="lifetime">ARCHIVE</button>
+            </div>
+            <div class="monitor-body player-viewport" id="cam-player">
+                <div class="video-stream-container player-container" id="player-container" style="position:relative;">
+                    <div id="body-pose-hud" style="display:none;position:absolute;top:8px;right:8px;z-index:40;background:rgba(3,7,18,0.85);border:1px solid #22c55e;border-radius:4px;padding:4px 8px;font-family:var(--font-mono);font-size:0.68rem;gap:8px;align-items:center;">
+                        <span style="color:#22c55e;font-weight:bold;">🦴 NVIDIA BODY POSE:</span>
+                        <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;color:#38bdf8;">
+                            <input type="checkbox" id="chk-layer-knochen" checked /> Knochen
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;color:#f59e0b;">
+                            <input type="checkbox" id="chk-layer-kasten" checked /> Kasten
+                        </label>
+                        <span id="pose-count-badge" style="background:#15803d;color:#fff;padding:1px 5px;border-radius:2px;font-weight:bold;">0 Erkannt</span>
+                    </div>
+                    <canvas id="body-pose-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:35;"></canvas>
+                    <div id="webcam-player-container" style="width:100%;height:100%;display:flex;flex-direction:column;position:relative;">
+                        <div style="color:var(--text-muted);font-size:0.8rem;margin:auto;">ACQUIRING LIVE FEED...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner" id="cam-telemetry-banner">
+                <span id="cam-telemetry-left">ZIEL: GLOBAL SENSOR GRID // KNOTEN AUF DER KARTE WÄHLEN</span>
+                <span id="cam-weather-snippet">STATUS: BEREIT // ECHTZEIT-DATEN VERFÜGBAR</span>
+            </div>
+        </div>
+
+        </div><!-- /top-monitors-row -->
+
+        <!-- MONITOR 3: Space & Orbital Surveillance (ISS + NASA HD Live Stream) -->
+        <div class="monitor-card" id="card-iss">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-03</span>
+                    <span>SPACE SURVEILLANCE // ISS LIVE NASA CAM</span>
+                </div>
+                <span id="iss-quick-stats" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--accent);">ALT: 421 km | 27,580 km/h</span>
+            </div>
+            <div class="stream-input-group">
+                <input type="text" id="iss-custom-stream" class="stream-url-input" placeholder="Paste custom 24/7 YouTube live stream URL..." value="https://youtu.be/fO9e9jnhYK8" />
+                <button id="btn-load-iss-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+            </div>
+            <div class="monitor-body">
+                <div class="video-stream-container" id="iss-player-container">
+                    <iframe 
+                        id="nasa-iss-iframe"
+                        src="https://www.youtube-nocookie.com/embed/fO9e9jnhYK8?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen="true">
+                    </iframe>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner" style="color:#38bdf8;">
+                <span id="iss-coords-readout">ISS: LAT --.----° | LON --.----°</span>
+                <span id="iss-visibility-readout">VISIBILITY: DAYLIGHT</span>
+            </div>
+        </div>
+
+        <!-- MONITOR: NEXUS-OPS Tactical Operations & Real-Time Sensors (Middle Panel between MON-03 and MON-04) -->
+        <div class="monitor-card" id="card-nexus-ops">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id" style="background:#0e7490;color:#22d3ee;border-color:#0891b2;">OPS-01</span>
+                    <span>NEXUS OPERATIONS // REAL-TIME SENSOR GRID</span>
+                </div>
+                <div id="nx-threat-badge" style="font-family:var(--font-mono);font-size:0.72rem;font-weight:bold;">…</div>
+            </div>
+            <div class="stream-input-group" style="padding:4px 8px;gap:6px;background:#050914;border-bottom:1px solid #164e63;display:flex;align-items:center;flex-wrap:wrap;">
+                <button class="ops-btn" id="nx-btn-iso" style="padding:2px 8px;font-size:0.72rem;">⏱ ISOCHRONE</button>
+                <select id="nx-iso-profile" class="ops-select" style="font-size:0.72rem;padding:2px 6px;">
+                    <option value="driving-car" selected>Auto</option>
+                    <option value="foot-walking">zu Fuß</option>
+                    <option value="cycling-regular">Fahrrad</option>
+                    <option value="driving-hgv">LKW</option>
+                </select>
+                <button class="ops-btn" id="nx-btn-measure" style="padding:2px 8px;font-size:0.72rem;">📏 MESSEN</button>
+                <button class="ops-btn" id="nx-btn-sitrep" style="padding:2px 8px;font-size:0.72rem;background:rgba(239,68,68,0.22);color:#f87171;border:1px solid #ef4444;font-weight:bold;" title="Taktisches Lage-Dossier (SITREP) als druckbares Cyberpunk-Briefing exportieren">📑 SITREP</button>
+                <label style="display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;cursor:pointer;color:#38bdf8;font-family:var(--font-mono);margin-left:auto;">
+                    <input type="checkbox" id="nx-voice" /> 🗣 Sprachalarm
+                </label>
+                <label style="display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;cursor:pointer;color:#f43f5e;font-family:var(--font-mono);">
+                    <input type="checkbox" id="nx-eas" /> 🚨 EAS-Sirene
+                </label>
+            </div>
+            <div class="monitor-body" style="overflow-y:auto;padding:8px 10px;font-family:var(--font-mono);font-size:0.72rem;display:flex;flex-direction:column;gap:8px;background:rgba(5,9,20,0.95);flex:1;">
+                <div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">ECHTZEIT-LAYER</div>
+                    <div id="nx-layers" style="display:flex;flex-direction:column;gap:3px;"></div>
+                </div>
+
+                <div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">BEDROHUNGSLAGE (THREAT MATRIX)</div>
+                    <div id="nx-threat" style="font-size:0.7rem;color:#cbd5e1;">Lade Bedrohungsdaten…</div>
+                </div>
+
+                <div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">DWD UNWETTER-RADAR (≥ STUFE 3)</div>
+                    <div id="nx-dwd" style="font-size:0.7rem;color:#f97316;">Prüfe DWD-Feeds…</div>
+                </div>
+
+                <div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">FLUG ↔ UNWETTER KORRELATION</div>
+                    <div id="nx-flightstorm" style="font-size:0.7rem;color:#94a3b8;">keine Flüge in Unwetterzonen</div>
+                </div>
+
+                <div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">STROMNETZ DE (SMARD) & KP-INDEX</div>
+                    <div id="nx-grid" style="font-size:0.7rem;color:#38bdf8;">Lade Netz- und Sonnenwinddaten…</div>
+                </div>
+
+                <div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">PROVIDER-GESUNDHEIT (HEALTH RADAR)</div>
+                    <div id="nx-health" style="font-size:0.7rem;color:#cbd5e1;">Prüfe 13 OSINT-Provider…</div>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner" style="color:#22d3ee;font-size:0.68rem;display:flex;justify-content:space-between;padding:3px 8px;background:#030712;border-top:1px solid #164e63;">
+                <span>NEXUS OPS v2.5 // ECHTE OSINT-DATEN</span>
+                <span id="nx-status-summary" style="color:#22c55e;">13/13 ONLINE</span>
+            </div>
+        </div>
+
+        <!-- MONITOR 4: Live Air Traffic Radar (OpenSky ADS-B + Airport Stream) -->
+        <div class="monitor-card mode-split" id="card-flights">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-04</span>
+                    <span>AIR TRAFFIC // LIVE AIRPORT & ADS-B RADAR</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="view-mode-group">
+                        <button class="view-mode-btn" data-mode="cam">CAM</button>
+                        <button class="view-mode-btn" data-mode="data">DATA</button>
+                        <button class="view-mode-btn active" data-mode="split">SPLIT</button>
+                    </div>
+                    <span id="flight-count-badge" class="tag-accent" style="font-size:0.72rem;">0 FLIGHTS</span>
+                </div>
+            </div>
+            <div class="stream-input-group">
+                <select id="flight-preset-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;max-width:175px;" title="Airport Runway Presets">
+                    <option value="https://www.youtube.com/watch?v=n4I0d44oBEs" selected>Los Angeles (LAX 24L/24R)</option>
+                    <option value="https://www.youtube.com/watch?v=2PIdi3Xa7TY">Tokyo Haneda (HND T2)</option>
+                    <option value="https://www.youtube.com/watch?v=Qqcd3IZWtOs">London Heathrow (LHR)</option>
+                    <option value="https://www.youtube.com/watch?v=Li3Dvqlo5uE">Frankfurt (FRA / Germany)</option>
+                </select>
+                <input type="text" id="flight-custom-stream" class="stream-url-input" placeholder="YouTube Flight / Airport Stream..." value="https://www.youtube.com/watch?v=n4I0d44oBEs" />
+                <button id="btn-load-flight-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+            </div>
+            <div class="split-stream-box">
+                <div class="video-stream-container">
+                    <iframe 
+                        id="flight-stream-iframe"
+                        src="about:blank"
+                        data-src="https://www.youtube-nocookie.com/embed/n4I0d44oBEs?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen="true">
+                    </iframe>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span id="flight-telemetry-left">LIVE RUNWAY & AIR TRAFFIC RADAR</span>
+                <span id="flight-telemetry-right">OPENSKY ADS-B ACTIVE</span>
+            </div>
+            <div class="split-table-box">
+                <table class="data-table" id="flights-table">
+                    <thead>
+                        <tr>
+                            <th>CALLSIGN</th>
+                            <th>AIRLINE</th>
+                            <th>ROUTE</th>
+                            <th>ALT (FT)</th>
+                            <th>SPEED</th>
+                            <th>MODEL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="flights-table-body">
+                        <tr><td colspan="5" style="text-align:center;color:var(--text-dim);">CONNECTING OPENSKY NETWORK...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MONITOR 5: Active Wildfires & Thermal Hazards (NASA FIRMS + Lookout Stream) -->
+        <div class="monitor-card mode-split" id="card-firms">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-05</span>
+                    <span>THERMAL SATELLITE // WILDFIRE & LOOKOUT CAM</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="view-mode-group">
+                        <button class="view-mode-btn" data-mode="cam">CAM</button>
+                        <button class="view-mode-btn" data-mode="data">DATA</button>
+                        <button class="view-mode-btn active" data-mode="split">SPLIT</button>
+                    </div>
+                    <span id="firms-count-badge" class="tag-alert" style="font-size:0.72rem;">FIRMS ACTIVE</span>
+                </div>
+            </div>
+            <div class="stream-input-group">
+                <select id="firms-preset-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;max-width:185px;" title="Wildfire & Lookout Presets">
+                    <option value="https://www.youtube.com/watch?v=HggWKlZv9yk" selected>Hawaiian Volcano (USGS Kīlauea)</option>
+                    <option value="https://www.youtube.com/watch?v=Z27ghRYocJ4">Mt. Washington Lookout (Summit)</option>
+                    <option value="https://www.youtube.com/watch?v=B4-L2nfGcuE">San Bernardino Forest (Big Bear)</option>
+                    <option value="https://www.youtube.com/watch?v=BgimbZHOICU">Iceland Volcano (Litli-Hrútur)</option>
+                </select>
+                <input type="text" id="firms-custom-stream" class="stream-url-input" placeholder="YouTube Wildfire Stream..." value="https://www.youtube.com/watch?v=HggWKlZv9yk" />
+                <button id="btn-load-firms-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+            </div>
+            <div class="split-stream-box">
+                <div class="video-stream-container">
+                    <iframe 
+                        id="firms-stream-iframe"
+                        src="about:blank"
+                        data-src="https://www.youtube-nocookie.com/embed/HggWKlZv9yk?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen="true">
+                    </iframe>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span id="firms-telemetry-left">WILDFIRE SURVEILLANCE FEED</span>
+                <span id="firms-telemetry-right">NASA MODIS / VIIRS SENSORS</span>
+            </div>
+            <div class="split-table-box">
+                <table class="data-table" id="firms-table">
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>LAT</th>
+                            <th>LON</th>
+                            <th>BRIGHTNESS</th>
+                            <th>SAT</th>
+                            <th>CONF</th>
+                        </tr>
+                    </thead>
+                    <tbody id="firms-table-body">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text-dim);">FETCHING AUTHENTIC FIRMS SATELLITE SENSORS...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MONITOR 6: Global Seismic Activity (USGS Earthquakes + Seismograph Stream) -->
+        <div class="monitor-card mode-split" id="card-quakes">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-06</span>
+                    <span>SEISMIC MONITOR // LIVE SEISMOGRAPH & USGS</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="view-mode-group">
+                        <button class="view-mode-btn" data-mode="cam">CAM</button>
+                        <button class="view-mode-btn" data-mode="data">DATA</button>
+                        <button class="view-mode-btn active" data-mode="split">SPLIT</button>
+                    </div>
+                    <span id="quake-count-badge" class="tag-warn" style="font-size:0.72rem;">USGS ACTIVE</span>
+                </div>
+            </div>
+            <div class="stream-input-group">
+                <input type="text" id="quakes-custom-stream" class="stream-url-input" placeholder="YouTube Earthquake Stream..." value="https://youtu.be/TWy9JMPs5Gk" />
+                <button id="btn-load-quakes-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+            </div>
+            <div class="split-stream-box">
+                <div class="video-stream-container">
+                    <iframe 
+                        id="quakes-stream-iframe"
+                        src="about:blank"
+                        data-src="https://www.youtube-nocookie.com/embed/TWy9JMPs5Gk?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen="true">
+                    </iframe>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span id="quakes-telemetry-left">24/7 GLOBAL SEISMIC MONITOR</span>
+                <span id="quakes-telemetry-right">USGS FAULT SENSORS SYNC</span>
+            </div>
+            <div class="split-table-box">
+                <table class="data-table" id="quakes-table">
+                    <thead>
+                        <tr>
+                            <th>MAG</th>
+                            <th>LOCATION</th>
+                            <th>DEPTH</th>
+                            <th>TIME</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quakes-table-body">
+                        <tr><td colspan="4" style="text-align:center;color:var(--text-dim);">MONITORING GLOBAL FAULT LINES...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MONITOR 7: Severe Weather & Storm Chaser Radar (Live Stream + NOAA Warnings) -->
+        <div class="monitor-card mode-split" id="card-storm">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-07</span>
+                    <span>SEVERE WEATHER // NOAA RADAR</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="view-mode-group">
+                        <button class="view-mode-btn" data-mode="cam">CAM</button>
+                        <button class="view-mode-btn" data-mode="data">ALERTS</button>
+                        <button class="view-mode-btn active" data-mode="split">SPLIT</button>
+                    </div>
+                    <span id="noaa-alerts-count" class="tag-alert" style="font-size:0.72rem;white-space:nowrap;padding:2px 6px;border-radius:3px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);font-weight:700;">248 NOAA ACTIVE</span>
+                    <span id="storm-alerts-count" style="display:none;"></span>
+                </div>
+            </div>
+            <div class="stream-input-group">
+                <input type="text" id="storm-custom-stream" class="stream-url-input" placeholder="YouTube Storm Stream URL..." value="https://youtu.be/sgJ14rQRUgQ" />
+                <button id="btn-load-storm-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+            </div>
+            <div class="storm-body-container">
+                <div class="split-stream-box">
+                    <div class="video-stream-container" id="storm-player-container">
+                        <iframe 
+                            id="storm-stream-iframe"
+                            src="about:blank"
+                            data-src="https://www.youtube-nocookie.com/embed/sgJ14rQRUgQ?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen="true">
+                        </iframe>
+                    </div>
+                    <div class="cam-telemetry-banner" id="storm-telemetry-banner">
+                        <span id="storm-feed-status">LIVE STORM CHASER FEED // TORNADO WATCH</span>
+                        <span id="storm-quick-alerts">NOAA: ACTIVE RADAR TRACKING</span>
+                    </div>
+                </div>
+                <div class="split-table-box" id="storm-alerts-container">
+                    <table class="data-table" id="storm-alerts-table">
+                        <thead>
+                            <tr>
+                                <th>SEV</th>
+                                <th>EVENT</th>
+                                <th>AFFECTED AREA</th>
+                                <th>RADAR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="storm-alerts-table-body">
+                            <tr><td colspan="4" style="text-align:center;color:var(--text-dim);">LOADING NOAA SEVERE STORM ALERTS...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MONITOR 8: Global Volcanic & Thermal Satellite Heatmap -->
+        <div class="monitor-card" id="card-volcano">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-08</span>
+                    <span>THERMAL SATELLITE & VOLCANOES // 4K SURVEILLANCE</span>
+                </div>
+                <span id="volcano-status-badge" class="tag-accent" style="font-size:0.72rem;">MODIS / VIIRS FEED</span>
+            </div>
+            <div class="stream-input-group">
+                <input type="text" id="volcano-custom-stream" class="stream-url-input" placeholder="YouTube Volcano Stream URL..." value="https://youtu.be/BgimbZHOICU" />
+                <button id="btn-load-volcano-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+            </div>
+            <div class="monitor-body">
+                <div class="video-stream-container" id="volcano-player-container">
+                    <iframe 
+                        id="volcano-stream-iframe"
+                        src="about:blank"
+                        data-src="https://www.youtube-nocookie.com/embed/BgimbZHOICU?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
+                        loading="lazy"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen="true">
+                    </iframe>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner" id="volcano-telemetry-banner">
+                <span>ICELAND VOLCANO 4K LIVE // SATELLITE ANOMALIES</span>
+                <span id="top-fire-max-k">MAX SAT TEMP: 410 K</span>
+            </div>
+        </div>
+
+        <!-- MONITOR 9: Tactical Air Corridor Radar Scope & Speed Spectrum -->
+        <div class="monitor-card" id="card-airspace-scope">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-09</span>
+                    <span>TACTICAL AIRSPACE RADAR SCOPE // DENSITY SPECTRUM</span>
+                </div>
+                <div id="air-alt-badges" style="display:flex;gap:6px;font-size:0.7rem;">
+                    <span class="tag-warn" id="badge-low-alt">LOW: 0</span>
+                    <span class="tag-accent" id="badge-mid-alt">MID: 0</span>
+                    <span class="tag-accent" id="badge-cruise-alt" style="background:rgba(16,185,129,0.15);color:#10b981;">CRUISE: 0</span>
+                </div>
+            </div>
+            <div class="monitor-body scrollable">
+                <table class="data-table" id="airspace-corridor-table">
+                    <thead>
+                        <tr>
+                            <th>FLIGHT</th>
+                            <th>ORIGIN</th>
+                            <th>ALTITUDE</th>
+                            <th>VELOCITY</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="air-corridors-table-body">
+                        <tr><td colspan="5" style="text-align:center;color:var(--text-dim);">CALCULATING AIRSPACE DENSITY SPECTRUM...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MONITOR 10: Live Multi-Sensor Intelligence Stream & Event Log -->
+        <div class="monitor-card" id="card-intelligence-log">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-10</span>
+                    <span>LIVE MULTI-SENSOR INTELLIGENCE LOG // AUDIT STREAM</span>
+                </div>
+                <span id="event-log-pulse" style="font-size:0.72rem;color:var(--success);">● REAL-TIME SYNC</span>
+            </div>
+            <div id="tactical-event-log" class="event-log-container">
+                <div style="text-align:center;color:var(--text-dim);padding:20px;">CONNECTING EVENT BUS...</div>
+            </div>
+        </div>
+
+        <!-- MONITOR 11: Google Earth 3D & Global Satellite Sphere (Three.js WebGL) -->
+        <div class="monitor-card" id="card-google-earth">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-11</span>
+                    <span>GOOGLE EARTH 3D // GLOBAL SATELLITE SPHERE</span>
+                </div>
+                <div style="display:flex;gap:4px;">
+                    <button class="ops-btn" id="btn-gearth-iss" style="padding:1px 6px;font-size:0.68rem;">ISS ORBIT</button>
+                    <button class="ops-btn" id="btn-gearth-nyc" style="padding:1px 6px;font-size:0.68rem;">NYC 3D</button>
+                    <button class="ops-btn" id="btn-gearth-tokyo" style="padding:1px 6px;font-size:0.68rem;">TOKYO 3D</button>
+                    <button class="ops-btn" id="btn-gearth-alps" style="padding:1px 6px;font-size:0.68rem;">ALPS 3D</button>
+                </div>
+            </div>
+            <div class="stream-input-group">
+                <input type="text" id="gearth-url-input" class="stream-url-input" placeholder="Latitude, Longitude or Location (e.g. 40.71, -74.00)..." value="0.0, 0.0" />
+                <button id="btn-load-gearth" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+                <a href="https://earth.google.com/web/" target="_blank" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;text-decoration:none;display:inline-flex;align-items:center;">OPEN 3D ↗</a>
+            </div>
+            <div class="monitor-body" style="position:relative; flex:1; min-height:0; overflow:hidden;">
+                <div id="globe-3d-container" style="width:100%; height:100%; position:relative; background:#02040a;">
+                    <canvas id="globe-3d-canvas" style="width:100%; height:100%; display:block; cursor:grab;"></canvas>
+                    <div id="globe-hud-overlay" style="position:absolute; top:8px; left:10px; pointer-events:none; font-family:var(--font-mono); font-size:0.72rem; color:var(--accent); background:rgba(8,12,20,0.85); padding:4px 8px; border-radius:4px; border:1px solid var(--border-subtle); display:flex; gap:8px; align-items:center; z-index:10;">
+                        <span id="globe-hud-pulse" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 6px var(--accent);"></span>
+                        <span id="globe-target-name">TARGET: GLOBAL ORBIT</span>
+                        <span style="color:var(--text-dim);">|</span>
+                        <span id="globe-target-coords">0.00°N / 0.00°E</span>
+                        <span style="color:var(--text-dim);">|</span>
+                        <span id="globe-target-zoom">ZOOM: 1.0X</span>
+                    </div>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span id="gearth-telemetry-left">PHOTOREALISTIC 3D SATELLITE MESH</span>
+                <span id="gearth-telemetry-right">ELEVATION: 22,250 KM // SPHERE ORBIT</span>
+            </div>
+        </div>
+
+        <!-- MONITOR 12: Maritime AIS Vessel Radar & Harbor Cam (Digitraffic Open Marine) -->
+        <div class="monitor-card mode-split" id="card-vessels">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-12</span>
+                    <span>MARITIME AIS // LIVE VESSEL RADAR & HARBOR CAM</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="view-mode-group">
+                        <button class="view-mode-btn" data-mode="cam">CAM</button>
+                        <button class="view-mode-btn" data-mode="data">DATA</button>
+                        <button class="view-mode-btn active" data-mode="split">SPLIT</button>
+                    </div>
+                    <span id="vessels-count-badge" class="tag-accent" style="font-size:0.72rem;color:#06b6d4;">AIS MARINE ACTIVE</span>
+                </div>
+            </div>
+            <div class="stream-input-group">
+                <select id="vessels-preset-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;max-width:180px;" title="Maritime Harbor Presets">
+                    <option value="https://www.youtube.com/watch?v=vukolcrIkzc" selected>Hamburg Harbor (Elbe Live)</option>
+                    <option value="https://www.youtube.com/watch?v=_pGIJmXxAHk">Port of Rotterdam (Waterweg)</option>
+                    <option value="https://www.youtube.com/watch?v=m1R-LmvVt30">Port of Miami (Cruise & Cargo)</option>
+                    <option value="https://www.youtube.com/watch?v=r8N6IsoIkTk">Venice Grand Canal (4K Live)</option>
+                </select>
+                <input type="text" id="vessels-custom-stream" class="stream-url-input" placeholder="YouTube Maritime / Harbor Stream..." value="https://www.youtube.com/watch?v=vukolcrIkzc" />
+                <button id="btn-load-vessels-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
+            </div>
+            <div class="vessels-body-container">
+                <div class="split-stream-box">
+                    <div class="video-stream-container">
+                        <iframe 
+                            id="vessels-stream-iframe"
+                            src="about:blank"
+                            data-src="https://www.youtube-nocookie.com/embed/vukolcrIkzc?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen="true">
+                        </iframe>
+                    </div>
+                    <div class="cam-telemetry-banner">
+                        <span id="vessels-telemetry-left">INTERNATIONAL SHIPPING CORRIDORS</span>
+                        <span id="vessels-telemetry-right">DIGITRAFFIC AIS LIVE</span>
+                    </div>
+                </div>
+                <div class="split-table-box">
+                    <table class="data-table" id="vessels-table">
+                        <thead>
+                            <tr>
+                                <th>VESSEL NAME</th>
+                                <th>TYPE</th>
+                                <th>DESTINATION</th>
+                                <th>SPEED</th>
+                                <th>COURSE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vessels-table-body">
+                            <tr><td colspan="5" style="text-align:center;color:var(--text-dim);">CONNECTING DIGITRAFFIC AIS MARINE NETWORK...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- MONITOR 13: Global OSINT News Desk // Breaking Crisis Radar (GDELT, UN ReliefWeb, EMSC) -->
+        <div class="monitor-card" id="card-osint-news">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-13</span>
+                    <span>GLOBAL OSINT NEWS DESK // BREAKING CRISIS RADAR</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <div class="g-mode-group">
+                        <button class="osint-filter-btn active" data-cat="all" style="background:#1e293b;border:none;color:#38bdf8;font-size:0.68rem;padding:2px 6px;cursor:pointer;border-radius:3px;">ALL</button>
+                        <button class="osint-filter-btn" data-cat="security" style="background:transparent;border:none;color:var(--text-dim);font-size:0.68rem;padding:2px 6px;cursor:pointer;border-radius:3px;">DEFENSE</button>
+                        <button class="osint-filter-btn" data-cat="crisis_disaster" style="background:transparent;border:none;color:var(--text-dim);font-size:0.68rem;padding:2px 6px;cursor:pointer;border-radius:3px;">CRISIS</button>
+                        <button class="osint-filter-btn" data-cat="cyber_tech" style="background:transparent;border:none;color:var(--text-dim);font-size:0.68rem;padding:2px 6px;cursor:pointer;border-radius:3px;">CYBER</button>
+                        <button class="osint-filter-btn" data-cat="energy_economy" style="background:transparent;border:none;color:var(--text-dim);font-size:0.68rem;padding:2px 6px;cursor:pointer;border-radius:3px;">ENERGY</button>
+                        <button class="osint-filter-btn" data-cat="maritime_aviation" style="background:transparent;border:none;color:var(--text-dim);font-size:0.68rem;padding:2px 6px;cursor:pointer;border-radius:3px;">TRANSIT</button>
+                        <button class="osint-filter-btn" data-cat="seismic" style="background:transparent;border:none;color:var(--text-dim);font-size:0.68rem;padding:2px 6px;cursor:pointer;border-radius:3px;">SEISMIC</button>
+                    </div>
+                    <span id="osint-count-badge" class="tag-alert" style="font-size:0.72rem;">LIVE OSINT STREAM</span>
+                </div>
+            </div>
+            <!-- OSINT 200-PROVIDER WIRE SWITCHER -->
+            <div id="osint-provider-bar" style="background:#070d18;border-bottom:1px solid #1e293b;padding:3px 8px;display:flex;align-items:center;gap:6px;overflow-x:auto;white-space:nowrap;font-size:0.68rem;">
+                <span style="color:#64748b;font-weight:bold;font-family:var(--font-mono);font-size:0.65rem;">200+ WIRES:</span>
+                <button class="osint-prov-btn active" data-prov="all" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #38bdf8;background:rgba(56,189,248,0.15);color:#38bdf8;font-weight:bold;">ALL (200+ WIRES)</button>
+                <select id="osint-provider-select" class="ops-select" style="font-size:0.68rem;padding:1px 6px;background:#0f172a;border:1px solid #334155;color:#38bdf8;max-width:240px;" title="Wähle einen der 200 globalen News-Anbieter">
+                    <option value="all">⚡ Alle 200 News-Quellen (Live-Aggregat)</option>
+                </select>
+                <button class="osint-prov-btn" data-prov="BBC" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🇬🇧 BBC</button>
+                <button class="osint-prov-btn" data-prov="DW" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🇩🇪 DW</button>
+                <button class="osint-prov-btn" data-prov="Al Jazeera" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🇶🇦 AL JAZEERA</button>
+                <button class="osint-prov-btn" data-prov="France 24" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🇫🇷 FRANCE 24</button>
+                <button class="osint-prov-btn" data-prov="The Guardian" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">📰 GUARDIAN</button>
+                <button class="osint-prov-btn" data-prov="Tagesschau" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🇩🇪 TAGESSCHAU</button>
+                <button class="osint-prov-btn" data-prov="Defense News" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🛡️ DEFENSE NEWS</button>
+                <button class="osint-prov-btn" data-prov="The Hacker News" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">💻 HACKER NEWS</button>
+                <button class="osint-prov-btn" data-prov="UN ReliefWeb" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🇺🇳 RELIEFWEB</button>
+                <button class="osint-prov-btn" data-prov="EMSC" style="padding:1px 6px;font-size:0.68rem;cursor:pointer;border-radius:3px;border:1px solid #334155;background:#0f172a;color:#cbd5e1;">🌋 EMSC</button>
+            </div>
+            <div id="osint-news-container" style="flex:1;overflow-y:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px;background:#030712;">
+                <div style="text-align:center;padding:20px;color:var(--text-dim);font-family:var(--font-mono);">
+                    INTERCEPTING GLOBAL GDELT & RELIEFWEB FEEDS...
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span>SOURCES: 200 GLOBAL OSINT WIRES // GEOPOLITICS // DEFENSE // CYBER // MARITIME // ENERGY</span>
+                <span style="color:#10b981;">STATUS: 100% UNFILTERED OPEN INTELLIGENCE</span>
+            </div>
+        </div>
+
+        <!-- MONITOR 14: Space Weather & Solar Telemetry (NOAA SWPC & NASA SDO) -->
+        <div class="monitor-card" id="card-space-weather">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-14</span>
+                    <span>SPACE WEATHER & SOLAR TELEMETRY // NOAA SWPC & NASA SDO</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <select id="sdo-wavelength-select" class="ops-select" style="font-size:0.7rem;padding:2px 6px;">
+                        <option value="0171" selected>AIA 171 Å (Corona 1M K - Gold)</option>
+                        <option value="0304">AIA 304 Å (Solar Flares - Red)</option>
+                        <option value="0193">AIA 193 Å (Solar Wind - Bronze)</option>
+                        <option value="0211">AIA 211 Å (Active Magnetic - Purple)</option>
+                    </select>
+                    <span id="kp-scale-badge" class="tag-warn" style="font-size:0.72rem;">KP 2.33 [G0 QUIET]</span>
+                </div>
+            </div>
+            <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;background:#030712;overflow:hidden;">
+                <!-- Left: NASA SDO 4K Live Sun Frame -->
+                <div style="position:relative;background:#000;border:1px solid #1e293b;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+                    <img id="sdo-sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0171.jpg" style="max-width:100%;max-height:100%;object-fit:contain;" />
+                    <div style="position:absolute;top:6px;left:6px;background:rgba(3,7,18,0.85);padding:2px 6px;border-radius:3px;font-family:var(--font-mono);font-size:0.68rem;border:1px solid #334155;color:#facc15;">
+                        NASA SDO // AIA 171 Å
+                    </div>
+                </div>
+                <!-- Right: NOAA SWPC Telemetry Gauges -->
+                <div style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;">
+                    <div class="swpc-gauge-box">
+                        <div style="font-size:0.68rem;color:var(--text-dim);font-family:var(--font-mono);">GEOMAGNETIC KP-INDEX</div>
+                        <div id="swpc-kp-val" class="swpc-gauge-val" style="color:#10b981;">2.33</div>
+                        <div id="swpc-kp-desc" style="font-size:0.7rem;color:#94a3b8;font-family:var(--font-mono);">BACKGROUND QUIET</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <div class="swpc-gauge-box">
+                            <div style="font-size:0.65rem;color:var(--text-dim);font-family:var(--font-mono);">SOLAR WIND SPEED</div>
+                            <div id="swpc-wind-speed" style="font-size:1.1rem;font-weight:bold;color:#38bdf8;font-family:var(--font-mono);">420 km/s</div>
+                        </div>
+                        <div class="swpc-gauge-box">
+                            <div style="font-size:0.65rem;color:var(--text-dim);font-family:var(--font-mono);">PROTON DENSITY</div>
+                            <div id="swpc-density" style="font-size:1.1rem;font-weight:bold;color:#a855f7;font-family:var(--font-mono);">5.2 p/cm³</div>
+                        </div>
+                    </div>
+                    <div class="swpc-gauge-box" style="flex:1;text-align:left;font-size:0.7rem;font-family:var(--font-mono);">
+                        <div style="color:#f59e0b;font-weight:bold;margin-bottom:4px;">AURORA VISIBILITY 30-MIN:</div>
+                        <div id="swpc-aurora-readout" style="color:#cbd5e1;">Visible down to 65°N latitude (Probability: 35%)</div>
+                        <div style="margin-top:6px;color:var(--text-dim);">X-RAY FLUX: <span id="swpc-xray-val" style="color:#10b981;">B-CLASS (NORMAL)</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span>TELEMETRY: NOAA SPACE WEATHER PREDICTION CENTER // NASA SDO</span>
+                <span style="color:#38bdf8;">ORBIT: GEOSYNCHRONOUS HELIO-OBSERVATORY</span>
+            </div>
+        </div>
+
+        <!-- MONITOR 15: Atmospheric Sensors & Global Air Quality Matrix (WAQI & OpenAQ) -->
+        <div class="monitor-card" id="card-air-quality">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-15</span>
+                    <span>ATMOSPHERIC SENSORS & AIR QUALITY // WAQI & OPENAQ</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <select id="aqi-city-preset" class="ops-select" style="font-size:0.7rem;padding:2px 6px;">
+                        <option value="52.52,13.405" selected>Berlin (Mitte / Alexanderplatz)</option>
+                        <option value="48.137,11.576">Munich (Marienplatz)</option>
+                        <option value="50.110,8.682">Frankfurt (Innenstadt)</option>
+                        <option value="47.376,8.541">Zurich (HB / Bahnhof)</option>
+                        <option value="48.208,16.373">Vienna (Stephansplatz)</option>
+                        <option value="40.712,-74.006">New York (Manhattan)</option>
+                        <option value="35.676,139.650">Tokyo (Shinjuku)</option>
+                        <option value="48.856,2.352">Paris (Champs-Élysées)</option>
+                    </select>
+                    <span id="aqi-status-badge" class="tag-accent" style="font-size:0.72rem;background:rgba(16,185,129,0.2);color:#10b981;border:1px solid #10b981;">AQI 25 GOOD</span>
+                </div>
+            </div>
+            <div style="flex:1;display:grid;grid-template-columns:140px 1fr;gap:10px;padding:10px;background:#030712;align-items:center;">
+                <!-- Left: Big Glowing Tactical AQI Circle -->
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;">
+                    <div id="aqi-circle" class="aqi-circle-badge">
+                        <span id="aqi-big-val" class="aqi-num" style="color:#10b981;">25</span>
+                        <span style="font-size:0.6rem;color:var(--text-dim);font-family:var(--font-mono);">AQI INDEX</span>
+                    </div>
+                    <span id="aqi-category-label" style="color:#10b981;font-weight:bold;font-size:0.75rem;font-family:var(--font-mono);">GOOD QUALITY</span>
+                </div>
+                <!-- Right: Detailed Pollutant Matrix -->
+                <div style="display:flex;flex-direction:column;gap:6px;font-family:var(--font-mono);">
+                    <div id="aqi-station-title" style="color:#fff;font-weight:bold;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        Station: Berlin Alexanderplatz
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <div class="swpc-gauge-box" style="padding:6px;">
+                            <div style="font-size:0.62rem;color:var(--text-dim);">PM2.5 FINE DUST</div>
+                            <div id="aqi-pm25-val" style="font-size:0.95rem;font-weight:bold;color:#38bdf8;">7.8 µg/m³</div>
+                        </div>
+                        <div class="swpc-gauge-box" style="padding:6px;">
+                            <div style="font-size:0.62rem;color:var(--text-dim);">PM10 COARSE DUST</div>
+                            <div id="aqi-pm10-val" style="font-size:0.95rem;font-weight:bold;color:#a855f7;">14.2 µg/m³</div>
+                        </div>
+                        <div class="swpc-gauge-box" style="padding:6px;">
+                            <div style="font-size:0.62rem;color:var(--text-dim);">NO2 NITROGEN DIOXIDE</div>
+                            <div id="aqi-no2-val" style="font-size:0.95rem;font-weight:bold;color:#f59e0b;">18.5 µg/m³</div>
+                        </div>
+                        <div class="swpc-gauge-box" style="padding:6px;">
+                            <div style="font-size:0.62rem;color:var(--text-dim);">O3 OZONE</div>
+                            <div id="aqi-o3-val" style="font-size:0.95rem;font-weight:bold;color:#10b981;">45.0 µg/m³</div>
+                        </div>
+                    </div>
+                    <div id="aqi-advice-text" style="font-size:0.68rem;color:#94a3b8;line-height:1.3;margin-top:2px;">
+                        Atmospheric conditions are clean and satisfactory. Air pollution poses minimal or no health risk.
+                    </div>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span>ATMOSPHERE: WAQI & OPENAQ GLOBAL SENSOR NETWORK</span>
+                <span style="color:#10b981;">SENSORS: 15,000+ CERTIFIED GOVERNMENT STATIONS</span>
+            </div>
+        </div>
+
+
+
+    </main>
+
+    <!-- Tactical Intelligence Dossier Modal (In-Depth Telemetry Inspector) -->
+    <div id="inspect-modal" class="dossier-backdrop hidden">
+        <div class="dossier-window">
+            <div class="dossier-header">
+                <span id="dossier-title">TARGET INTELLIGENCE DOSSIER</span>
+                <button id="dossier-close" class="ops-btn" style="padding:2px 8px;">✕</button>
+            </div>
+            <div class="dossier-body">
+                <div class="dossier-grid" id="dossier-grid">
+                    <!-- Populated dynamically on click -->
+                </div>
+                <div id="dossier-actions" style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                    <button id="dossier-lock-cam" class="ops-btn active" style="padding:4px 12px;background:rgba(16,185,129,0.25);border-color:#10b981;color:#6ee7b7;font-weight:bold;">📡 BODEN WETTERSTATION LOCKEN</button>
+                    <button id="dossier-center-map" class="ops-btn" style="padding:4px 12px;">CENTER RADAR MAP</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Vault & Registration Guidance Modal -->
+    <div id="vault-modal" class="ops-modal-backdrop hidden">
+        <div class="ops-modal-window">
+            <div class="ops-modal-header">
+                <span>AUTHENTICATED API KEYS & CREDENTIALS VAULT</span>
+                <button id="vault-close" class="ops-btn" style="padding:2px 8px;">✕</button>
+            </div>
+            <div class="ops-modal-body">
+                <p style="color:var(--text-muted);margin-bottom:12px;">
+                    All authentic API keys are verified and stored securely on your local system on drive <code>D:\</code>.
+                </p>
+
+                <!-- Google Maps & Google Earth Key Section with Step-by-Step Instructions -->
+                <div class="vault-field" style="border:1px solid #38bdf8;padding:12px;border-radius:6px;background:rgba(56,189,248,0.06);margin-bottom:16px;">
+                    <label>
+                        <span style="color:#38bdf8;font-weight:700;">Google Maps & Earth Platform API Key</span>
+                        <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" style="color:#38bdf8;font-weight:bold;">[Google Cloud Console ↗]</a>
+                    </label>
+                    <input type="password" id="key-google-maps" placeholder="AIzaSy... (Hier deinen Google Maps Key einfügen)" style="margin-top:4px;" />
+                    <div style="background:#090e17;border:1px solid #1e293b;border-radius:4px;padding:8px 10px;font-size:0.75rem;color:#cbd5e1;line-height:1.45;margin-top:6px;">
+                        <strong style="color:#38bdf8;">Schritt-für-Schritt Anleitung für Google Maps & Earth (Kostenlos):</strong><br>
+                        1. Klicke oben rechts auf <code>[Google Cloud Console ↗]</code>.<br>
+                        2. Melde dich mit deinem Google-Konto an & wähle oder erstelle ein Projekt.<br>
+                        3. Aktiviere in der API-Bibliothek: <strong>Maps JavaScript API</strong> und <strong>Map Tiles API (Photorealistic 3D Tiles)</strong>.<br>
+                        4. Klicke links auf <strong>Anmeldedaten (Credentials)</strong> → <strong>+ Anmeldedaten erstellen</strong> → <strong>API-Schlüssel</strong>.<br>
+                        5. Kopiere den Schlüssel (beginnt mit <code>AIzaSy...</code>) und füge ihn hier ein.<br>
+                        <span style="color:#10b981;">● <strong>Vorteil:</strong> Google schenkt jedem Account 200 $ monatliches Startguthaben – für private Nutzung komplett kostenlos!</span>
+                    </div>
+                </div>
+
+                <div class="vault-field">
+                    <label>
+                        <span>Windy Webcams API Key</span>
+                        <a href="https://api.windy.com/webcams" target="_blank">[Open Windy Registration]</a>
+                    </label>
+                    <input type="password" id="key-windy" placeholder="Paste Windy Webcams Key here..." />
+                    <div style="background:#090e17;border:1px solid #1e293b;border-radius:4px;padding:8px;font-size:0.76rem;color:#cbd5e1;line-height:1.4;margin-top:4px;">
+                        <strong>Windy Formular-Anleitung (Kostenlos):</strong><br>
+                        • <strong>Domain restrictions</strong>: LEER LASSEN (Optional, keine Domain nötig!)<br>
+                        • <strong>Project identification</strong>: <code>http://localhost:8888</code> oder <code>org.surveillance.app</code><br>
+                        • <strong>API service</strong>: Wähle <strong>Webcams API</strong>
+                    </div>
+                </div>
+
+                <div class="vault-field">
+                    <label>
+                        <span>Mapbox Access Token</span>
+                        <a href="https://account.mapbox.com/auth/signup/" target="_blank">[Mapbox Portal]</a>
+                    </label>
+                    <input type="password" id="key-mapbox" placeholder="Mapbox Token..." />
+                </div>
+
+                <div class="vault-field">
+                    <label>
+                        <span>NASA FIRMS MAP KEY (Live Thermal Satellite)</span>
+                        <a href="https://firms.modaps.eosdis.nasa.gov/api/map_key/" target="_blank">[NASA FIRMS Key]</a>
+                    </label>
+                    <input type="password" id="key-firms" placeholder="NASA FIRMS Map Key..." />
+                </div>
+
+                <div class="vault-field">
+                    <label>
+                        <span>OpenWeatherMap API Key</span>
+                        <a href="https://openweathermap.org/api" target="_blank">[OpenWeatherMap]</a>
+                    </label>
+                    <input type="password" id="key-owm" placeholder="OpenWeatherMap Key..." />
+                </div>
+
+                <div class="vault-field">
+                    <label>
+                        <span>OpenSky Network Client ID & Secret</span>
+                        <a href="https://opensky-network.org/" target="_blank">[OpenSky Network]</a>
+                    </label>
+                    <div style="display:flex;gap:6px;">
+                        <input type="text" id="key-opensky-id" placeholder="Client ID..." style="flex:1;" />
+                        <input type="password" id="key-opensky-secret" placeholder="Client Secret..." style="flex:1;" />
+                    </div>
+                </div>
+
+                <!-- JEV AI ENGINE & CODIV CLOUD SECTION -->
+                <div style="margin-top:16px;padding:12px;border:1px solid #7c3aed;background:rgba(124,58,237,0.08);border-radius:4px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="color:#c084fc;font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:6px;">
+                            <span>🔮</span> JEV AI PROGNOSE-ENGINE // MODELL-AUSWAHL
+                        </span>
+                        <span style="font-size:0.68rem;color:#38bdf8;background:rgba(56,189,248,0.15);padding:2px 8px;border-radius:3px;border:1px solid rgba(56,189,248,0.3);">
+                            TYPESAFE CODIV SYSTEM-ONE
+                        </span>
+                    </div>
+                    <div style="font-size:0.73rem;color:var(--text-muted);margin-bottom:10px;line-height:1.4;">
+                        Wähle die primäre KI-Inferenz für Jev 10-Tage Prognosen & Unwetter-Entscheidungen:
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                        <label style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid rgba(56,189,248,0.4);border-radius:4px;background:rgba(15,23,42,0.8);cursor:pointer;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="radio" name="jev_default_engine" id="engine-cloud" value="cloud" checked />
+                                <strong style="color:#38bdf8;font-size:0.78rem;">☁️ GEMMA 26B (Cloud)</strong>
+                            </div>
+                            <span style="font-size:0.68rem;color:var(--text-dim);margin-left:20px;">
+                                DiffusionGemma 26B-A4B (NVFP4) via Codiv API. Hochpräzise stochastische Denoising-Entscheidungen.
+                            </span>
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid rgba(168,85,247,0.4);border-radius:4px;background:rgba(15,23,42,0.8);cursor:pointer;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="radio" name="jev_default_engine" id="engine-local" value="local" />
+                                <strong style="color:#c084fc;font-size:0.78rem;">💻 LOKAL (1050 Ti DirectML)</strong>
+                            </div>
+                            <span style="font-size:0.68rem;color:var(--text-dim);margin-left:20px;">
+                                Lokales 500M ONNX-Modell mit RLCD-Temperaturkalibrierung. Läuft direkt auf deiner NVIDIA GTX 1050 Ti.
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="vault-field" style="margin-bottom:0;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="margin-bottom:0;">
+                                <span style="color:#f8fafc;font-weight:600;font-size:0.75rem;">Codiv / OpenJev Cloud API Key</span>
+                                <a href="https://api.codiv.ai" target="_blank" style="color:#38bdf8;font-size:0.7rem;text-decoration:none;">[Codiv Portal ↗]</a>
+                            </label>
+                            <button type="button" class="btn-test" data-service="codiv" style="background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;padding:2px 8px;font-size:0.68rem;border-radius:3px;cursor:pointer;">TEST</button>
+                        </div>
+                        <input type="password" id="key-codiv" placeholder="sk-codiv-..." style="width:100%;padding:6px;background:#020617;border:1px solid #334155;color:#f8fafc;border-radius:3px;font-family:monospace;font-size:0.75rem;" />
+                    </div>
+                </div>
+
+                <!-- ALTERNATIVE FREE PROVIDERS (NO CREDIT CARD REQUIRED) -->
+                <div style="margin-top:16px;padding-top:12px;border-top:1px solid #1e293b;">
+                    <div style="margin-bottom:6px;">
+                        <span style="color:#10b981;font-weight:700;font-size:0.82rem;">ALTERNATIVE FREE KARTEN-PROVIDER (100% KOSTENLOS // KEINE KREDITKARTE NÖTIG)</span>
+                    </div>
+                    <p style="color:var(--text-muted);font-size:0.74rem;line-height:1.4;margin-bottom:10px;">
+                        Falls die Google Cloud Kontoeinrichtung scheitert: Die Karten <strong>ESRI Satellit HD</strong>, <strong>CartoDB Dark</strong>, <strong>NASA Orbit</strong> und <strong>OpenStreetMap</strong> laufen bereits <strong>dauerhaft kostenlos ohne jeden Key</strong> im Dropdown oben! Für zusätzliche Vektorkarten & Geocoding kannst du diese kostenlosen Sofort-Keys nutzen:
+                    </p>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                        <a href="https://cloud.maptiler.com/auth/signup" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
+                            <strong style="color:#38bdf8;">MapTiler Cloud ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">100.000 Tiles/Mo (Sofort frei)</span>
+                        </a>
+                        <a href="https://myprojects.geoapify.com/" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
+                            <strong style="color:#10b981;">Geoapify ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">3.000 Suchen/Tag (Sofort frei)</span>
+                        </a>
+                        <a href="https://locationiq.com/register" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
+                            <strong style="color:#f59e0b;">LocationIQ ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">5.000 Suchen/Tag (Sofort frei)</span>
+                        </a>
+                        <a href="https://client.stadiamaps.com/signup/" target="_blank" class="ops-btn" style="text-decoration:none;padding:6px 10px;text-align:center;font-size:0.73rem;">
+                            <strong style="color:#a855f7;">Stadia Maps ↗</strong><br><span style="color:var(--text-dim);font-size:0.67rem;">200.000 Tiles/Mo (Sofort frei)</span>
+                        </a>
+                    </div>
+
+                    <div class="vault-field">
+                        <label>
+                            <span>MapTiler API Key (Optional für Custom Vektorkarten & 3D)</span>
+                            <a href="https://cloud.maptiler.com/auth/signup" target="_blank">[MapTiler Free Key holen ↗]</a>
+                        </label>
+                        <input type="password" id="key-maptiler" placeholder="Hier MapTiler Key einfügen..." />
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+                    <span id="vault-status" style="color:var(--success);font-weight:600;"></span>
+                    <button id="vault-save" class="ops-btn active" style="padding:6px 14px;">SAVE & APPLY SETTINGS</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 140+ WEATHER ENGINES & MULTI-MODEL CONSENSUS MODAL -->
+    <div id="weather-engines-modal" class="vault-modal hidden">
+        <div class="vault-content" style="max-width:880px;width:92%;background:#090d16;border:1px solid #0284c7;box-shadow:0 0 35px rgba(2,132,199,0.3);">
+            <div class="vault-header" style="border-bottom:1px solid #1e293b;padding-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="pulse-dot" style="background:#38bdf8;"></span>
+                    <span style="font-weight:bold;color:#38bdf8;letter-spacing:1px;font-size:0.95rem;">🌦️ 140+ GLOBAL WEATHER ENGINES // 100% KEYLESS METEOROLOGICAL NETWORK</span>
+                </div>
+                <button id="btn-close-weather-engines" class="dossier-close" style="font-size:1.2rem;color:#94a3b8;cursor:pointer;background:none;border:none;">&times;</button>
+            </div>
+            <div class="vault-body" style="display:flex;flex-direction:column;gap:12px;max-height:75vh;overflow-y:auto;padding:12px 0;">
+                <!-- Header Actions & Consensus Trigger -->
+                <div style="display:flex;justify-content:space-between;align-items:center;background:#0b1329;border:1px solid #1e293b;border-radius:4px;padding:10px 14px;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <div style="font-weight:bold;color:#f8fafc;font-size:0.85rem;">140+ CERTIFIED NO-KEY REST & NUMERICAL MODELS</div>
+                        <div style="color:#94a3b8;font-size:0.72rem;">DWD, Yr.no, ECMWF IFS, NOAA (NWS/SPC/NHC/CPC), Météo-France, GeoSphere, JMA, KMA, BoM, SMHI & 140+ global agencies</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button id="btn-run-weather-consensus" class="ops-btn active" style="background:#0284c7;color:#fff;padding:6px 14px;font-size:0.75rem;font-weight:bold;cursor:pointer;">
+                            <span>⚡ RUN MULTI-MODEL CONSENSUS</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Consensus Display Box -->
+                <div id="weather-consensus-box" style="display:none;background:rgba(2,132,199,0.08);border:1px solid #0284c7;border-radius:4px;padding:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="color:#38bdf8;font-weight:bold;font-size:0.8rem;">MULTI-MODEL CONSENSUS VERDICT</span>
+                        <span id="consensus-confidence-badge" class="tag-accent">HIGH AGREEMENT</span>
+                    </div>
+                    <div id="consensus-summary-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- 2-Column Inspector: Provider List + Live Data Card -->
+                <div style="display:grid;grid-template-columns:300px 1fr;gap:12px;">
+                    <!-- Engine List -->
+                    <div style="display:flex;flex-direction:column;gap:4px;background:#030712;border:1px solid #1e293b;border-radius:4px;padding:8px;max-height:380px;overflow-y:auto;" id="weather-engine-list-container">
+                        <div style="color:#94a3b8;font-size:0.75rem;padding:8px;text-align:center;">LOADING 30 ENGINES...</div>
+                    </div>
+                    <!-- Selected Engine Inspector Dossier -->
+                    <div id="weather-engine-inspector-dossier" style="background:#030712;border:1px solid #1e293b;border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="color:#64748b;font-size:0.8rem;text-align:center;padding:40px 0;">SELECT A WEATHER ENGINE ON THE LEFT TO INSPECT LIVE TELEMETRY</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- HISTORICAL WEATHER, TORNADO & NOAA EXTREME STORM ARCHIVE MODAL            -->
+    <!-- ========================================================================= -->
+    <div id="weather-archive-modal" class="modal-backdrop hidden" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);z-index:9999;display:none;align-items:center;justify-content:center;">
+        <div style="background:#090d16;border:2px solid #ef4444;box-shadow:0 0 35px rgba(239,68,68,0.5);border-radius:8px;width:95%;max-width:980px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;color:#f8fafc;font-family:var(--font-mono);">
+            <!-- Modal Header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:rgba(239,68,68,0.12);border-bottom:1px solid #ef4444;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:1.4rem;">🏛️</span>
+                    <div>
+                        <div style="font-weight:900;color:#f87171;letter-spacing:1px;font-size:1rem;">HISTORISCHES WETTER- & TORNADO-ARCHIV</div>
+                        <div style="font-size:0.7rem;color:#94a3b8;">NOAA LOCAL STORM REPORTS (USA) // OPEN-METEO GLOBAL CLIMATE ARCHIVE (1940-HEUTE)</div>
+                    </div>
+                </div>
+                <button id="btn-close-archive-modal" class="ops-btn" style="background:#dc2626;border:none;color:#fff;padding:4px 10px;font-weight:bold;cursor:pointer;border-radius:4px;">✕ SCHLIESSEN</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;">
+                <!-- Preset Chips Bar -->
+                <div>
+                    <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:6px;font-weight:bold;">⚡ LEGENDÄRE TORNADO- & STURM-AUSBRÜCHE (1-KLICK ABFRAGE):</div>
+                    <div id="archive-presets-strip" style="display:flex;flex-wrap:wrap;gap:6px;">
+                        <!-- Injected via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Query Controls: City Search, Date Selector & Submit -->
+                <div style="background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                    <!-- City Search with Live Autocomplete -->
+                    <div style="flex:1;min-width:240px;position:relative;">
+                        <label style="font-size:0.7rem;color:#94a3b8;display:block;margin-bottom:3px;">STADT / ORT (USA ODER WELTWEIT):</label>
+                        <input type="text" id="archive-city-search" class="ops-input" placeholder="z. B. Moore, Joplin, Tuscaloosa, Miami, Hamburg..." style="width:100%;padding:6px 10px;font-size:0.8rem;background:#030712;border:1px solid #334155;color:#f8fafc;border-radius:4px;" autocomplete="off" />
+                        <div id="archive-city-dropdown" style="display:none;position:absolute;top:100%;left:0;width:100%;background:#090d16;border:1px solid #ef4444;border-radius:4px;z-index:10001;max-height:180px;overflow-y:auto;box-shadow:0 8px 20px rgba(0,0,0,0.8);"></div>
+                    </div>
+
+                    <!-- Date Picker -->
+                    <div style="min-width:160px;">
+                        <label style="font-size:0.7rem;color:#94a3b8;display:block;margin-bottom:3px;">EXAKTES DATUM (1940 - HEUTE):</label>
+                        <input type="date" id="archive-date-input" class="ops-input" style="width:100%;padding:5px 8px;font-size:0.8rem;background:#030712;border:1px solid #334155;color:#f8fafc;border-radius:4px;" value="2013-05-20" />
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div style="align-self:flex-end;">
+                        <button id="btn-archive-submit" class="ops-btn" style="background:#ef4444;color:#fff;border:none;padding:7px 18px;font-size:0.82rem;font-weight:bold;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:6px;">
+                            <span>🔍</span>
+                            <span>ARCHIV ABFRAGEN</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metric Summary Highlights Grid -->
+                <div id="archive-metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;">
+                    <div class="archive-stat-card">
+                        <div style="font-size:0.68rem;color:#94a3b8;">🌪️ TORNADOS (BESTÄTIGT)</div>
+                        <div id="stat-tor-count" style="font-size:1.2rem;font-weight:900;color:#ef4444;">--</div>
+                    </div>
+                    <div class="archive-stat-card">
+                        <div style="font-size:0.68rem;color:#94a3b8;">💨 MAX. WINDBÖE</div>
+                        <div id="stat-wind-max" style="font-size:1.2rem;font-weight:900;color:#22d3ee;">--</div>
+                    </div>
+                    <div class="archive-stat-card">
+                        <div style="font-size:0.68rem;color:#94a3b8;">🧊 MAX. HAGEL</div>
+                        <div id="stat-hail-max" style="font-size:1.2rem;font-weight:900;color:#c084fc;">--</div>
+                    </div>
+                    <div class="archive-stat-card">
+                        <div style="font-size:0.68rem;color:#94a3b8;">🌡️ TEMPERATUR (MIN / MAX)</div>
+                        <div id="stat-temp-range" style="font-size:1.1rem;font-weight:900;color:#10b981;">--</div>
+                    </div>
+                    <div class="archive-stat-card">
+                        <div style="font-size:0.68rem;color:#94a3b8;">🌧️ NIEDERSCHLAG GESAMT</div>
+                        <div id="stat-precip-sum" style="font-size:1.2rem;font-weight:900;color:#38bdf8;">--</div>
+                    </div>
+                </div>
+
+                <!-- Main Content Split: Left = NOAA Storm Reports / Right = Hourly Curve -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;min-height:280px;">
+                    <!-- Left: NOAA Severe Storm Reports List -->
+                    <div style="background:#030712;border:1px solid #1e293b;border-radius:6px;padding:10px;display:flex;flex-direction:column;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:6px;margin-bottom:8px;">
+                            <span style="font-size:0.75rem;font-weight:bold;color:#f87171;">🌪️ NOAA STORM REPORTS (LSR)</span>
+                            <span id="archive-reports-count" style="font-size:0.68rem;color:#94a3b8;">0 MELDUNGEN</span>
+                        </div>
+                        <div id="archive-reports-list" style="flex:1;overflow-y:auto;max-height:260px;display:flex;flex-direction:column;gap:6px;">
+                            <div style="text-align:center;color:#64748b;padding:30px 0;font-size:0.75rem;">KEINE DATEN GELADEN // WÄHLE EINEN PRESET ODER STARTE ABFRAGE</div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Hourly Wind & Temperature Atmospheric Curve -->
+                    <div style="background:#030712;border:1px solid #1e293b;border-radius:6px;padding:10px;display:flex;flex-direction:column;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:6px;margin-bottom:8px;">
+                            <span style="font-size:0.75rem;font-weight:bold;color:#38bdf8;">📈 STUNDENPROFIL (WIND, BÖEN & TEMP)</span>
+                            <span id="archive-profile-source" style="font-size:0.68rem;color:#94a3b8;">OPEN-METEO HISTORICAL ARCHIVE</span>
+                        </div>
+                        <div id="archive-hourly-table-wrap" style="flex:1;overflow-y:auto;max-height:260px;">
+                            <table style="width:100%;font-size:0.72rem;border-collapse:collapse;color:#cbd5e1;">
+                                <thead>
+                                    <tr style="border-bottom:1px solid #334155;color:#94a3b8;text-align:left;">
+                                        <th style="padding:4px;">UHR</th>
+                                        <th style="padding:4px;">TEMP</th>
+                                        <th style="padding:4px;">WIND</th>
+                                        <th style="padding:4px;">BÖEN</th>
+                                        <th style="padding:4px;">REGEN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="archive-hourly-tbody">
+                                    <tr><td colspan="5" style="text-align:center;color:#64748b;padding:30px 0;">KEINE STUNDENDATEN</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Action Strip -->
+                <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1e293b;padding-top:10px;">
+                    <div style="font-size:0.7rem;color:#64748b;">
+                        HINWEIS: Tornados & Windböen werden als interaktive Pins auf die Leaflet-Karte geladen.
+                    </div>
+                    <button id="btn-archive-plot-map" class="ops-btn" style="background:#0284c7;color:#fff;border:none;padding:8px 18px;font-size:0.82rem;font-weight:bold;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:6px;">
+                        <span>🗺️</span>
+                        <span>AUF KARTE PLOTTIEREN & ZENTRIEREN</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEVERE WEATHER ALARM CONFIGURATION MODAL -->
+    <div id="weather-alarm-modal" class="archive-modal-overlay" style="display:none;">
+        <div class="archive-modal-card" style="max-width:760px;border-color:#ef4444;box-shadow:0 0 35px rgba(239,68,68,0.4);">
+            <div class="archive-modal-header" style="background:rgba(239,68,68,0.15);border-bottom-color:#ef4444;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:1.4rem;">🚨</span>
+                    <div>
+                        <div style="font-size:0.95rem;font-weight:900;color:#f87171;letter-spacing:1px;">
+                            TAKTISCHES UNWETTER- & TORNADO-ALARMSYSTEM
+                        </div>
+                        <div style="font-size:0.7rem;color:#94a3b8;">
+                            Echtzeit-Überwachung: Tornado am Boden, Superzellen, Hook Echo, Windböen & Blitzrate
+                        </div>
+                    </div>
+                </div>
+                <button id="btn-close-alarm-modal" class="ops-btn" style="padding:2px 8px;font-size:1rem;color:#f87171;border-color:#ef4444;">✕</button>
+            </div>
+
+            <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
+                <!-- Trigger Criteria Grid -->
+                <div>
+                    <div style="font-size:0.75rem;font-weight:bold;color:#f87171;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
+                        1. ALARM-AUSLÖSER & KRITERIEN:
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;background:#030712;padding:12px;border-radius:6px;border:1px solid #1e293b;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;cursor:pointer;">
+                            <input type="checkbox" id="cfg-alarm-tornado" checked style="accent-color:#ef4444;" />
+                            <span>🌪️ <strong>Tornado am Boden</strong> (Bestätigt)</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;cursor:pointer;">
+                            <input type="checkbox" id="cfg-alarm-hook-echo" checked style="accent-color:#ef4444;" />
+                            <span>🌀 <strong>Hook Echo & TVS Rotation</strong></span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;cursor:pointer;">
+                            <input type="checkbox" id="cfg-alarm-supercell" checked style="accent-color:#ef4444;" />
+                            <span>⛈️ <strong>Superzelle / Mesozyklone</strong></span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;cursor:pointer;">
+                            <input type="checkbox" id="cfg-alarm-flood" checked style="accent-color:#ef4444;" />
+                            <span>🌊 <strong>Sturzflut / Flash Flood</strong></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Sliders & Thresholds -->
+                <div>
+                    <div style="font-size:0.75rem;font-weight:bold;color:#38bdf8;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
+                        2. SCHWELLENWERTE (EF-SKALA, WIND, HAGEL):
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;background:#030712;padding:12px;border-radius:6px;border:1px solid #1e293b;">
+                        <div>
+                            <label style="font-size:0.7rem;color:#94a3b8;display:block;margin-bottom:4px;">MIN. EF-SKALA:</label>
+                            <select id="cfg-alarm-min-ef" class="ops-select" style="width:100%;padding:4px 8px;font-size:0.78rem;background:#030712;border:1px solid #334155;">
+                                <option value="0">EF0+ (Leichter Tornado, ab 105 km/h)</option>
+                                <option value="1" selected>EF1+ (Mäßiger Tornado, ab 138 km/h)</option>
+                                <option value="2">EF2+ (Bedeutender Tornado, ab 179 km/h)</option>
+                                <option value="3">EF3+ (Schwerer Tornado, ab 219 km/h)</option>
+                                <option value="4">EF4+ (Verwüstender Tornado, ab 267 km/h)</option>
+                                <option value="5">EF5 (Unglaublicher Tornado, > 322 km/h)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem;color:#94a3b8;display:block;margin-bottom:4px;">MIN. WINDBÖEN (MPH):</label>
+                            <input type="number" id="cfg-alarm-wind-mph" class="ops-input" min="40" max="250" value="70" style="width:100%;padding:4px 8px;font-size:0.78rem;background:#030712;border:1px solid #334155;" />
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem;color:#94a3b8;display:block;margin-bottom:4px;">MIN. HAGELDURCHMESSER (ZOLL):</label>
+                            <input type="number" step="0.25" id="cfg-alarm-hail-in" class="ops-input" min="0.5" max="5.0" value="1.75" style="width:100%;padding:4px 8px;font-size:0.78rem;background:#030712;border:1px solid #334155;" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alarm Notifications & Audio -->
+                <div>
+                    <div style="font-size:0.75rem;font-weight:bold;color:#10b981;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
+                        3. BENACHRICHTIGUNGEN & VERHALTEN:
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;background:#030712;padding:12px;border-radius:6px;border:1px solid #1e293b;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;cursor:pointer;">
+                            <input type="checkbox" id="cfg-alarm-eas-sound" checked style="accent-color:#ef4444;" />
+                            <span>🔊 <strong>EAS Dual-Ton Siren</strong> (853/960 Hz)</span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;cursor:pointer;">
+                            <input type="checkbox" id="cfg-alarm-toast" checked style="accent-color:#38bdf8;" />
+                            <span>🔔 <strong>Windows Desktop Toast</strong></span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#cbd5e1;cursor:pointer;">
+                            <input type="checkbox" id="cfg-alarm-auto-jump" checked style="accent-color:#10b981;" />
+                            <span>🎯 <strong>Auto-Switch zur nächsten Webcam</strong></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons: Save & Drill Test Alarm -->
+                <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1e293b;padding-top:12px;margin-top:4px;">
+                    <button id="btn-trigger-alarm-test" class="ops-btn" style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid #ef4444;padding:8px 16px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                        <span>⚡</span>
+                        <span>DRILL-TEST ALARM AUSLÖSEN</span>
+                    </button>
+                    <button id="btn-save-alarm-cfg" class="ops-btn" style="background:#10b981;color:#fff;border:none;padding:8px 20px;font-weight:bold;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:6px;">
+                        <span>💾</span>
+                        <span>EINSTELLUNGEN SPEICHERN</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI SUPPORT BOT MODAL (NVIDIA NIM DEEPSEEK v4.1 FLASH) -->
+    <div id="ai-support-bot-modal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.82);z-index:99999;align-items:center;justify-content:center;backdrop-filter:blur(5px);">
+        <div style="background:#090d16;border:1px solid #a855f7;box-shadow:0 0 35px rgba(168,85,247,0.3);border-radius:8px;width:92%;max-width:680px;height:80vh;max-height:680px;display:flex;flex-direction:column;overflow:hidden;font-family:var(--font-sans);">
+            <!-- Modal Header -->
+            <div style="padding:12px 16px;background:rgba(168,85,247,0.12);border-bottom:1px solid #7e22ce;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:1.3rem;">🤖</span>
+                    <div>
+                        <div style="font-size:0.92rem;font-weight:900;color:#c084fc;letter-spacing:1px;font-family:var(--font-mono);">
+                            CYBER-SPECTRE TACTICAL AI SUPPORT BOT
+                        </div>
+                        <div style="font-size:0.68rem;color:#a855f7;display:flex;align-items:center;gap:6px;">
+                            <span>🟢 POWERED BY NVIDIA NIM</span> • <span>deepseek-v4.1-flash</span> • <span>nemotron-3-ultra</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="btn-close-ai-bot" class="ops-btn" style="padding:2px 8px;font-size:1rem;color:#c084fc;border-color:#7e22ce;cursor:pointer;">✕</button>
+            </div>
+
+            <!-- Quick Suggestion Prompt Chips -->
+            <div style="padding:8px 12px;background:#050811;border-bottom:1px solid #1e293b;display:flex;gap:6px;overflow-x:auto;white-space:nowrap;">
+                <button class="ai-chip-btn" data-prompt="Wie ist die aktuelle Tornado- und Sturm-Gefahrenlage im Sektor?" style="padding:3px 9px;font-size:0.7rem;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid #ef4444;border-radius:4px;cursor:pointer;white-space:nowrap;">🌪️ Aktuelle Sturmlage</button>
+                <button class="ai-chip-btn" data-prompt="Erkläre die Doppler-Radar-Modi: dBZ Reflectivity vs Radial Velocity vs Echo Tops" style="padding:3px 9px;font-size:0.7rem;background:rgba(56,189,248,0.15);color:#7dd3fc;border:1px solid #0284c7;border-radius:4px;cursor:pointer;white-space:nowrap;">📡 Doppler Radar Hilfe</button>
+                <button class="ai-chip-btn" data-prompt="Berechne die schnellste Fluchtroute (Escape Corridor) weg vom Sturm" style="padding:3px 9px;font-size:0.7rem;background:rgba(34,197,94,0.15);color:#86efac;border:1px solid #16a34a;border-radius:4px;cursor:pointer;white-space:nowrap;">🏃 Fluchtroute (cuOpt)</button>
+                <button class="ai-chip-btn" data-prompt="Berechne den optimalen Abfangkorridor (Intercept) zur Annäherung" style="padding:3px 9px;font-size:0.7rem;background:rgba(245,158,11,0.15);color:#fde047;border:1px solid #d97706;border-radius:4px;cursor:pointer;white-space:nowrap;">🎯 Abfangkorridor</button>
+            </div>
+
+            <!-- Chat Message History Scrollable Container -->
+            <div id="ai-chat-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;background:#03060d;">
+                <!-- Messages appended dynamically by AiAssistantController -->
+            </div>
+
+            <!-- Chat Input Area -->
+            <div style="padding:10px 14px;background:#070b16;border-top:1px solid #1e293b;display:flex;gap:8px;align-items:center;">
+                <input type="text" id="ai-input-field" class="ops-input" placeholder="Frage zu Wetter, Radar, Fluchtrouten oder Sensoren stellen..." style="flex:1;padding:8px 12px;font-size:0.82rem;background:#030712;border:1px solid #3b4252;color:#f8fafc;border-radius:4px;" autocomplete="off" />
+                <button id="btn-ai-send" class="ops-btn" style="background:#7e22ce;color:#fff;border:none;padding:8px 16px;font-weight:bold;cursor:pointer;border-radius:4px;">SENDEN</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SITREP TACTICAL DOSSIER MODAL (Feature 07) -->
+    <div id="modal-sitrep" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(2,6,17,0.88);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:#070d19;border:1px solid #ef4444;box-shadow:0 0 25px rgba(239,68,68,0.3);width:900px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;border-radius:4px;overflow:hidden;font-family:var(--font-mono);">
+            <div style="background:#0f172a;border-bottom:1px solid #ef4444;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="background:#ef4444;color:#000;font-weight:900;font-size:0.75rem;padding:2px 8px;border-radius:2px;">TOP SECRET // NOFORN</span>
+                    <span style="color:#f87171;font-weight:bold;font-size:0.85rem;letter-spacing:1px;">CYBER-SPECTRE TACTICAL SITREP DOSSIER</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button id="btn-print-sitrep" class="ops-btn" style="background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;padding:2px 10px;font-size:0.75rem;">🖨️ DRUCKEN / PDF</button>
+                    <button id="btn-close-sitrep" class="ops-btn" style="background:transparent;color:#94a3b8;border:none;font-size:1.1rem;cursor:pointer;">✕</button>
+                </div>
+            </div>
+            <div id="sitrep-content" style="padding:16px;overflow-y:auto;color:#cbd5e1;font-size:0.8rem;line-height:1.5;flex:1;">
+                Lade operatives Lagebild…
+            </div>
+        </div>
+    </div>
+
+    <!-- External Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- OmniScope Web Serverless Client-Side Bridge -->
+    <script src="js/web_bridge.js"></script>
+
+    <script src="js/audio.js?v=7.4"></script>
+    <script src="js/ram_cleaner.js?v=7.4"></script>
+    <script src="js/player.js?v=7.4"></script>
+    <script src="js/globe.js?v=7.4"></script>
+    <script src="js/map.js?v=7.4"></script>
+    <script src="js/ai_assistant.js?v=7.4"></script>
+    <script src="js/settings.js?v=7.4"></script>
+    <script src="js/app.js?v=7.4"></script>
+    <script src="js/upgrade.js?v=2.7"></script>
+</body>
+</html>
