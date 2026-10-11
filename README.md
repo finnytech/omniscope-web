@@ -38,10 +38,12 @@ npx wrangler pages deploy . --project-name omniscope-web
 
 ## 🛡️ Zero-Fake Policy
 
-Even on the static web edition, OmniScope enforces a strict Zero-Fake Policy:
-- Features requiring private credentials (such as OpenSky ADS-B flights or proprietary AI tokens) are cleanly omitted from the user interface.
-- No synthetic airplanes, simulated telemetry, or phantom coordinates are ever displayed.
-- Everything visible on screen represents genuine, verified open data.
+Across all editions, OmniScope enforces a strict Zero-Fake Policy:
+- **Meteorological Data Integrity**: Strikte wissenschaftliche Unterscheidung zwischen Doppler-Radar-Rotation in der Wolke (`RADAR INDICATED`) und bodennah verifizierten Tornados (`OBSERVED GROUND CONTACT`).
+- **Keine Phantasie-Einstufungen**: Die Enhanced Fujita (EF)-Skala wird ausschließlich nach offiziellen NWS Ground Damage Surveys vergeben. Live-Alarme erhalten niemals spekulative Ratings (kein Fake EF-4/EF-5) oder pauschale Windwerte (keine erfundenen 165 MPH).
+- **Client-Side Transparenz**: Features, die private Authentifizierung erfordern (z. B. geschützte Luftfahrt- oder KI-APIs), werden im Web-Interface transparent weggelassen, anstatt synthetische Dummydaten zu simulieren.
+- **100% Genuine Open Data**: Sämtliche Daten basieren auf unmodifizierten, verifizierten Echtzeit-Feeds von NOAA/NWS, RainViewer, USGS und Open-Meteo.
+
 
 ---
 

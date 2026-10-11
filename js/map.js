@@ -2540,24 +2540,41 @@ class OperationsMap {
             const lon = tg.lon != null ? tg.lon : (tg.centroid && tg.centroid.lon);
             if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) return;
             if (window.isOceanCoordinate && window.isOceanCoordinate(lat, lon)) return;
-            const threat = tg.threat_level || 'OBSERVED GROUND CONTACT';
-            const ef = tg.ef_rating || tg.ef_scale || 'EF-4';
-            const tags = (tg.detection_tags || []).join(' // ') || 'Touchdown Verified';
-            const headline = tg.headline || 'Confirmed Tornado on the Ground';
+            const isGroundConfirmed = tg.is_ground_confirmed === true || tg.status === 'CONFIRMED_GROUND_CONTACT';
+            const threat = tg.threat_level || (isGroundConfirmed ? 'OBSERVED GROUND CONTACT' : 'RADAR INDICATED ROTATION (KEIN BODENKONTAKT)');
+            const ef = tg.ef_rating || tg.ef_scale || (isGroundConfirmed ? 'AUSSTEHEND (DAMAGE SURVEY)' : 'N/A (RADAR INDICATED)');
+            const tags = (tg.detection_tags || []).join(' // ') || (isGroundConfirmed ? 'Bodenkontakt Bestätigt' : 'Radar Indicated Rotation');
+            const headline = tg.headline || (isGroundConfirmed ? 'Bestätigter Tornado am Boden' : 'Radar-Indizierte Mesozzyklone');
             const area = (typeof resolveCountry === 'function' ? resolveCountry(lat, lon, tg.area_description) : (tg.area_description || 'Severe Storm Sector'));
             const motion_deg = tg.motion_deg !== undefined ? tg.motion_deg : 240;
             const motion_kts = tg.motion_kts !== undefined ? tg.motion_kts : 35;
-            const wind_speed_mph = tg.wind_speed_mph || 165;
+            const wind_speed_mph = tg.wind_speed_mph;
+            const windDisplay = tg.wind_speed || (wind_speed_mph ? `${wind_speed_mph} MPH` : (isGroundConfirmed ? 'Bodenmessung ausstehend' : 'Doppler-Rotation (Nicht gemessen)'));
 
-            // 1. SIMPLE ROTATING RED CIRCLE VORTEX MARKER WITH MOTION TICK
+            const markerWrapClass = isGroundConfirmed ? 'tornado-vortex-circle-wrap' : 'tornado-vortex-circle-wrap radar-indicated';
+            const spinOuterClass = isGroundConfirmed ? 'tornado-circle-spin-outer' : 'tornado-circle-spin-outer radar-indicated';
+            const coreClass = isGroundConfirmed ? 'tornado-vortex-core' : 'tornado-vortex-core radar-indicated';
+            const tagClass = isGroundConfirmed ? 'tornado-vortex-tag' : 'tornado-vortex-tag radar-indicated';
+            const tagText = isGroundConfirmed ? `${ef} • ${windDisplay}` : `RADAR ROTATION • ${windDisplay}`;
+            const headerTitle = isGroundConfirmed ? '🚨 TORNADO AM BODEN // CONFIRMED GROUND CONTACT (OBSERVED)' : '🌪️ MESOZYKLONE IM RADAR // RADAR INDICATED (UNBESTÄTIGT)';
+            const headerColor = isGroundConfirmed ? '#dc2626' : '#ea580c';
+            const headerBorder = isGroundConfirmed ? '#ef4444' : '#f97316';
+            const statusStyle = isGroundConfirmed ? 'background:#fee2e2;color:#b91c1c;' : 'background:#ffedd5;color:#c2410c;';
+            const coneBorderColor = isGroundConfirmed ? '#ef4444' : '#f97316';
+            const coneFillColor = isGroundConfirmed ? '#dc2626' : '#ea580c';
+            const noticeHtml = isGroundConfirmed
+                ? '<div style="margin-top:3px;font-size:10px;color:#991b1b;background:#fef2f2;padding:3px 5px;border-left:2px solid #ef4444;">🚨 <strong>BODENKONTAKT BESTÄTIGT:</strong> Verifiziert durch NWS/Spotter oder TDS Trümmer-Signatur. Offizielle EF-Skala wird nach Ground Damage Survey vergeben.</div>'
+                : '<div style="margin-top:3px;font-size:10px;color:#9a3412;background:#fff7ed;padding:3px 5px;border-left:2px solid #f97316;">📡 <strong>KEIN BODENKONTAKT BESTÄTIGT:</strong> Doppler-Radar erfasst Zirkulation in der Wolke. NWS Damage Survey ausstehend.</div>';
+
+            // 1. DYNAMIC VORTEX MARKER (RED = OBSERVED GROUND, AMBER = RADAR INDICATED)
             const vortexIcon = L.divIcon({
-                className: 'tornado-vortex-pin',
+                className: isGroundConfirmed ? 'tornado-vortex-pin' : 'tornado-vortex-pin radar-indicated',
                 html: `
-                    <div class="tornado-vortex-circle-wrap" title="🚨 TORNADO AM BODEN // ${ef} • ${wind_speed_mph} MPH (Zugrichtung: ${motion_deg}°)">
-                        <div class="tornado-circle-spin-outer"></div>
-                        <div class="tornado-vortex-core">🌪️</div>
+                    <div class="${markerWrapClass}" title="${headerTitle} // ${ef} • ${windDisplay} (Zugrichtung: ${motion_deg}°)">
+                        <div class="${spinOuterClass}"></div>
+                        <div class="${coreClass}">🌪️</div>
                         <div class="tornado-heading-tick" style="transform: rotate(${motion_deg}deg);"><span>▲</span></div>
-                        <div class="tornado-vortex-tag">${ef} • ${wind_speed_mph} MPH</div>
+                        <div class="${tagClass}">${tagText}</div>
                     </div>
                 `,
                 iconSize: [48, 48],
@@ -2567,19 +2584,21 @@ class OperationsMap {
             const marker = L.marker([lat, lon], { icon: vortexIcon, zIndexOffset: 1000 });
 
             const popupContent = `
-                <div style="font-family:var(--font-mono);font-size:11px;min-width:260px;max-width:340px;color:#0f172a;">
-                    <div style="font-weight:900;color:#dc2626;border-bottom:2px solid #ef4444;padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-size:12px;">
-                        <span>🌪️</span>
-                        <span>🚨 TORNADO AM BODEN // CONFIRMED GROUND CONTACT</span>
+                <div style="font-family:var(--font-mono);font-size:11px;min-width:270px;max-width:350px;color:#0f172a;">
+                    <div style="font-weight:900;color:${headerColor};border-bottom:2px solid ${headerBorder};padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-size:12px;">
+                        <span>${isGroundConfirmed ? '🌪️' : '📡'}</span>
+                        <span>${headerTitle}</span>
                     </div>
-                    <div><strong>STATUS:</strong> <span style="background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:3px;font-weight:bold;">${threat.toUpperCase()}</span></div>
-                    <div style="margin-top:3px;"><strong>EF-BEWERTUNG:</strong> <strong style="color:#ef4444;">${ef}</strong> (${wind_speed_mph} MPH)</div>
+                    <div><strong>STATUS:</strong> <span style="${statusStyle}padding:1px 6px;border-radius:3px;font-weight:bold;">${threat.toUpperCase()}</span></div>
+                    <div style="margin-top:3px;"><strong>EF-BEWERTUNG:</strong> <strong style="color:${headerColor};">${ef}</strong></div>
+                    <div style="margin-top:2px;"><strong>WINDGESCHWINDIGKEIT:</strong> <span>${windDisplay}</span></div>
                     <div style="margin-top:2px;"><strong>ZUGBAHN:</strong> <span style="color:#0284c7;font-weight:bold;">${motion_deg}° @ ${motion_kts} KTS</span></div>
                     <div style="margin-top:2px;"><strong>ERFASSUNG:</strong> <span style="color:#475569;">${tags}</span></div>
                     <div style="margin-top:2px;"><strong>SEKTOR:</strong> ${area}</div>
+                    ${noticeHtml}
                     <div style="margin-top:4px;font-size:10px;color:#64748b;">${headline}</div>
                     <div style="display:flex;gap:4px;margin-top:8px;">
-                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:#b91c1c;color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.targetStorm({lat:${lat},lon:${lon},id:'${tg.alert_id||tg.id||''}',title:'${headline.replace(/'/g, "\\'")}',ef_scale:'${ef}',wind_speed:'${wind_speed_mph} MPH',is_tornado:true});}">
+                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:${headerColor};color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.targetStorm({lat:${lat},lon:${lon},id:'${tg.alert_id||tg.id||''}',title:'${headline.replace(/'/g, "\\'")}',ef_scale:'${ef}',wind_speed:'${windDisplay}',is_tornado:true,is_ground_confirmed:${isGroundConfirmed}});}">
                             🎯 ANVISIEREN
                         </button>
                         <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.lockProximityGroundStation(${lat}, ${lon}); window.MapController.lockProximityCamera(${lat}, ${lon});}">
@@ -2632,15 +2651,15 @@ class OperationsMap {
                     [coneLeft.lat, coneLeft.lon]
                 ], {
                     pane: 'weatherZonesPane',
-                    color: '#ef4444',
+                    color: coneBorderColor,
                     weight: 1.5,
                     dashArray: '4, 4',
-                    fillColor: '#dc2626',
-                    fillOpacity: 0.16,
+                    fillColor: coneFillColor,
+                    fillOpacity: isGroundConfirmed ? 0.16 : 0.11,
                     className: 'tornado-hazard-polygon alert-zone-pass-through',
                     bubblingMouseEvents: false
                 });
-                dangerCone.bindTooltip(`⚠️ GEFAHRENKORRIDOR: Zugbahn ${motion_deg}° @ ${motion_kts} KTS`, { sticky: true });
+                dangerCone.bindTooltip(`⚠️ GEFAHRENKORRIDOR: Zugbahn ${motion_deg}° @ ${motion_kts} KTS (${isGroundConfirmed ? 'Bodenkontakt Bestätigt' : 'Radar-Rotation'})`, { sticky: true });
                 dangerCone.on('click', (ev) => {
                     this.notifyLayerClicked(ev);
                     if (window.openSupercellDossier) {
@@ -2657,7 +2676,7 @@ class OperationsMap {
                     [p45.lat, p45.lon]
                 ], {
                     pane: 'weatherZonesPane',
-                    color: '#ef4444',
+                    color: coneBorderColor,
                     weight: 3.5,
                     dashArray: '8, 6',
                     opacity: 0.95,
@@ -2666,6 +2685,7 @@ class OperationsMap {
                 });
                 pathLine.bindTooltip(`🌪️ LIVE-PFAD: ${motion_deg}° @ ${motion_kts} KTS (${speedKmh.toFixed(0)} km/h)`, { sticky: true });
                 this.tornadoGroundLayer.addLayer(pathLine);
+
 
                 // Checkpoint markers at +15m, +30m, +45m
                 const waypoints = [
@@ -2867,24 +2887,26 @@ class OperationsMap {
         const lon = alarm.lon || (alarm.touchdown_sector && alarm.touchdown_sector.lon) || (alarm.centroid && alarm.centroid.lon);
         if (lat === undefined || lon === undefined) return;
         
+        const isGround = isGroundTornado || alarm.is_ground_tornado || alarm.is_ground_confirmed || alarm.status === 'CONFIRMED_GROUND_CONTACT';
         this.pinnedStorm = {
             id: alarm.id || `storm_${lat}_${lon}`,
-            is_tornado: isGroundTornado || alarm.is_ground_tornado || (alarm.event || '').toLowerCase().includes('tornado'),
+            is_tornado: isGround || (alarm.event || '').toLowerCase().includes('tornado'),
+            is_ground_confirmed: isGround,
             is_tropical: (alarm.event || '').toLowerCase().includes('hurricane') || (alarm.event || '').toLowerCase().includes('tropical'),
-            title: alarm.headline || alarm.title || (isGroundTornado ? "🚨 TORNADO ON THE GROUND" : "SEVERE STORM WARNING"),
-            event: alarm.event || (isGroundTornado ? "TORNADO EMERGENCY" : "SEVERE STORM"),
+            title: alarm.headline || alarm.title || (isGround ? "🚨 TORNADO AM BODEN (BESTÄTIGT)" : "🌪️ MESOZYKLONE IM RADAR (UNBESTÄTIGT)"),
+            event: alarm.event || (isGround ? "TORNADO EMERGENCY" : "TORNADO WARNING (RADAR)"),
             lat: parseFloat(lat),
             lon: parseFloat(lon),
             area: alarm.area || (alarm.touchdown_sector && alarm.touchdown_sector.area) || alarm.area_description || "Active Warning Sector",
-            ef_scale: alarm.ef_scale ? `EF-${alarm.ef_scale}` : (isGroundTornado ? "EF-4/EF-5" : null),
-            wind_speed: alarm.wind_gust_mph ? `${alarm.wind_gust_mph} MPH` : (isGroundTornado ? "195 MPH (314 km/h)" : "85 MPH"),
-            hail_size: alarm.hail_size_inches ? `${alarm.hail_size_inches}"` : (isGroundTornado ? "3.0\" BASEBALL" : "1.75\""),
+            ef_scale: alarm.ef_scale ? (String(alarm.ef_scale).startsWith('EF-') ? alarm.ef_scale : `EF-${alarm.ef_scale}`) : (isGround ? "AUSSTEHEND (DAMAGE SURVEY)" : "RADAR INDICATED"),
+            wind_speed: alarm.wind_gust_mph ? `${alarm.wind_gust_mph} MPH` : (isGround ? "Bodenmessung ausstehend" : "Doppler-Rotation (Nicht gemessen)"),
+            hail_size: alarm.hail_size_inches ? `${alarm.hail_size_inches}"` : (alarm.hail_size || "Kein Hagel gemeldet"),
             motion_vector: alarm.motion_vector || "240° (WSW) @ 35 KTS",
             motion_deg: alarm.motion_deg !== undefined ? alarm.motion_deg : 240,
             motion_kts: alarm.motion_kts !== undefined ? alarm.motion_kts : 35,
-            nearest_camera: alarm.nearest_camera || null,
             timestamp: new Date().toLocaleTimeString()
         };
+
 
         const stormCard = document.getElementById('card-live-storm') || document.getElementById('live-storm-side-panel');
         const camCard = document.getElementById('card-webcam');
@@ -2949,28 +2971,34 @@ class OperationsMap {
         // Compile combined list of authentic active threats
         const storms = [];
 
-        // 1. Add confirmed tornadoes on the ground
+        // 1. Add confirmed tornadoes on the ground & radar-indicated rotations (ZERO FAKE)
         if (Array.isArray(this.rawTornadoGroundAlerts)) {
             this.rawTornadoGroundAlerts.forEach(tg => {
                 const lat = tg.lat || (tg.centroid && tg.centroid.lat);
                 const lon = tg.lon || (tg.centroid && tg.centroid.lon);
                 if (lat === undefined || lon === undefined || lat === null || lon === null) return;
+                const isGround = tg.is_ground_confirmed === true || tg.status === 'CONFIRMED_GROUND_CONTACT';
+                const efVal = tg.ef_scale || tg.ef_rating || (isGround ? 'AUSSTEHEND (SURVEY)' : 'RADAR INDICATED');
+                const windVal = tg.wind_speed || (tg.wind_speed_mph ? `${tg.wind_speed_mph} MPH` : (isGround ? 'Bodenmessung ausstehend' : 'Doppler-Rotation (Nicht gemessen)'));
+                const hailVal = tg.hail_size || (tg.hail_size_inches ? `${tg.hail_size_inches}"` : null);
+
                 storms.push({
                     id: tg.id || tg.alert_id || `tg_${lat}_${lon}`,
                     is_tornado: true,
-                    type: 'tornado',
-                    title: tg.headline || 'Confirmed Tornado on the Ground',
-                    event: tg.event || 'TORNADO WARNING',
+                    is_ground_confirmed: isGround,
+                    type: isGround ? 'tornado_ground' : 'tornado_radar',
+                    title: tg.headline || (isGround ? '🚨 Tornado am Boden (Bestätigt)' : '🌪️ Doppler-Mesozzyklone (Unbestätigt)'),
+                    event: tg.event || (isGround ? 'TORNADO WARNING // CONFIRMED GROUND CONTACT' : 'TORNADO WARNING // RADAR ROTATION'),
                     lat: parseFloat(lat),
                     lon: parseFloat(lon),
                     area: tg.area_description || 'Active Warning Sector',
-                    ef_scale: tg.ef_scale || tg.ef_rating || 'EF-4',
-                    wind_speed: tg.wind_speed || `${tg.wind_speed_mph || 165} MPH`,
-                    hail_size: tg.hail_size_inches ? `${tg.hail_size_inches}"` : '2.5"',
+                    ef_scale: efVal,
+                    wind_speed: windVal,
+                    hail_size: hailVal,
                     motion_vector: tg.motion_vector || '240° (WSW) @ 35 KTS',
                     motion_deg: tg.motion_deg !== undefined ? tg.motion_deg : 240,
                     motion_kts: tg.motion_kts !== undefined ? tg.motion_kts : 35,
-                    tags: tg.detection_tags || ['Touchdown Confirmed']
+                    tags: tg.detection_tags || (isGround ? ['Bodenkontakt Bestätigt'] : ['Radar Indicated Rotation'])
                 });
             });
         }
@@ -3062,9 +3090,21 @@ class OperationsMap {
             this.pinnedStorm = storms[0];
         }
 
-        // Update counts
+        // Update counts (ZERO FAKE)
+        const groundCount = storms.filter(s => s.type === 'tornado_ground').length;
+        const radarCount = storms.filter(s => s.type === 'tornado_radar').length;
         if (activeCountBadge) activeCountBadge.innerText = `${storms.length}`;
-        if (listCountTag) listCountTag.innerText = `${storms.length} ERKANNT`;
+        if (listCountTag) {
+            if (groundCount > 0 && radarCount > 0) {
+                listCountTag.innerText = `${groundCount} BODEN | ${radarCount} RADAR`;
+            } else if (groundCount > 0) {
+                listCountTag.innerText = `${groundCount} BODEN (BESTÄTIGT)`;
+            } else if (radarCount > 0) {
+                listCountTag.innerText = `${radarCount} RADAR ROTATION`;
+            } else {
+                listCountTag.innerText = `${storms.length} ERKANNT`;
+            }
+        }
 
         // Render Hero Pinned Box
         if (pinnedBox && pinnedContent) {
@@ -3072,14 +3112,15 @@ class OperationsMap {
                 pinnedBox.classList.remove('empty');
                 if (pinnedTime) pinnedTime.innerText = `AKTIV // LIVE`;
                 const ps = this.pinnedStorm;
-                const efHtml = ps.ef_scale ? `<span class="pinned-metric-pill danger">${ps.is_tornado ? '🌪️' : '🌀'} ${ps.ef_scale}</span>` : '';
-                const windHtml = ps.wind_speed ? `<span class="pinned-metric-pill danger">💨 ${ps.wind_speed}</span>` : '<span class="pinned-metric-pill" style="opacity:0.6;">💨 Nicht spezifiziert</span>';
+                const isGroundPs = ps.is_ground_confirmed === true;
+                const efHtml = ps.ef_scale ? `<span class="pinned-metric-pill ${isGroundPs ? 'danger' : ''}" style="${!isGroundPs ? 'background:rgba(234,88,12,0.25);border:1px solid #ea580c;color:#fdba74;' : ''}">${ps.is_tornado ? (isGroundPs ? '🚨' : '📡') : '🌀'} ${ps.ef_scale}</span>` : '';
+                const windHtml = ps.wind_speed ? `<span class="pinned-metric-pill ${isGroundPs ? 'danger' : ''}" style="${!isGroundPs ? 'background:rgba(234,88,12,0.25);border:1px solid #ea580c;color:#fdba74;' : ''}">💨 ${ps.wind_speed}</span>` : '<span class="pinned-metric-pill" style="opacity:0.6;">💨 Nicht spezifiziert</span>';
                 const hailHtml = ps.hail_size ? `<span class="pinned-metric-pill">🧊 ${ps.hail_size}</span>` : '';
                 const motHtml = ps.motion_vector ? `<span class="pinned-metric-pill">🧭 ${ps.motion_vector}</span>` : '<span class="pinned-metric-pill" style="opacity:0.6;">🧭 Stationär / Keine Drift</span>';
 
                 pinnedContent.innerHTML = `
-                    <div class="pinned-threat-card">
-                        <div class="pinned-threat-title">${ps.is_tornado ? '🚨 🌪️' : (ps.is_tropical ? '🌀' : '⚠️')} ${ps.title}</div>
+                    <div class="pinned-threat-card" style="${!isGroundPs && ps.is_tornado ? 'border-left: 3px solid #ea580c;' : ''}">
+                        <div class="pinned-threat-title">${ps.is_tornado ? (isGroundPs ? '🚨 🌪️' : '📡 🌪️') : (ps.is_tropical ? '🌀' : '⚠️')} ${ps.title}</div>
                         <div style="font-size:0.68rem;color:#94a3b8;">📍 [LAT: ${ps.lat.toFixed(4)}°, LON: ${ps.lon.toFixed(4)}°] • ${ps.area}</div>
                         <div class="pinned-metrics-row">
                             ${efHtml}
@@ -3128,13 +3169,18 @@ class OperationsMap {
                 card.className = `storm-item-card ${this.pinnedStorm && this.pinnedStorm.id === storm.id ? 'is-active-pinned' : ''}`;
                 
                 let typeBadge = '<span class="storm-tag-badge tornado">🌪️ TORNADO</span>';
-                if (storm.type === 'hurricane') {
+                if (storm.type === 'tornado_ground') {
+                    typeBadge = '<span class="storm-tag-badge" style="background:#dc2626;color:#fff;box-shadow:0 0 8px rgba(220,38,38,0.7);">🚨 AM BODEN (BESTÄTIGT)</span>';
+                } else if (storm.type === 'tornado_radar') {
+                    typeBadge = '<span class="storm-tag-badge" style="background:#ea580c;color:#fff;box-shadow:0 0 8px rgba(234,88,12,0.6);">📡 RADAR ROTATION (UNBESTÄTIGT)</span>';
+                } else if (storm.type === 'hurricane') {
                     typeBadge = '<span class="storm-tag-badge" style="background:#0284c7;color:#fff;">🌀 HURRICANE/TROPICAL</span>';
                 } else if (storm.type === 'supercell') {
                     typeBadge = '<span class="storm-tag-badge supercell">⚡ SUPERZELLE</span>';
                 } else if (storm.type === 'severe') {
                     typeBadge = '<span class="storm-tag-badge severe">⚠️ UNWETTER</span>';
                 }
+
 
                 card.innerHTML = `
                     <div class="storm-item-top">

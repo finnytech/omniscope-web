@@ -3244,6 +3244,30 @@ body {
     z-index: 4;
 }
 
+/* Radar Indicated Mid-Altitude Rotation (Amber/Orange Variant) */
+.tornado-vortex-circle-wrap.radar-indicated .tornado-circle-spin-outer,
+.tornado-circle-spin-outer.radar-indicated {
+    border: 3px dashed #f97316;
+    border-top: 3px solid #fef08a;
+    box-shadow: 0 0 16px rgba(249, 115, 22, 0.85), inset 0 0 8px rgba(249, 115, 22, 0.4);
+    animation: tornadoCircleSpin 2.4s linear infinite;
+}
+
+.tornado-vortex-circle-wrap.radar-indicated .tornado-vortex-core,
+.tornado-vortex-core.radar-indicated {
+    background: radial-gradient(circle, #ea580c 40%, #7c2d12 100%);
+    border: 2px solid #fed7aa;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.7);
+}
+
+.tornado-vortex-circle-wrap.radar-indicated .tornado-vortex-tag,
+.tornado-vortex-tag.radar-indicated {
+    border-color: #f97316;
+    color: #fed7aa;
+    background: rgba(24, 18, 12, 0.95);
+}
+
+
 /* ==========================================================================
    CYCLONIC HURRICANE SPIRAL VORTEX MARKER
    ========================================================================== */

@@ -331,41 +331,71 @@
 
                     alerts.push(alertObj);
 
-                    // Confirmed Tornado on the Ground detection
+                    // Confirmed Tornado on the Ground & Radar Indicated Detection (ZERO FAKE)
                     const isTornadoWarning = evt.toLowerCase().includes('tornado warning');
-                    const isObserved = combined.includes('OBSERVED') || combined.includes('CONFIRMED GROUND CONTACT') || combined.includes('TORNADO ON THE GROUND') || combined.includes('TOUCHDOWN');
-                    const isSevereThreat = combined.includes('CATASTROPHIC') || combined.includes('PDS') || combined.includes('CONSIDERABLE');
+                    const isObservedGround = combined.includes('TORNADO...OBSERVED') ||
+                                             combined.includes('TORNADO: OBSERVED') ||
+                                             combined.includes('TORNADO OBSERVED') ||
+                                             combined.includes('CONFIRMED GROUND CONTACT') ||
+                                             combined.includes('TORNADO ON THE GROUND') ||
+                                             combined.includes('TORNADO IS ON THE GROUND') ||
+                                             combined.includes('CONFIRMED TORNADO') ||
+                                             combined.includes('TOUCHDOWN OBSERVED') ||
+                                             combined.includes('TOUCHDOWN REPORTED') ||
+                                             combined.includes('LARGE AND EXTREMELY DANGEROUS TORNADO') ||
+                                             (params.tornadoDetection && params.tornadoDetection.some(v => String(v).toUpperCase().includes('OBSERVED'))) ||
+                                             combined.includes('CATASTROPHIC');
 
-                    if (isTornado && (isTornadoWarning || isObserved || isSevereThreat)) {
-                        let threatLevel = 'OBSERVED GROUND CONTACT';
-                        if (combined.includes('CATASTROPHIC')) threatLevel = 'CATASTROPHIC (TORNADO EMERGENCY)';
-                        else if (combined.includes('PDS')) threatLevel = 'PARTICULARLY DANGEROUS SITUATION (PDS)';
-                        else if (combined.includes('CONSIDERABLE')) threatLevel = 'CONSIDERABLE THREAT';
+                    if (isTornado && (isTornadoWarning || isObservedGround || combined.includes('RADAR INDICATED'))) {
+                        let threatLevel = 'RADAR INDICATED ROTATION (KEIN BODENKONTAKT)';
+                        if (isObservedGround) {
+                            if (combined.includes('CATASTROPHIC')) threatLevel = 'CATASTROPHIC (TORNADO EMERGENCY)';
+                            else if (combined.includes('PDS') || combined.includes('PARTICULARLY DANGEROUS SITUATION')) threatLevel = 'PARTICULARLY DANGEROUS SITUATION (PDS)';
+                            else if (combined.includes('CONSIDERABLE')) threatLevel = 'CONSIDERABLE THREAT';
+                            else threatLevel = 'OBSERVED GROUND CONTACT';
+                        }
 
-                        let efRating = 'RADAR INDICATED';
+                        // EF Rating - ZERO FAKE: never default to EF-4!
+                        let efRating = null;
                         const efMatch = combined.match(/\b(EF[- ]?[0-5])\b/);
-                        if (efMatch) efRating = efMatch[1].replace(' ', '-');
+                        if (efMatch) {
+                            efRating = efMatch[1].replace(' ', '-');
+                        } else {
+                            efRating = isObservedGround ? 'AUSSTEHEND (DAMAGE SURVEY)' : 'N/A (RADAR INDICATED)';
+                        }
+
+                        // Wind Speed - ZERO FAKE: never default to 135 or 165 MPH!
+                        const finalWindSpeed = windSpeed || (windGustMph ? `${windGustMph} MPH` : (isObservedGround ? 'Bodenmessung ausstehend' : 'Doppler-Rotation (Nicht gemessen)'));
+
+                        // Hail - ZERO FAKE: never default to 2.0"
+                        const finalHailSize = hailSize || (hailInches ? `${hailInches}"` : 'Kein Hagel gemeldet');
+
+                        const detectionTags = isObservedGround
+                            ? ['NOAA NWS Doppler TDS / Spotter', '🚨 Bestätigter Bodenkontakt (Observed)']
+                            : ['NEXRAD Doppler Zirkulation', '📡 Radar Indicated Rotation (Kein Bodenkontakt bestätigt)'];
 
                         tornadoGroundAlerts.push({
                             id: alertObj.id,
                             alert_id: alertObj.id,
-                            event: evt,
-                            headline: headline || `🚨 Tornado am Boden in ${area}`,
-                            status: 'CONFIRMED_GROUND_CONTACT',
-                            severity: sev,
+                            event: isObservedGround ? 'TORNADO WARNING // CONFIRMED GROUND CONTACT' : 'TORNADO WARNING // RADAR INDICATED ROTATION',
+                            headline: headline || (isObservedGround ? `🚨 Bestätigter Tornado am Boden in ${area}` : `🌪️ Radar-Indizierte Mesozzyklone in ${area}`),
+                            status: isObservedGround ? 'CONFIRMED_GROUND_CONTACT' : 'RADAR_INDICATED_ROTATION',
+                            is_ground_confirmed: isObservedGround,
+                            is_radar_indicated: !isObservedGround,
+                            severity: isObservedGround ? 'Extreme' : sev,
                             threat_level: threatLevel,
                             ef_scale: efRating,
                             ef_rating: efRating,
-                            wind_speed_mph: windGustMph || 135,
-                            wind_speed: windSpeed || `${windGustMph || 135} MPH`,
-                            hail_size: hailSize || '2.00"',
-                            hail_size_inches: hailInches || 2.0,
+                            wind_speed_mph: windGustMph || null,
+                            wind_speed: finalWindSpeed,
+                            hail_size: finalHailSize,
+                            hail_size_inches: hailInches || null,
                             motion_vector: motionVector || `${motionDeg}° @ ${motionKts} KTS`,
                             motion_deg: motionDeg,
                             motion_kts: motionKts,
                             area_description: area,
-                            detection_tags: ['NOAA NWS Doppler Radar', 'Observed Ground Contact'],
-                            detection_source: 'NOAA NWS LIVE RADAR TELEMETRY',
+                            detection_tags: detectionTags,
+                            detection_source: isObservedGround ? 'NOAA NWS OBSERVED RADAR / SPOTTER CONFIRMED' : 'NOAA NEXRAD DOPPLER AZIMUTHAL SHEAR',
                             lat: alertLat,
                             lon: alertLon,
                             centroid: { lat: alertLat, lon: alertLon },
@@ -373,6 +403,7 @@
                             is_tornado: true
                         });
                     }
+
                 });
 
                 const payload = {
@@ -387,11 +418,15 @@
                     },
                     counts_by_category: {
                         tornado: tornadoGroundAlerts.length,
+                        tornado_ground_confirmed: tornadoGroundAlerts.filter(t => t.is_ground_confirmed).length,
+                        tornado_radar_indicated: tornadoGroundAlerts.filter(t => !t.is_ground_confirmed).length,
                         severe_thunderstorm: alerts.filter(a => (a.event || '').toLowerCase().includes('thunderstorm')).length,
                         flood: alerts.filter(a => (a.event || '').toLowerCase().includes('flood')).length
                     },
                     tornado_ground_alerts: tornadoGroundAlerts,
-                    tornado_ground_count: tornadoGroundAlerts.length,
+                    tornado_ground_count: tornadoGroundAlerts.filter(t => t.is_ground_confirmed).length,
+                    tornado_radar_count: tornadoGroundAlerts.filter(t => !t.is_ground_confirmed).length,
+
                     alerts: alerts,
                     source: "NOAA National Weather Service (api.weather.gov)",
                     cached: false
