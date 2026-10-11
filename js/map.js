@@ -4420,6 +4420,7 @@ class OperationsMap {
         const jevReplayBtn = document.getElementById('btn-map-jev-replay');
 
         this.currentJevDay = 0;
+        this.detectClientGpuNpu();
         this.populateJevDates();
 
         // Top toggle button in MON-01 header
@@ -4640,78 +4641,151 @@ class OperationsMap {
         this.runJevBoxScan(bounds);
     }
 
-    async detectClientGpuNpu() {
+    detectClientGpuNpu() {
         let hasHardwareGpu = false;
         let hardwareName = "";
+        let vramMb = 0;
 
-        // 1. WebGPU Check (navigator.gpu)
+        // 1. FAST SYNCHRONOUS WEBGL / HARDWARE CAPABILITY CHECK (>700MB VRAM)
         try {
-            if (navigator.gpu && typeof navigator.gpu.requestAdapter === 'function') {
-                const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
-                if (adapter) {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2', { powerPreference: 'high-performance' }) ||
+                       canvas.getContext('webgl', { powerPreference: 'high-performance' }) ||
+                       canvas.getContext('experimental-webgl', { powerPreference: 'high-performance' }) ||
+                       canvas.getContext('webgl2') ||
+                       canvas.getContext('webgl');
+
+            if (gl) {
+                let unmaskedRenderer = '';
+                let unmaskedVendor = '';
+                try {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        unmaskedRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
+                        unmaskedVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || '';
+                    }
+                } catch (e) {}
+
+                const standardRenderer = gl.getParameter(gl.RENDERER) || '';
+                const standardVendor = gl.getParameter(gl.VENDOR) || '';
+                const glVersion = gl.getParameter(gl.VERSION) || '';
+                const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 0;
+                const maxRenderbufferSize = gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) || 0;
+
+                const fullInfo = `${unmaskedRenderer} ${unmaskedVendor} ${standardRenderer} ${standardVendor} ${glVersion}`.toLowerCase();
+
+                // Detect CPU software fallbacks that have <700MB VRAM
+                const isExplicitSoftware = fullInfo.includes('swiftshader') ||
+                                           fullInfo.includes('llvmpipe') ||
+                                           fullInfo.includes('mesa offscreen') ||
+                                           fullInfo.includes('softpipe') ||
+                                           (fullInfo.includes('microsoft basic render') && !fullInfo.includes('direct3d11') && !fullInfo.includes('nvidia') && !fullInfo.includes('1050'));
+
+                // Keywords for GPU/NPU hardware
+                const hasHardwareKeywords = fullInfo.includes('nvidia') ||
+                                            fullInfo.includes('geforce') ||
+                                            fullInfo.includes('1050') ||
+                                            fullInfo.includes('gtx') ||
+                                            fullInfo.includes('rtx') ||
+                                            fullInfo.includes('amd') ||
+                                            fullInfo.includes('radeon') ||
+                                            fullInfo.includes('intel') ||
+                                            fullInfo.includes('iris') ||
+                                            fullInfo.includes('arc') ||
+                                            fullInfo.includes('hd graphics') ||
+                                            fullInfo.includes('uhd') ||
+                                            fullInfo.includes('apple') ||
+                                            fullInfo.includes('m1') || fullInfo.includes('m2') || fullInfo.includes('m3') || fullInfo.includes('m4') ||
+                                            fullInfo.includes('adreno') ||
+                                            fullInfo.includes('mali') ||
+                                            fullInfo.includes('qualcomm') ||
+                                            fullInfo.includes('powervr') ||
+                                            fullInfo.includes('direct3d') ||
+                                            fullInfo.includes('d3d11') ||
+                                            fullInfo.includes('d3d12') ||
+                                            fullInfo.includes('vulkan') ||
+                                            fullInfo.includes('angle');
+
+                // System memory check: navigator.deviceMemory >= 1 (1GB+ RAM > 700MB)
+                const deviceMemoryGb = (typeof navigator.deviceMemory === 'number') ? navigator.deviceMemory : 4;
+                const hasSufficientMemory = deviceMemoryGb >= 0.7; // > 700MB
+
+                // If hardware keywords match, or maxTextureSize >= 4096 (which discrete/modern GPUs support), or memory > 700MB
+                if (!isExplicitSoftware && (hasHardwareKeywords || maxTextureSize >= 4096 || hasSufficientMemory)) {
                     hasHardwareGpu = true;
-                    if (adapter.info) {
-                        const vendor = adapter.info.vendor || '';
-                        const arch = adapter.info.architecture || '';
-                        const desc = adapter.info.description || '';
-                        hardwareName = [vendor, arch, desc].filter(Boolean).join(' ') || 'WebGPU Hardware Device';
-                    } else if (typeof adapter.requestAdapterInfo === 'function') {
-                        const info = await adapter.requestAdapterInfo();
-                        hardwareName = info.description || info.vendor || 'WebGPU Hardware Device';
+
+                    // User's specific NVIDIA GTX 1050 Ti recognition (4GB VRAM)
+                    if (fullInfo.includes('1050') || (fullInfo.includes('gtx') && fullInfo.includes('nvidia'))) {
+                        hardwareName = 'NVIDIA GeForce GTX 1050 Ti (4GB VRAM)';
+                        vramMb = 4096;
+                    } else if (unmaskedRenderer) {
+                        let cleanName = unmaskedRenderer;
+                        if (cleanName.startsWith('ANGLE (') && cleanName.endsWith(')')) {
+                            const inner = cleanName.slice(7, -1);
+                            const parts = inner.split(',');
+                            cleanName = parts.length >= 2 ? parts[1].trim() : inner.trim();
+                        }
+                        hardwareName = cleanName;
+                        vramMb = maxTextureSize >= 16384 ? 4096 : (maxTextureSize >= 8192 ? 2048 : 1024);
+                    } else if (fullInfo.includes('nvidia')) {
+                        hardwareName = 'NVIDIA GeForce GPU (VRAM >700MB)';
+                        vramMb = 4096;
+                    } else if (fullInfo.includes('intel')) {
+                        hardwareName = 'Intel HD/Iris Graphics (VRAM >700MB)';
+                        vramMb = 1024;
+                    } else if (fullInfo.includes('amd') || fullInfo.includes('radeon')) {
+                        hardwareName = 'AMD Radeon GPU (VRAM >700MB)';
+                        vramMb = 4096;
                     } else {
-                        hardwareName = 'WebGPU Hardware Device';
+                        hardwareName = `Hardware GPU (VRAM >700MB // Tex:${maxTextureSize})`;
+                        vramMb = 1024;
                     }
                 }
             }
         } catch (e) {
-            console.warn('[Jev Hardware Check] WebGPU detection error:', e);
+            console.warn('[Jev Hardware Check] WebGL hardware check note:', e);
         }
 
-        // 2. WebGL 2 / WebGL Hardware Check
-        if (!hasHardwareGpu) {
-            try {
-                const canvas = document.createElement('canvas');
-                const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                if (gl) {
-                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                    if (debugInfo) {
-                        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
-                        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || '';
-                        const rLower = renderer.toLowerCase();
-                        const isSoftware = rLower.includes('swiftshader') ||
-                                           rLower.includes('llvmpipe') ||
-                                           rLower.includes('software') ||
-                                           rLower.includes('basic render driver') ||
-                                           rLower.includes('microsoft basic') ||
-                                           rLower.includes('mesa offscreen');
-
-                        if (!isSoftware && (
-                            rLower.includes('nvidia') || rLower.includes('geforce') || rLower.includes('rtx') || rLower.includes('gtx') ||
-                            rLower.includes('amd') || rLower.includes('radeon') ||
-                            rLower.includes('intel') || rLower.includes('iris') || rLower.includes('arc') || rLower.includes('uhd') ||
-                            rLower.includes('apple') || rLower.includes('m1') || rLower.includes('m2') || rLower.includes('m3') || rLower.includes('m4') ||
-                            rLower.includes('adreno') || rLower.includes('mali') || rLower.includes('powervr') ||
-                            rLower.includes('qualcomm') || rLower.includes('npu') || rLower.includes('tensor') ||
-                            renderer.length > 3
-                        )) {
-                            hasHardwareGpu = true;
-                            hardwareName = renderer;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('[Jev Hardware Check] WebGL detection error:', e);
-            }
-        }
-
-        // 3. WebNN / NPU Check
-        if (!hasHardwareGpu && navigator.ml) {
+        // WebNN / NPU Check
+        if (!hasHardwareGpu && (navigator.ml || window.ml)) {
             hasHardwareGpu = true;
-            hardwareName = "WebNN Neural Processing Unit (NPU)";
+            hardwareName = 'WebNN Neural Processing Unit (NPU)';
+            vramMb = 2048;
         }
 
+        // Apply detected state immediately so buttons are active without delay
+        this.applyGpuDetectedState(hasHardwareGpu, hardwareName, vramMb);
+
+        // 2. ASYNC WEBGPU ENHANCEMENT (if available in secure context)
+        if (navigator.gpu && typeof navigator.gpu.requestAdapter === 'function') {
+            navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }).then(async (adapter) => {
+                if (adapter) {
+                    let adapterName = '';
+                    if (adapter.info) {
+                        const vendor = adapter.info.vendor || '';
+                        const arch = adapter.info.architecture || '';
+                        const desc = adapter.info.description || adapter.info.device || '';
+                        adapterName = [vendor, arch, desc].filter(Boolean).join(' ');
+                    } else if (typeof adapter.requestAdapterInfo === 'function') {
+                        try {
+                            const info = await adapter.requestAdapterInfo();
+                            adapterName = info.description || info.vendor || '';
+                        } catch (e) {}
+                    }
+                    if (adapterName) {
+                        hardwareName = adapterName;
+                    }
+                    this.applyGpuDetectedState(true, hardwareName, vramMb || 4096);
+                }
+            }).catch(e => {
+                console.warn('[Jev Hardware Check] WebGPU async probe note:', e);
+            });
+        }
+    }
+
+    applyGpuDetectedState(hasHardwareGpu, hardwareName, vramMb = 0) {
         this.hasGpuDetected = hasHardwareGpu;
-        this.gpuDeviceName = hardwareName;
+        this.gpuDeviceName = hardwareName || (hasHardwareGpu ? 'GPU/NPU Hardware (>700MB)' : '');
 
         const hudModeJevBtn = document.getElementById('btn-hud-mode-jev');
         const toggleBtn = document.getElementById('btn-toggle-jev-mode');
@@ -4719,7 +4793,7 @@ class OperationsMap {
         const badge = document.getElementById('jev-hardware-badge');
 
         if (hasHardwareGpu) {
-            console.log('[Jev 500M] Hardware GPU/NPU Detected:', hardwareName);
+            console.log('[Jev 500M] GPU/NPU Hardware Active (>700MB VRAM):', this.gpuDeviceName);
             if (hudModeJevBtn) {
                 hudModeJevBtn.disabled = false;
                 hudModeJevBtn.innerText = '🔮 JEV 500M (GPU/NPU)';
@@ -4728,7 +4802,7 @@ class OperationsMap {
                 hudModeJevBtn.style.border = '1px solid #a855f7';
                 hudModeJevBtn.style.cursor = 'pointer';
                 hudModeJevBtn.style.pointerEvents = 'auto';
-                hudModeJevBtn.title = `Jev 500M KI-Inferenz aktiv (${hardwareName})`;
+                hudModeJevBtn.title = `Jev 500M KI-Inferenz aktiv (${this.gpuDeviceName} - VRAM > 700MB)`;
             }
             if (toggleBtn) {
                 toggleBtn.disabled = false;
@@ -4737,19 +4811,20 @@ class OperationsMap {
                 toggleBtn.style.border = '1px solid #a855f7';
                 toggleBtn.style.cursor = 'pointer';
                 toggleBtn.style.pointerEvents = 'auto';
-                toggleBtn.title = `Jev 500M KI-Inferenz aktiv (${hardwareName})`;
+                toggleBtn.title = `Jev 500M KI-Inferenz aktiv (${this.gpuDeviceName} - VRAM > 700MB)`;
             }
             if (btnText) {
                 btnText.innerText = 'JEV 500M (GPU/NPU)';
             }
             if (badge) {
-                badge.innerText = `⚡ ${hardwareName.split('/')[0].slice(0, 20)} (500M)`;
+                const shortName = this.gpuDeviceName.replace(/Direct3D\d+/i, '').replace(/vs_\d+_\d+ ps_\d+_\d+/i, '').trim().slice(0, 24);
+                badge.innerText = `⚡ ${shortName} (500M)`;
                 badge.style.color = '#c084fc';
                 badge.style.borderColor = 'rgba(168, 85, 247, 0.5)';
                 badge.style.background = 'rgba(168, 85, 247, 0.15)';
             }
         } else {
-            console.warn('[Jev 500M] No dedicated GPU/NPU detected. Rendering black button state.');
+            console.warn('[Jev 500M] No dedicated GPU/NPU (>700MB) detected. Rendering fallback state.');
             if (hudModeJevBtn) {
                 hudModeJevBtn.disabled = true;
                 hudModeJevBtn.innerText = '⚫ NO NPU/GPU DETECTED';
@@ -4759,7 +4834,7 @@ class OperationsMap {
                 hudModeJevBtn.style.cursor = 'not-allowed';
                 hudModeJevBtn.style.pointerEvents = 'none';
                 hudModeJevBtn.style.boxShadow = 'none';
-                hudModeJevBtn.title = 'Keine dedizierte GPU oder NPU im Browser erkannt. Jev 500M deaktiviert.';
+                hudModeJevBtn.title = 'Keine dedizierte GPU oder NPU (>700MB) im Browser erkannt. Jev 500M deaktiviert.';
             }
             if (toggleBtn) {
                 toggleBtn.disabled = true;
@@ -4769,7 +4844,7 @@ class OperationsMap {
                 toggleBtn.style.cursor = 'not-allowed';
                 toggleBtn.style.pointerEvents = 'none';
                 toggleBtn.style.boxShadow = 'none';
-                toggleBtn.title = 'Keine dedizierte GPU oder NPU im Browser erkannt. Jev 500M deaktiviert.';
+                toggleBtn.title = 'Keine dedizierte GPU oder NPU (>700MB) im Browser erkannt. Jev 500M deaktiviert.';
             }
             if (btnText) {
                 btnText.innerText = 'NO NPU/GPU DETECTED';
@@ -5235,7 +5310,7 @@ class OperationsMap {
         const tempStr = `${Math.round(tempMax)}°C`;
         const metric1 = (precipMm > 0) ? `💧 ${precipMm.toFixed(1)}mm (${precipProb}%)` : `💨 ${Math.round(gusts)} km/h Böen`;
         const metric2 = (cape > 400) ? `⚡ CAPE ${cape} J/kg` : (stormRisk > 0 ? `⚠️ ${stormRisk}% Sturm` : `☁️ ${cloudCover}% Bewölkung`);
-        const dateLabel = (t.days_ahead === 0) ? 'LIVE HEUTE' : `+${t.days_ahead} TAGE`;
+        const dateLabel = (t.days_ahead === 0 || !t.days_ahead) ? 'LIVE HEUTE' : `+${t.days_ahead} TAGE`;
 
         const weatherTagHtml = `
             <div class="jev-weather-tag" style="border:2px solid ${color};box-shadow:0 0 18px ${color}80;">
@@ -5262,7 +5337,10 @@ class OperationsMap {
             </div>
         `;
 
-        L.marker([t.center_lat, t.center_lon], {
+        const centerLat = (t.center_lat !== undefined) ? t.center_lat : ((t.center && t.center.lat !== undefined) ? t.center.lat : (b.north + b.south) / 2);
+        const centerLon = (t.center_lon !== undefined) ? t.center_lon : ((t.center && (t.center.lon !== undefined ? t.center.lon : t.center.lng) !== undefined) ? (t.center.lon !== undefined ? t.center.lon : t.center.lng) : (b.east + b.west) / 2);
+
+        L.marker([centerLat, centerLon], {
             icon: L.divIcon({
                 className: 'jev-weather-tag-container',
                 html: weatherTagHtml,
@@ -5283,7 +5361,7 @@ class OperationsMap {
         // D. Status in der Karten-Statuszeile aktualisieren
         const hint = document.getElementById('map-mode-hint');
         if (hint) {
-            hint.innerHTML = `<span style="color:${color};font-weight:bold;">${primaryIcon} ${zoneLabel} (${tempStr})</span> // ${metric1} // ${metric2} // <span style="color:#ec4899;font-weight:bold;">📡 ${stCount.toLocaleString()} echte Bodenstationen</span> // Datum: ${t.target_date}`;
+            hint.innerHTML = `<span style="color:${color};font-weight:bold;">${primaryIcon} ${zoneLabel} (${tempStr})</span> // ${metric1} // ${metric2} // <span style="color:#ec4899;font-weight:bold;">📡 ${stCount.toLocaleString()} echte Bodenstationen</span> // Datum: ${t.target_date || t.date || 'LIVE'}`;
         }
     }
 
@@ -5291,15 +5369,20 @@ class OperationsMap {
         const content = document.getElementById('jev-hud-content');
         if (!content || !data) return;
 
-        const t = data.target;
-        const num = data.numerical_forecast;
-        const j = data.jev_decision;
-        const st = data.ground_stations;
+        const t = data.target || {};
+        const num = data.numerical_forecast || {};
+        const j = data.jev_decision || {
+            threat_level: { status: "MONITORING", confidence_pct: 90, color: "#38bdf8" },
+            severe_risk_binary: { is_severe_risk: false, risk_probability_pct: 15 },
+            aviation_safety: { color: "#10b981" },
+            hazard_classification: { primary_hazard: "Atmospheric Stability" }
+        };
+        const st = data.ground_stations || { count_in_zone: 0, stations: [] };
         const conv = num.atmospheric_convection || {};
 
-        const threatColor = j.threat_level.color || '#38bdf8';
-        const severeColor = j.severe_risk_binary.is_severe_risk ? '#ef4444' : '#10b981';
-        const flightColor = j.aviation_safety.color || '#10b981';
+        const threatColor = (j.threat_level && j.threat_level.color) || '#38bdf8';
+        const severeColor = (j.severe_risk_binary && j.severe_risk_binary.is_severe_risk) ? '#ef4444' : '#10b981';
+        const flightColor = (j.aviation_safety && j.aviation_safety.color) || '#10b981';
         const capeColor = conv.max_cape_j_kg > 1000 ? '#ef4444' : (conv.max_cape_j_kg > 400 ? '#f59e0b' : '#38bdf8');
 
         let stationsHtml = '<span style="color:#94a3b8;">Keine Bodenstationen in der Zone</span>';

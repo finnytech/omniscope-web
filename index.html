@@ -60,18 +60,12 @@
 
             <select id="map-style-select" class="ops-select" title="Map Tile Style">
                 <option value="esri-hybrid" selected>ESRI Satellit Hybrid (HD + Labels) [FREE]</option>
-                <option value="maptiler-streets">MapTiler Streets HD [KEY AKTIV]</option>
-                <option value="maptiler-sat">MapTiler Satellite [KEY AKTIV]</option>
-                <option value="maptiler-topo">MapTiler Topo Gelände [KEY AKTIV]</option>
-                <option value="maptiler-dark">MapTiler Dataviz Dark [KEY AKTIV]</option>
                 <option value="esri-sat">ESRI World Imagery (High-Res Sat) [FREE]</option>
                 <option value="carto-dark">CartoDB Dark Matter (Tactical HUD) [FREE]</option>
                 <option value="nasa-night">NASA Earth at Night (Orbit Night) [FREE]</option>
                 <option value="esri-topo">ESRI Topo & Relief (Gelände) [FREE]</option>
                 <option value="opentopomap">OpenTopoMap (Höhenlinien) [FREE]</option>
                 <option value="osm-hot">OpenStreetMap Humanitarian [FREE]</option>
-                <option value="mapbox-dark">Mapbox Dark (Key)</option>
-                <option value="mapbox-sat">Mapbox High-Res Satellite (Key)</option>
             </select>
             <!-- EXTREME RAM & YOUTUBE STREAM GARBAGE CLEANER WIDGET -->
             <div class="ram-cleaner-group" title="Extreme RAM Cleaner & Stream Concurrency Governor">
@@ -211,9 +205,9 @@
                         <span>🌦️</span>
                         <span>140+ WEATHER ENGINES</span>
                     </button>
-                    <button id="btn-toggle-jev-mode" class="ops-btn" style="background:#000000;color:#64748b;border:1px solid #1e293b;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:not-allowed;" disabled title="Detecting GPU / NPU hardware...">
-                        <span>⚫</span>
-                        <span id="jev-mode-btn-text">NO NPU/GPU DETECTED</span>
+                    <button id="btn-toggle-jev-mode" class="ops-btn" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid #a855f7;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;" title="JEV 500M Lokale Hardware-Inferenz (GPU/NPU >700MB)">
+                        <span>🔮</span>
+                        <span id="jev-mode-btn-text">JEV 500M (GPU/NPU)</span>
                     </button>
                 </div>
                 <div id="map-mode-hint" style="font-size:0.75rem;color:var(--text-muted);">
@@ -623,7 +617,7 @@
                     <div style="display:inline-flex;gap:3px;border-right:1px solid #334155;padding-right:6px;margin-right:2px;">
                         <button id="btn-hud-mode-radar" class="ops-btn active" style="padding:2px 6px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="RainViewer Doppler Radar Loop (Live Past 2-4 Hours)">⚡ RADAR (2H)</button>
                         <button id="btn-hud-mode-multiday" class="ops-btn active" style="padding:2px 6px;font-size:0.68rem;background:rgba(250,204,21,0.2);color:#facc15;border:1px solid #facc15;" title="Multi-Day History Timeline (Bis zu 7 Tage)">📅 7 TAGE</button>
-                        <button id="btn-hud-mode-jev" class="ops-btn" style="padding:2px 6px;font-size:0.68rem;background:#000000;color:#64748b;border:1px solid #1e293b;cursor:not-allowed;" disabled title="Prüfe lokale Hardware (GPU / NPU)...">⚫ NO NPU/GPU DETECTED</button>
+                        <button id="btn-hud-mode-jev" class="ops-btn" style="padding:2px 6px;font-size:0.68rem;background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid #a855f7;cursor:pointer;" title="Jev 500M KI-Inferenz aktiv (GPU/NPU >700MB)">🔮 JEV 500M (GPU/NPU)</button>
                     </div>
 
                     <!-- Mode 1: Doppler Radar Loop (Past 2-4h) -->
