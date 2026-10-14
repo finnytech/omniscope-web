@@ -854,13 +854,6 @@
                 <div id="nx-threat-badge" style="font-family:var(--font-mono);font-size:0.72rem;font-weight:bold;">…</div>
             </div>
             <div class="stream-input-group" style="padding:4px 8px;gap:6px;background:#050914;border-bottom:1px solid #164e63;display:flex;align-items:center;flex-wrap:wrap;">
-                <button class="ops-btn" id="nx-btn-iso" style="padding:2px 8px;font-size:0.72rem;">⏱ ISOCHRONE</button>
-                <select id="nx-iso-profile" class="ops-select" style="font-size:0.72rem;padding:2px 6px;">
-                    <option value="driving-car" selected>Auto</option>
-                    <option value="foot-walking">zu Fuß</option>
-                    <option value="cycling-regular">Fahrrad</option>
-                    <option value="driving-hgv">LKW</option>
-                </select>
                 <button class="ops-btn" id="nx-btn-measure" style="padding:2px 8px;font-size:0.72rem;">📏 MESSEN</button>
                 <button class="ops-btn" id="nx-btn-sitrep" style="padding:2px 8px;font-size:0.72rem;background:rgba(239,68,68,0.22);color:#f87171;border:1px solid #ef4444;font-weight:bold;" title="Taktisches Lage-Dossier (SITREP) als druckbares Cyberpunk-Briefing exportieren">📑 SITREP</button>
                 <label style="display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;cursor:pointer;color:#38bdf8;font-family:var(--font-mono);margin-left:auto;">
@@ -887,11 +880,6 @@
                 </div>
 
                 <div>
-                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">FLUG ↔ UNWETTER KORRELATION</div>
-                    <div id="nx-flightstorm" style="font-size:0.7rem;color:#94a3b8;">keine Flüge in Unwetterzonen</div>
-                </div>
-
-                <div>
                     <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">STROMNETZ DE (SMARD) & KP-INDEX</div>
                     <div id="nx-grid" style="font-size:0.7rem;color:#38bdf8;">Lade Netz- und Sonnenwinddaten…</div>
                 </div>
@@ -907,133 +895,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 4: Live Air Traffic Radar (OpenSky ADS-B + Airport Stream) -->
-        <div class="monitor-card mode-split" id="card-flights">
-            <div class="monitor-header">
-                <div class="monitor-header-left">
-                    <span class="monitor-id">MON-04</span>
-                    <span>AIR TRAFFIC // LIVE AIRPORT & ADS-B RADAR</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <div class="view-mode-group">
-                        <button class="view-mode-btn" data-mode="cam">CAM</button>
-                        <button class="view-mode-btn" data-mode="data">DATA</button>
-                        <button class="view-mode-btn active" data-mode="split">SPLIT</button>
-                    </div>
-                    <span id="flight-count-badge" class="tag-accent" style="font-size:0.72rem;">0 FLIGHTS</span>
-                </div>
-            </div>
-            <div class="stream-input-group">
-                <select id="flight-preset-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;max-width:175px;" title="Airport Runway Presets">
-                    <option value="https://www.youtube.com/watch?v=n4I0d44oBEs" selected>Los Angeles (LAX 24L/24R)</option>
-                    <option value="https://www.youtube.com/watch?v=2PIdi3Xa7TY">Tokyo Haneda (HND T2)</option>
-                    <option value="https://www.youtube.com/watch?v=Qqcd3IZWtOs">London Heathrow (LHR)</option>
-                    <option value="https://www.youtube.com/watch?v=Li3Dvqlo5uE">Frankfurt (FRA / Germany)</option>
-                </select>
-                <input type="text" id="flight-custom-stream" class="stream-url-input" placeholder="YouTube Flight / Airport Stream..." value="https://www.youtube.com/watch?v=n4I0d44oBEs" />
-                <button id="btn-load-flight-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
-            </div>
-            <div class="split-stream-box">
-                <div class="video-stream-container">
-                    <iframe 
-                        id="flight-stream-iframe"
-                        src="about:blank"
-                        data-src="https://www.youtube-nocookie.com/embed/n4I0d44oBEs?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
-                        loading="lazy"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen="true">
-                    </iframe>
-                </div>
-            </div>
-            <div class="cam-telemetry-banner">
-                <span id="flight-telemetry-left">LIVE RUNWAY & AIR TRAFFIC RADAR</span>
-                <span id="flight-telemetry-right">OPENSKY ADS-B ACTIVE</span>
-            </div>
-            <div class="split-table-box">
-                <table class="data-table" id="flights-table">
-                    <thead>
-                        <tr>
-                            <th>CALLSIGN</th>
-                            <th>AIRLINE</th>
-                            <th>ROUTE</th>
-                            <th>ALT (FT)</th>
-                            <th>SPEED</th>
-                            <th>MODEL</th>
-                        </tr>
-                    </thead>
-                    <tbody id="flights-table-body">
-                        <tr><td colspan="5" style="text-align:center;color:var(--text-dim);">CONNECTING OPENSKY NETWORK...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- MONITOR 5: Active Wildfires & Thermal Hazards (NASA FIRMS + Lookout Stream) -->
-        <div class="monitor-card mode-split" id="card-firms">
-            <div class="monitor-header">
-                <div class="monitor-header-left">
-                    <span class="monitor-id">MON-05</span>
-                    <span>THERMAL SATELLITE // WILDFIRE & LOOKOUT CAM</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <div class="view-mode-group">
-                        <button class="view-mode-btn" data-mode="cam">CAM</button>
-                        <button class="view-mode-btn" data-mode="data">DATA</button>
-                        <button class="view-mode-btn active" data-mode="split">SPLIT</button>
-                    </div>
-                    <span id="firms-count-badge" class="tag-alert" style="font-size:0.72rem;">FIRMS ACTIVE</span>
-                </div>
-            </div>
-            <div class="stream-input-group">
-                <select id="firms-preset-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;max-width:185px;" title="Wildfire & Lookout Presets">
-                    <option value="https://www.youtube.com/watch?v=HggWKlZv9yk" selected>Hawaiian Volcano (USGS Kīlauea)</option>
-                    <option value="https://www.youtube.com/watch?v=Z27ghRYocJ4">Mt. Washington Lookout (Summit)</option>
-                    <option value="https://www.youtube.com/watch?v=B4-L2nfGcuE">San Bernardino Forest (Big Bear)</option>
-                    <option value="https://www.youtube.com/watch?v=BgimbZHOICU">Iceland Volcano (Litli-Hrútur)</option>
-                </select>
-                <input type="text" id="firms-custom-stream" class="stream-url-input" placeholder="YouTube Wildfire Stream..." value="https://www.youtube.com/watch?v=HggWKlZv9yk" />
-                <button id="btn-load-firms-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
-            </div>
-            <div class="split-stream-box">
-                <div class="video-stream-container">
-                    <iframe 
-                        id="firms-stream-iframe"
-                        src="about:blank"
-                        data-src="https://www.youtube-nocookie.com/embed/HggWKlZv9yk?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
-                        loading="lazy"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen="true">
-                    </iframe>
-                </div>
-            </div>
-            <div class="cam-telemetry-banner">
-                <span id="firms-telemetry-left">WILDFIRE SURVEILLANCE FEED</span>
-                <span id="firms-telemetry-right">NASA MODIS / VIIRS SENSORS</span>
-            </div>
-            <div class="split-table-box">
-                <table class="data-table" id="firms-table">
-                    <thead>
-                        <tr>
-                            <th>DATE</th>
-                            <th>LAT</th>
-                            <th>LON</th>
-                            <th>BRIGHTNESS</th>
-                            <th>SAT</th>
-                            <th>CONF</th>
-                        </tr>
-                    </thead>
-                    <tbody id="firms-table-body">
-                        <tr><td colspan="6" style="text-align:center;color:var(--text-dim);">FETCHING AUTHENTIC FIRMS SATELLITE SENSORS...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- MONITOR 6: Global Seismic Activity (USGS Earthquakes + Seismograph Stream) -->
+        <!-- MONITOR 4: Global Seismic Activity (USGS Earthquakes + Seismograph Stream) -->
         <div class="monitor-card mode-split" id="card-quakes">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-06</span>
+                    <span class="monitor-id">MON-04</span>
                     <span>SEISMIC MONITOR // LIVE SEISMOGRAPH & USGS</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -1082,11 +948,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 7: Severe Weather & Storm Chaser Radar (Live Stream + NOAA Warnings) -->
+        <!-- MONITOR 5: Severe Weather & Storm Chaser Radar (Live Stream + NOAA Warnings) -->
         <div class="monitor-card mode-split" id="card-storm">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-07</span>
+                    <span class="monitor-id">MON-05</span>
                     <span>SEVERE WEATHER // NOAA RADAR</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -1138,11 +1004,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 8: Global Volcanic & Thermal Satellite Heatmap -->
+        <!-- MONITOR 6: Global Volcanic & Thermal Satellite Heatmap -->
         <div class="monitor-card" id="card-volcano">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-08</span>
+                    <span class="monitor-id">MON-06</span>
                     <span>THERMAL SATELLITE & VOLCANOES // 4K SURVEILLANCE</span>
                 </div>
                 <span id="volcano-status-badge" class="tag-accent" style="font-size:0.72rem;">MODIS / VIIRS FEED</span>
@@ -1169,42 +1035,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 9: Tactical Air Corridor Radar Scope & Speed Spectrum -->
-        <div class="monitor-card" id="card-airspace-scope">
-            <div class="monitor-header">
-                <div class="monitor-header-left">
-                    <span class="monitor-id">MON-09</span>
-                    <span>TACTICAL AIRSPACE RADAR SCOPE // DENSITY SPECTRUM</span>
-                </div>
-                <div id="air-alt-badges" style="display:flex;gap:6px;font-size:0.7rem;">
-                    <span class="tag-warn" id="badge-low-alt">LOW: 0</span>
-                    <span class="tag-accent" id="badge-mid-alt">MID: 0</span>
-                    <span class="tag-accent" id="badge-cruise-alt" style="background:rgba(16,185,129,0.15);color:#10b981;">CRUISE: 0</span>
-                </div>
-            </div>
-            <div class="monitor-body scrollable">
-                <table class="data-table" id="airspace-corridor-table">
-                    <thead>
-                        <tr>
-                            <th>FLIGHT</th>
-                            <th>ORIGIN</th>
-                            <th>ALTITUDE</th>
-                            <th>VELOCITY</th>
-                            <th>STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="air-corridors-table-body">
-                        <tr><td colspan="5" style="text-align:center;color:var(--text-dim);">CALCULATING AIRSPACE DENSITY SPECTRUM...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- MONITOR 10: Live Multi-Sensor Intelligence Stream & Event Log -->
+        <!-- MONITOR 7: Live Multi-Sensor Intelligence Stream & Event Log -->
         <div class="monitor-card" id="card-intelligence-log">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-10</span>
+                    <span class="monitor-id">MON-07</span>
                     <span>LIVE MULTI-SENSOR INTELLIGENCE LOG // AUDIT STREAM</span>
                 </div>
                 <span id="event-log-pulse" style="font-size:0.72rem;color:var(--success);">● REAL-TIME SYNC</span>
@@ -1214,11 +1049,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 11: Google Earth 3D & Global Satellite Sphere (Three.js WebGL) -->
+        <!-- MONITOR 8: Google Earth 3D & Global Satellite Sphere (Three.js WebGL) -->
         <div class="monitor-card" id="card-google-earth">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-11</span>
+                    <span class="monitor-id">MON-08</span>
                     <span>GOOGLE EARTH 3D // GLOBAL SATELLITE SPHERE</span>
                 </div>
                 <div style="display:flex;gap:4px;">
@@ -1252,11 +1087,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 12: Maritime AIS Vessel Radar & Harbor Cam (Digitraffic Open Marine) -->
+        <!-- MONITOR 9: Maritime AIS Vessel Radar & Harbor Cam (Digitraffic Open Marine) -->
         <div class="monitor-card mode-split" id="card-vessels">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-12</span>
+                    <span class="monitor-id">MON-09</span>
                     <span>MARITIME AIS // LIVE VESSEL RADAR & HARBOR CAM</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -1314,11 +1149,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 13: Global OSINT News Desk // Breaking Crisis Radar (GDELT, UN ReliefWeb, EMSC) -->
+        <!-- MONITOR 10: Global OSINT News Desk // Breaking Crisis Radar (GDELT, UN ReliefWeb, EMSC) -->
         <div class="monitor-card" id="card-osint-news">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-13</span>
+                    <span class="monitor-id">MON-10</span>
                     <span>GLOBAL OSINT NEWS DESK // BREAKING CRISIS RADAR</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -1363,11 +1198,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 14: Space Weather & Solar Telemetry (NOAA SWPC & NASA SDO) -->
+        <!-- MONITOR 11: Space Weather & Solar Telemetry (NOAA SWPC & NASA SDO) -->
         <div class="monitor-card" id="card-space-weather">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-14</span>
+                    <span class="monitor-id">MON-11</span>
                     <span>SPACE WEATHER & SOLAR TELEMETRY // NOAA SWPC & NASA SDO</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -1418,11 +1253,11 @@
             </div>
         </div>
 
-        <!-- MONITOR 15: Atmospheric Sensors & Global Air Quality Matrix (WAQI & OpenAQ) -->
+        <!-- MONITOR 12: Atmospheric Sensors & Global Air Quality Matrix (WAQI & OpenAQ) -->
         <div class="monitor-card" id="card-air-quality">
             <div class="monitor-header">
                 <div class="monitor-header-left">
-                    <span class="monitor-id">MON-15</span>
+                    <span class="monitor-id">MON-12</span>
                     <span>ATMOSPHERIC SENSORS & AIR QUALITY // WAQI & OPENAQ</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
@@ -1826,7 +1661,6 @@
     <script src="js/player.js?v=7.4"></script>
     <script src="js/globe.js?v=7.4"></script>
     <script src="js/map.js?v=7.4"></script>
-    <script src="js/ai_assistant.js?v=7.4"></script>
     <script src="js/settings.js?v=7.4"></script>
     <script src="js/app.js?v=7.4"></script>
     <script src="js/upgrade.js?v=2.7"></script>

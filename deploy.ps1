@@ -28,6 +28,8 @@ if (-not $env:CLOUDFLARE_API_TOKEN) {
 }
 
 $env:CLOUDFLARE_ACCOUNT_ID = "89092df8cc06f48007f4e87344e99941"
+$env:CI = "1"
+$env:WRANGLER_SEND_METRICS = "false"
 
 # 2. Sync worker.js with _worker.js if modified
 if (Test-Path "$projectDir\_worker.js") {

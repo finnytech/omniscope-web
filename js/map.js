@@ -3225,10 +3225,6 @@ class OperationsMap {
         this.fetchVessels();
         setInterval(() => this.fetchVessels(), 25000);
 
-        // 4. NASA FIRMS Active Wildfires (every 60 seconds)
-        this.fetchFIRMS();
-        setInterval(() => this.fetchFIRMS(), 60000);
-
         // 5. USGS Global Earthquakes (every 60 seconds)
         this.fetchEarthquakes();
         setInterval(() => this.fetchEarthquakes(), 60000);
