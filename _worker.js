@@ -289,9 +289,11 @@ Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
         response = await env.ASSETS.fetch(new Request(indexUrl, request));
       }
     } else {
-      return new Response("OmniScope OSINT - Tactical Edge System Ready", {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8" }
+      // Standalone Worker: Transparent proxy from canonical Cloudflare Pages edge
+      const targetUrl = new URL(url.pathname + url.search, "https://omniscope-web.pages.dev");
+      response = await fetch(targetUrl.toString(), {
+        method: request.method,
+        headers: request.headers
       });
     }
 

@@ -44,7 +44,12 @@ npx wrangler pages deploy . --project-name=omniscope-web --branch=main --commit-
 Write-Host "[INFO] Aktualisiere www-Alias Branch (www.omniscope-web.pages.dev -> 301 Redirect)..." -ForegroundColor Cyan
 npx wrangler pages deploy . --project-name=omniscope-web --branch=www --commit-dirty=true
 
+# 5. Deploy Standalone Worker (omniscope-web.fuchsdany1984.workers.dev)
+Write-Host "[INFO] Aktualisiere Standalone Cloudflare Worker (omniscope-web)..." -ForegroundColor Cyan
+npx wrangler deploy worker.js --name omniscope-web --compatibility-date 2026-10-14
+
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " [DEPLOY COMPLETE] Live unter: https://omniscope-web.pages.dev" -ForegroundColor Green
-Write-Host " [ALIAS ACTIVE]   Live unter: https://www.omniscope-web.pages.dev (301 Auto-Redirect)" -ForegroundColor Green
+Write-Host " [PAGES PROD]   Live unter: https://omniscope-web.pages.dev" -ForegroundColor Green
+Write-Host " [PAGES ALIAS]  Live unter: https://www.omniscope-web.pages.dev (301 Auto-Redirect)" -ForegroundColor Green
+Write-Host " [WORKER EDGE]  Live unter: https://omniscope-web.fuchsdany1984.workers.dev" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
