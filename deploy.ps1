@@ -36,10 +36,15 @@ if (Test-Path "$projectDir\_worker.js") {
     Copy-Item "$projectDir\_worker.js" "$projectDir\worker.js" -Force
 }
 
-# 3. Deploy to Pages
-Write-Host "[INFO] Starte Deployment zu Cloudflare Pages (Projekt: omniscope-web)..." -ForegroundColor Cyan
-npx wrangler pages deploy . --project-name=omniscope-web --commit-dirty=true
+# 3. Deploy to Pages (Production Main)
+Write-Host "[INFO] Starte Deployment zu Cloudflare Pages (Production: omniscope-web.pages.dev)..." -ForegroundColor Cyan
+npx wrangler pages deploy . --project-name=omniscope-web --branch=main --commit-dirty=true
+
+# 4. Deploy www Alias Preview Branch (auto-redirects to main)
+Write-Host "[INFO] Aktualisiere www-Alias Branch (www.omniscope-web.pages.dev -> 301 Redirect)..." -ForegroundColor Cyan
+npx wrangler pages deploy . --project-name=omniscope-web --branch=www --commit-dirty=true
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " [DEPLOY COMPLETE] Live unter: https://omniscope-web.pages.dev" -ForegroundColor Green
+Write-Host " [ALIAS ACTIVE]   Live unter: https://www.omniscope-web.pages.dev (301 Auto-Redirect)" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Cyan
