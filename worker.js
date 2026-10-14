@@ -11,6 +11,32 @@ export default {
       return Response.redirect(cleanUrl.toString(), 301);
     }
 
+    // 0b. WAF CUSTOM RULE: EXPLOIT & PROBE SCANNER ZERO-TOLERANCE IMMEDIATE BLOCK (403 DROP)
+    // Matches: uri.path contains ".env" || uri.path contains ".php" || uri.path contains "wp-"
+    //          || uri.path contains "credentials" || uri.path contains "xmlrpc"
+    //          || .git || .svn || .hg || .aws || phpinfo || wlwmanifest || keyfile || etc.
+    const wafExploitPattern = /(\.env|\.php|wp-|xmlrpc|credentials|\.git|\.svn|\.hg|\.aws|phpinfo|wlwmanifest|keyfile|service-account|sa\.json|firebase-key|server-status)/i;
+    let decodedPath = url.pathname;
+    try {
+      decodedPath = decodeURIComponent(url.pathname);
+    } catch (_) {
+      decodedPath = url.pathname;
+    }
+    if (wafExploitPattern.test(url.pathname) || wafExploitPattern.test(decodedPath)) {
+      return new Response("403 Forbidden: WAF Custom Rule Triggered - Unauthorized vulnerability scan attempt blocked and dropped.", {
+        status: 403,
+        statusText: "Forbidden - Exploit Probe Dropped",
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "X-WAF-Action": "BLOCK",
+          "X-WAF-Rule": "EXPLOIT_SCANNER_CONTAINMENT",
+          "X-Robots-Tag": "noindex, nofollow, noarchive",
+          "Cache-Control": "public, max-age=86400",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+
     // 1. Allow and serve robots.txt dynamically
     if (url.pathname === "/robots.txt") {
       const robotsTxt = `# ==============================================================================
@@ -57,13 +83,16 @@ Allow: /
 User-agent: BraveBot
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
 User-agent: GPTBot
 Disallow: /
 
 User-agent: ChatGPT-User
-Disallow: /
-
-User-agent: OAI-SearchBot
 Disallow: /
 
 User-agent: ClaudeBot
@@ -79,9 +108,6 @@ User-agent: CCBot
 Disallow: /
 
 User-agent: Bytespider
-Disallow: /
-
-User-agent: PerplexityBot
 Disallow: /
 
 User-agent: FacebookBot
@@ -147,6 +173,11 @@ Disallow: /
 User-agent: *
 Allow: /
 Disallow: /api/proxy/
+Disallow: /*.env*
+Disallow: /*.php*
+Disallow: /*wp-*
+Disallow: /*credentials*
+Disallow: /*xmlrpc*
 
 Sitemap: https://omniscope-web.pages.dev/sitemap.xml
 Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
@@ -200,21 +231,21 @@ Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
       "yandexbot",
       "qwantify",
       "seznambot",
-      "bravebot"
+      "bravebot",
+      "oai-searchbot",
+      "perplexitybot"
     ];
-    const isSearchEngine = searchEngineBots.some(bot => lowerUA.includes(bot));
+    const isSearchEngine = searchEngineBots.some(bot => lowerUA.includes(bot)) && !lowerUA.includes("applebot-extended");
 
-    // 4. Blocked AI Harvesters & Unwanted Scrapers
+    // 4. Blocked AI Harvesters & Unwanted Scrapers (Bulk LLM Training Data Crawlers)
     const blockedScrapers = [
       "gptbot",
       "chatgpt-user",
-      "oai-searchbot",
       "claudebot",
       "anthropic-ai",
       "claude-web",
       "ccbot",
       "bytespider",
-      "perplexitybot",
       "facebookbot",
       "meta-externalagent",
       "cohere-ai",

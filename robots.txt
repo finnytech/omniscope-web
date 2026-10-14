@@ -43,14 +43,17 @@ Allow: /
 User-agent: BraveBot
 Allow: /
 
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
 # 2. BLOCK AI TRAINING CRAWLERS, LLM HARVESTERS & JUNK BOTS
 User-agent: GPTBot
 Disallow: /
 
 User-agent: ChatGPT-User
-Disallow: /
-
-User-agent: OAI-SearchBot
 Disallow: /
 
 User-agent: ClaudeBot
@@ -66,9 +69,6 @@ User-agent: CCBot
 Disallow: /
 
 User-agent: Bytespider
-Disallow: /
-
-User-agent: PerplexityBot
 Disallow: /
 
 User-agent: FacebookBot
@@ -131,10 +131,16 @@ Disallow: /
 User-agent: SemanticScholarBot
 Disallow: /
 
-# 3. DEFAULT RULES
+# 3. DEFAULT RULES & EXPLOIT PATH DROP
 User-agent: *
 Allow: /
 Disallow: /api/proxy/
+Disallow: /*.env*
+Disallow: /*.php*
+Disallow: /*wp-*
+Disallow: /*credentials*
+Disallow: /*xmlrpc*
 
 Sitemap: https://omniscope-web.pages.dev/sitemap.xml
 Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
+
