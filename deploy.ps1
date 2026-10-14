@@ -9,14 +9,18 @@ Write-Host " [OMNISCOPE OSINT] Cloudflare Pages Deployer" -ForegroundColor Yello
 Write-Host " Pfad: $projectDir" -ForegroundColor Gray
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. Resolve Cloudflare API Token
+# 1. Resolve Cloudflare API Token (auto-refresh via cf CLI)
+try {
+    cf user get -q 2>$null | Out-Null
+} catch {}
+
 $tokenFile = "$env:APPDATA\xdg.config\cloudflare\config\default.json"
 if (Test-Path $tokenFile) {
     try {
         $json = Get-Content $tokenFile -Raw | ConvertFrom-Json
         if ($json.oauth_token) {
             $env:CLOUDFLARE_API_TOKEN = $json.oauth_token
-            Write-Host "[OK] Cloudflare OAuth Token geladen aus default.json" -ForegroundColor Green
+            Write-Host "[OK] Cloudflare OAuth Token geladen aus default.json (Gültig bis: $($json.expiration_time))" -ForegroundColor Green
         }
     } catch {
         Write-Host "[WARN] Konnte default.json nicht parsen, nutze Fallback..." -ForegroundColor DarkYellow
