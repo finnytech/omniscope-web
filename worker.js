@@ -1,8 +1,15 @@
-﻿export default {
+export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const userAgent = request.headers.get("user-agent") || "";
     const lowerUA = userAgent.toLowerCase();
+
+    // 0. Handle www redirects cleanly (avoid origin loops)
+    if (url.hostname.startsWith("www.")) {
+      const cleanUrl = new URL(request.url);
+      cleanUrl.hostname = url.hostname.replace(/^www\./, "");
+      return Response.redirect(cleanUrl.toString(), 301);
+    }
 
     // 1. Allow and serve robots.txt dynamically
     if (url.pathname === "/robots.txt") {
@@ -141,6 +148,7 @@ User-agent: *
 Allow: /
 Disallow: /api/proxy/
 
+Sitemap: https://omniscope-web.pages.dev/sitemap.xml
 Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
 `;
       return new Response(robotsTxt, {
@@ -158,16 +166,16 @@ Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
       const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://omniscope-web.fuchsdany1984.workers.dev/</loc>
-    <lastmod>2026-10-12</lastmod>
+    <loc>https://omniscope-web.pages.dev/</loc>
+    <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://omniscope-web.pages.dev/</loc>
-    <lastmod>2026-10-12</lastmod>
+    <loc>https://omniscope-web.fuchsdany1984.workers.dev/</loc>
+    <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
-    <priority>1.0</priority>
+    <priority>0.9</priority>
   </url>
 </urlset>`;
       return new Response(sitemapXml, {
@@ -271,12 +279,20 @@ Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
       }
     }
 
-    // 5. Forward legitimate requests to static assets
+    // 5. Forward legitimate requests to static assets (NEVER fallback to fetch(request) which loops to missing origin)
     let response;
     if (env.ASSETS && typeof env.ASSETS.fetch === "function") {
       response = await env.ASSETS.fetch(request);
+      // SPA Fallback for non-file routes
+      if (response.status === 404 && !url.pathname.includes(".")) {
+        const indexUrl = new URL("/index.html", request.url);
+        response = await env.ASSETS.fetch(new Request(indexUrl, request));
+      }
     } else {
-      response = await fetch(request);
+      return new Response("OmniScope OSINT - Tactical Edge System Ready", {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" }
+      });
     }
 
     const newHeaders = new Headers(response.headers);

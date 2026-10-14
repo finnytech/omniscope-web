@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # OmniScope OSINT - Tactical Search & Scraper Policy (RFC 9309)
 # Search Engines: ALLOWED | AI Scrapers & Data Harvesters: STRICTLY BLOCKED
 # ==============================================================================
@@ -136,4 +136,5 @@ User-agent: *
 Allow: /
 Disallow: /api/proxy/
 
+Sitemap: https://omniscope-web.pages.dev/sitemap.xml
 Sitemap: https://omniscope-web.fuchsdany1984.workers.dev/sitemap.xml
