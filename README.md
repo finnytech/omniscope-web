@@ -1,4 +1,22 @@
-# 🌐 OmniScope Web
+# 🌐 OmniScope Web [OFFICIAL ORIGINAL]
+
+[![Official Original Project](https://img.shields.io/badge/OmniScope-OFFICIAL%20ORIGINAL-00ffcc?style=for-the-badge&logo=shield)](https://github.com/finnytech/omniscope-web)
+[![FinnyTech Original](https://img.shields.io/badge/Author-FinnyTech-ff0055?style=for-the-badge)](https://github.com/finnytech)
+[![Production Live](https://img.shields.io/badge/Live-omniscope--web.pages.dev-blue?style=for-the-badge)](https://omniscope-web.pages.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
+> [!IMPORTANT]
+> ### 🚨 OFFICIAL REPOSITORY & INTELLECTUAL PROPERTY NOTICE
+> **OmniScope™ is the original, authentic open-source geospatial intelligence and tactical sensor grid created and maintained exclusively by [FinnyTech](https://github.com/finnytech).**
+>
+> ⚠️ **BEWARE OF UNAUTHORIZED CLONES & COPYCATS**:
+> Following the recent viral surge of OmniScope, third parties (including unauthorized groups such as *"Sam Good Group / OmniScope Lite"*) have begun cloning, scraping, and republishing stripped-down knockoffs.
+> 
+> - **Canonical Live Web Dashboard**: [`https://omniscope-web.pages.dev`](https://omniscope-web.pages.dev)
+> - **Official Web Repository**: [`https://github.com/finnytech/omniscope-web`](https://github.com/finnytech/omniscope-web)
+> - **Official OSINT Native Desktop Repository**: [`https://github.com/finnytech/omniscope-osint`](https://github.com/finnytech/omniscope-osint)
+> 
+> Any versions hosted outside `*.pages.dev` or `github.com/finnytech/*` are unauthorized copies, lack our certified 147-model keyless consensus and Cloudflare Edge WAF security, and may contain modified or malicious code.
 
 > **Serverless, 100% Free Open Geospatial Intelligence Dashboard for Cloudflare Pages**  
 > *Zero Server Costs • Zero Cloudflare Database Fees • 100% Keyless • Pure Open Data*
