@@ -38,6 +38,9 @@ All live data is fetched directly inside the user's browser using open, CORS-ena
 
 ## 🤖 Model Context Protocol (MCP) & Edge REST APIs
 
+OmniScope features a dedicated, standalone repository for its complete Model Context Protocol ecosystem:  
+👉 **Official Standalone MCP Repository**: [`https://github.com/finnytech/omniscope-mcp`](https://github.com/finnytech/omniscope-mcp)
+
 OmniScope Web provides a native, zero-key Model Context Protocol (MCP) server and public Edge REST API suite hosted across Cloudflare's Anycast Edge for Claude Desktop, Cursor, and autonomous AI agents:
 
 ### 1. Stdio MCP Server (`omniscope-web-mcp`):
