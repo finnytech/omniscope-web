@@ -2,11 +2,140 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <title>OMNISCOPE WEB // OPEN SENSOR & RADAR COMMAND GRID</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>OmniScope OSINT // Realtime Geospatial Intelligence & Radar Command Grid</title>
+    <meta name="description" content="OmniScope by FinnyTech is the premier 100% keyless open-source intelligence (OSINT) command center. Features real-time geospatial mapping, 147-model weather consensus, live NEXRAD Doppler radar, 1,000,000+ verified CCTV nodes, and native MCP protocol support. Zero-Fake, keyless open data." />
+    <meta name="keywords" content="OSINT dashboard, realtime OSINT map, live weather Doppler tracker, open source intelligence command center, NEXRAD radar live, traffic camera OSINT, flight radar open source, OmniScope, FinnyTech, OpenJEV, MCP OSINT" />
+    <meta name="author" content="FinnyTech" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://omniscope-web.pages.dev/" />
+
+    <!-- Open Graph / Social / Discord / LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://omniscope-web.pages.dev/" />
+    <meta property="og:site_name" content="OmniScope OSINT" />
+    <meta property="og:title" content="OmniScope OSINT - Realtime Geospatial Intelligence Command Center" />
+    <meta property="og:description" content="100% Keyless, Zero-Fake live intelligence map. 147-model WMO weather consensus, live Doppler radar, 1M+ camera/sensor feeds, and native MCP AI agent integration." />
+    <meta property="og:image" content="https://omniscope-web.pages.dev/assets/omniscope-preview-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="OmniScope OSINT Multi-Monitor Command Center Interface" />
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@FinnyTech" />
+    <meta name="twitter:creator" content="@FinnyTech" />
+    <meta name="twitter:title" content="OmniScope OSINT - Realtime Intelligence Command Center" />
+    <meta name="twitter:description" content="Instant zero-key geospatial intelligence. Live NEXRAD Doppler radar, 147-model weather consensus, live CCTV network, and ADS-B flight tracking." />
+    <meta name="twitter:image" content="https://omniscope-web.pages.dev/assets/omniscope-preview-card.png" />
+
+    <!-- Verification & Security Provenance -->
+    <meta name="finnytech-provenance" content="verified-original" />
+    <meta name="theme-color" content="#0a0e17" />
+
+    <!-- JSON-LD Multi-Graph Schema for Google Rich Snippets & Search Dominance -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "https://omniscope-web.pages.dev/#webapp",
+          "name": "OmniScope OSINT",
+          "url": "https://omniscope-web.pages.dev/",
+          "applicationCategory": "SecurityApplication",
+          "operatingSystem": "All modern web browsers (Chrome, Firefox, Safari, Edge)",
+          "browserRequirements": "Requires WebGL support",
+          "description": "High-density real-time open source intelligence (OSINT) command center. Unifies live Doppler radar, 147 weather prediction models, 1M+ traffic and optical sensors, ADS-B aircraft, and AIS marine tracking without requiring API keys.",
+          "softwareVersion": "3.4.0",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "creator": {
+            "@type": "Organization",
+            "@id": "https://omniscope-web.pages.dev/#organization",
+            "name": "FinnyTech",
+            "url": "https://github.com/finnytech"
+          },
+          "featureList": [
+            "100% Keyless zero-friction access",
+            "147-model international weather consensus (ECMWF, GFS, ICON, HRRR)",
+            "Realtime NEXRAD Level II/III Doppler radar reflection and velocity",
+            "Over 1,000,000 indexed optical camera and traffic sensor nodes",
+            "Uncensored real-time ADS-B flight and AIS marine vessel feeds",
+            "Native Model Context Protocol (MCP) server support for AI agents",
+            "Zero-Fake guaranteed authentic telemetry"
+          ]
+        },
+        {
+          "@type": "Dataset",
+          "@id": "https://omniscope-web.pages.dev/#dataset",
+          "name": "OmniScope Live Global Telemetry & Sensor Feed",
+          "description": "Aggregated real-time global telemetry feed containing WMO weather models, Doppler radar, active wildland fires (NASA FIRMS), seismic activity (USGS), and verified transport cameras.",
+          "url": "https://omniscope-web.pages.dev/",
+          "creator": {
+            "@id": "https://omniscope-web.pages.dev/#organization"
+          },
+          "distribution": {
+            "@type": "DataDownload",
+            "encodingFormat": "application/json",
+            "contentUrl": "https://omniscope-web.pages.dev/api/capabilities"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://omniscope-web.pages.dev/#organization",
+          "name": "FinnyTech",
+          "url": "https://github.com/finnytech",
+          "sameAs": [
+            "https://github.com/finnytech/omniscope-web",
+            "https://github.com/finnytech/omniscope-osint",
+            "https://github.com/finnytech/omniscope-mcp"
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://omniscope-web.pages.dev/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is OmniScope OSINT?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "OmniScope OSINT is an open-source intelligence command center built by FinnyTech. It integrates real-time geospatial layers including live Doppler radar, 147-model weather consensus, over 1 million camera nodes, ADS-B flight tracking, and seismic sensors into a responsive multi-monitor web application."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does OmniScope require API keys or registration?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. OmniScope operates under FinnyTech's Zero-Key policy. All data layers leverage public, keyless government and scientific data portals mediated through Cloudflare Anycast edge proxies."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is FinnyTech's Zero-Fake Policy?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "FinnyTech's Zero-Fake Policy guarantees that every data point, flight vector, weather echo, and camera stream rendered on OmniScope originates from verified, real-world telemetry. OmniScope strictly forbids synthetic, simulated, or mocked data."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can AI agents interact with OmniScope?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. OmniScope features native Model Context Protocol (MCP) server support through the official finnytech/omniscope-mcp package, allowing AI models (like Claude, Gemini, and GPT) to query live weather, search cameras, and inspect radar telemetry directly."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23030712' stroke='%2338bdf8' stroke-width='6'/><circle cx='50' cy='50' r='20' fill='none' stroke='%2306b6d4' stroke-width='4'/><line x1='50' y1='5' x2='50' y2='95' stroke='%2338bdf8' stroke-width='3'/><line x1='5' y1='50' x2='95' y2='50' stroke='%2338bdf8' stroke-width='3'/></svg>" />
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
