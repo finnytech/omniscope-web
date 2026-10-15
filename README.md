@@ -15,6 +15,7 @@
 > - **Canonical Live Web Dashboard**: [`https://omniscope-web.pages.dev`](https://omniscope-web.pages.dev)
 > - **Official Web Repository**: [`https://github.com/finnytech/omniscope-web`](https://github.com/finnytech/omniscope-web)
 > - **Official OSINT Native Desktop Repository**: [`https://github.com/finnytech/omniscope-osint`](https://github.com/finnytech/omniscope-osint)
+> - **Official Standalone MCP Suite**: [`https://github.com/finnytech/omniscope-mcp`](https://github.com/finnytech/omniscope-mcp)
 > 
 > Any versions hosted outside `*.pages.dev` or `github.com/finnytech/*` are unauthorized copies, lack our certified 147-model keyless consensus and Cloudflare Edge WAF security, and may contain modified or malicious code.
 
@@ -33,6 +34,44 @@ All live data is fetched directly inside the user's browser using open, CORS-ena
 - **Meteorological Supercomputers**: Live temperature, pressure, CAPE, and dew point feeds via Open-Meteo.
 - **Curated Worldwide Webcams**: Over 1,500 verified scenic, beach, alpine, and city public webcams loaded from `data/webcams.json`.
 - **ISS Space Station Orbit**: Real-time orbital telemetry tracking.
+
+---
+
+## 🤖 Model Context Protocol (MCP) & Edge REST APIs
+
+OmniScope features a dedicated, standalone repository for its complete Model Context Protocol ecosystem:  
+👉 **Official Standalone MCP Repository**: [`https://github.com/finnytech/omniscope-mcp`](https://github.com/finnytech/omniscope-mcp)
+
+OmniScope Web provides a native, zero-key Model Context Protocol (MCP) server and public Edge REST API suite hosted across Cloudflare's Anycast Edge for Claude Desktop, Cursor, and autonomous AI agents:
+
+### 1. Stdio MCP Server (`omniscope-web-mcp`):
+Add to `claude_desktop_config.json` or `.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "omniscope-web": {
+      "command": "node",
+      "args": ["D:/projects/omniscope-web/mcp-server/index.js"]
+    }
+  }
+}
+```
+
+### 2. Live Cloudflare Anycast Remote MCP Endpoints:
+- **Discovery Manifest**: [`https://omniscope-web.pages.dev/.well-known/mcp.json`](https://omniscope-web.pages.dev/.well-known/mcp.json)
+- **JSON-RPC 2.0 Messages**: `https://omniscope-web.pages.dev/mcp/messages`
+- **SSE Stream**: `https://omniscope-web.pages.dev/mcp/sse`
+- **OpenAPI 3.1 Spec**: [`https://omniscope-web.pages.dev/openapi.json`](https://omniscope-web.pages.dev/openapi.json)
+- **LLM Specification**: [`https://omniscope-web.pages.dev/llms.txt`](https://omniscope-web.pages.dev/llms.txt)
+
+### 3. Public Keyless Edge APIs (`/api/*`):
+- `GET /api/capabilities`: System health, capabilities, and Zero-Fake compliance.
+- `GET /api/weather?latitude=50.11&longitude=8.68`: 147-model numerical consensus across DWD ICON, ECMWF IFS, NOAA GFS, and GEM Global.
+- `GET /api/storms`: Active NOAA NWS tornado warnings and convective storm alerts.
+- `GET /api/seismic?min_magnitude=2.5`: Real-time tectonic earthquake telemetry from USGS.
+- `GET /api/space-weather`: Planetary Kp-index and geomagnetic storm threat levels from NOAA SWPC.
+- `GET /api/webcams?query=zugspitze`: Search 1,500+ verified public streaming webcams.
+- `GET /api/sitrep?location=Frankfurt`: Synthesize a comprehensive tactical Situation Report combining all live telemetry.
 
 ---
 
