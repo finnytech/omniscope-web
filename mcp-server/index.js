@@ -89,14 +89,15 @@ async function directFallback(toolName, args) {
   if (toolName === "omniscope_space_weather") {
     const res = await fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json");
     const data = await res.json();
-    const rows = Array.isArray(data) ? data.slice(1) : [];
+    const rows = Array.isArray(data) ? data : [];
     const latest = rows.length > 0 ? rows[rows.length - 1] : null;
-    const kp = latest ? parseFloat(latest[1]) : 1.0;
+    const rawKp = latest ? (latest.Kp !== undefined ? latest.Kp : latest[1]) : 1.0;
+    const kp = typeof rawKp === "number" ? rawKp : parseFloat(rawKp || "1.0");
     return {
       status: "ok",
       planetary_k_index: kp,
       source: "NOAA Space Weather Prediction Center (Direct Fallback)",
-      observation_time: latest ? latest[0] : new Date().toISOString()
+      observation_time: latest ? (latest.time_tag || latest[0] || new Date().toISOString()) : new Date().toISOString()
     };
   }
 

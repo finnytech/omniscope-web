@@ -254,10 +254,11 @@ async function handleSpaceWeather() {
   }
 
   const data = await res.json();
-  const readings = Array.isArray(data) ? data.slice(1) : []; // first row is header
+  const readings = Array.isArray(data) ? data : [];
   const latest = readings.length > 0 ? readings[readings.length - 1] : null;
 
-  const kp = latest ? parseFloat(latest[1]) : 1.0;
+  const rawKp = latest ? (latest.Kp !== undefined ? latest.Kp : latest[1]) : 1.0;
+  const kp = typeof rawKp === "number" ? rawKp : parseFloat(rawKp || "1.0");
   let stormScale = "G0 - Quiet";
   let auroralActivity = "Low (Polar latitudes only)";
 
@@ -268,13 +269,18 @@ async function handleSpaceWeather() {
   else if (kp >= 5.0) { stormScale = "G1 - Minor Geomagnetic Storm"; auroralActivity = "Active"; }
   else if (kp >= 4.0) { stormScale = "Unsettled"; auroralActivity = "Moderate"; }
 
+  const obsTime = latest ? (latest.time_tag || latest[0] || new Date().toISOString()) : new Date().toISOString();
+
   return jsonResponse({
     status: "ok",
     planetary_k_index: kp,
     noaa_storm_scale: stormScale,
     auroral_activity: auroralActivity,
-    observation_time: latest ? latest[0] : new Date().toISOString(),
-    recent_trend: readings.slice(-6).map(r => ({ time: r[0], kp: parseFloat(r[1]) })),
+    observation_time: obsTime,
+    recent_trend: readings.slice(-6).map(r => ({
+      time: r.time_tag || r[0],
+      kp: parseFloat((r.Kp !== undefined ? r.Kp : r[1]) || 1.0)
+    })),
     source: "NOAA Space Weather Prediction Center (SWPC)",
     timestamp: new Date().toISOString()
   });
