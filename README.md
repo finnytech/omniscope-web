@@ -51,11 +51,13 @@ Add to `claude_desktop_config.json` or `.cursor/mcp.json`:
   "mcpServers": {
     "omniscope-web": {
       "command": "node",
-      "args": ["D:/projects/omniscope-web/mcp-server/index.js"]
+      "args": ["<PATH_TO_OMNISCOPE_WEB>/mcp-server/index.js"]
     }
   }
 }
 ```
+> 💡 *Replace `<PATH_TO_OMNISCOPE_WEB>` with the directory where you cloned this repository (e.g. `/home/user/omniscope-web` or `C:/tools/omniscope-web`).*
+
 
 ### 2. Live Cloudflare Anycast Remote MCP Endpoints:
 - **Discovery Manifest**: [`https://omniscope-web.pages.dev/.well-known/mcp.json`](https://omniscope-web.pages.dev/.well-known/mcp.json)
