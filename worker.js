@@ -766,13 +766,16 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
 User-agent: PerplexityBot
 Allow: /
 
-User-agent: GPTBot
-Disallow: /
+User-agent: Perplexity-User
+Allow: /
 
-User-agent: ChatGPT-User
+User-agent: GPTBot
 Disallow: /
 
 User-agent: ClaudeBot
@@ -1081,12 +1084,12 @@ Available at: https://omniscope-web.pages.dev/openapi.json
     const searchEngineBots = [
       "googlebot", "google-inspectiontool", "bingbot", "msnbot", "duckduckbot",
       "applebot", "slurp", "baiduspider", "yandexbot", "qwantify", "seznambot",
-      "bravebot", "oai-searchbot", "perplexitybot"
+      "bravebot", "oai-searchbot", "perplexitybot", "chatgpt-user", "perplexity-user"
     ];
     const isSearchEngine = searchEngineBots.some(bot => lowerUA.includes(bot)) && !lowerUA.includes("applebot-extended");
 
     const blockedScrapers = [
-      "gptbot", "chatgpt-user", "claudebot", "anthropic-ai", "claude-web", "ccbot",
+      "gptbot", "claudebot", "anthropic-ai", "claude-web", "ccbot",
       "bytespider", "facebookbot", "meta-externalagent", "cohere-ai",
       "cohere-training-data-crawler", "diffbot", "amazonbot", "google-extended",
       "applebot-extended", "quora", "poe-bot", "poe", "scrapy", "omgili",

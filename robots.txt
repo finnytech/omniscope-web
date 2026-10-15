@@ -46,14 +46,17 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
+User-agent: ChatGPT-User
+Allow: /
+
 User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
 Allow: /
 
 # 2. BLOCK AI TRAINING CRAWLERS, LLM HARVESTERS & JUNK BOTS
 User-agent: GPTBot
-Disallow: /
-
-User-agent: ChatGPT-User
 Disallow: /
 
 User-agent: ClaudeBot
