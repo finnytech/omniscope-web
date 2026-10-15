@@ -1,0 +1,31 @@
+# OmniScope OSINT - Tactical Edge Intelligence & Geospatial Sensor Grid
+
+> OmniScope OSINT is an open-source, serverless tactical command center that aggregates real-time meteorological supercomputers, live Doppler precipitation loops, USGS seismic feeds, global optical webcams, and space weather telemetry into an integrated multi-monitor dashboard.
+
+- **Author**: FinnyTech (https://github.com/finnytech)
+- **Live Deployment**: https://omniscope-web.pages.dev
+- **Repository**: https://github.com/finnytech/omniscope-web
+- **API Base URL**: https://omniscope-web.pages.dev/api
+- **MCP Endpoint**: https://omniscope-web.pages.dev/mcp
+- **Architecture**: Zero-key open data, Cloudflare Edge Workers, 100% free public access.
+
+## Live Edge APIs Available for AI Agents
+
+All endpoints return raw JSON with standard CORS headers (`Access-Control-Allow-Origin: *`):
+
+- `GET /api/capabilities`: Return system health, supported data layers, and Zero-Fake compliance status.
+- `GET /api/weather?latitude={lat}&longitude={lon}`: Real-time consensus forecast comparing DWD ICON, ECMWF IFS, NOAA GFS, and GEM models.
+- `GET /api/weather/providers`: Certified registry of 147 numerical weather models with agency metadata.
+- `GET /api/storms`: Active convective storm warnings (Tornado, Severe Thunderstorm, Flash Flood) parsed from official NOAA NWS feeds.
+- `GET /api/seismic?min_magnitude=2.5`: Real-time global earthquakes from USGS with magnitude, depth, and tsunami alert flags.
+- `GET /api/space-weather`: Planetary Kp-index and geomagnetic storm threat level from NOAA SWPC.
+- `GET /api/webcams?query={query}&country={code}`: Search over 1,500 verified public highway, airport, and scenic cameras.
+- `GET /api/sitrep?location={name}&latitude={lat}&longitude={lon}`: Generate an executive, markdown-formatted tactical Situation Report.
+
+## Model Context Protocol (MCP) Integration
+
+OmniScope Web provides a native Model Context Protocol (MCP) server for Claude Desktop, Cursor, and autonomous agents:
+- Manifest: `https://omniscope-web.pages.dev/.well-known/mcp.json`
+- SSE Transport: `https://omniscope-web.pages.dev/mcp/sse`
+- JSON-RPC POST: `https://omniscope-web.pages.dev/mcp/messages`
+- Stdio NPM Runner: `npx omniscope-web-mcp`

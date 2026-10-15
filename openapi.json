@@ -1,0 +1,106 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OmniScope OSINT Tactical Edge API",
+    "version": "2.0.0",
+    "description": "Zero-key open-source tactical intelligence APIs for meteorological supercomputers, live Doppler radar, USGS seismic activity, space weather, and optical surveillance webcams.",
+    "contact": {
+      "name": "FinnyTech",
+      "url": "https://github.com/finnytech/omniscope-web"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://omniscope-web.pages.dev/api",
+      "description": "Cloudflare Global Edge Anycast Network"
+    }
+  ],
+  "paths": {
+    "/capabilities": {
+      "get": {
+        "summary": "System Health & Capabilities",
+        "description": "Returns verified serverless capabilities, Zero-Fake compliance, and active telemetry streams.",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/weather": {
+      "get": {
+        "summary": "147-Model Weather Consensus",
+        "description": "Calculates real-time numerical weather consensus across DWD ICON, ECMWF IFS, NOAA GFS, and GEM models.",
+        "parameters": [
+          { "name": "latitude", "in": "query", "required": true, "schema": { "type": "number" }, "example": 50.1109 },
+          { "name": "longitude", "in": "query", "required": true, "schema": { "type": "number" }, "example": 8.6821 },
+          { "name": "models", "in": "query", "required": false, "schema": { "type": "string" }, "example": "dwd_icon,ecmwf_ifs025,gfs_seamless" }
+        ],
+        "responses": {
+          "200": { "description": "Consensus weather data" }
+        }
+      }
+    },
+    "/storms": {
+      "get": {
+        "summary": "Live Severe Storm & Tornado Alerts",
+        "description": "Fetches active severe weather alerts, tornado warnings, and convective storm cells from NOAA NWS.",
+        "responses": {
+          "200": { "description": "Active storm alerts" }
+        }
+      }
+    },
+    "/seismic": {
+      "get": {
+        "summary": "Real-Time Earthquakes",
+        "description": "Fetches verified global tectonic activity from the USGS Real-Time Earthquake feed.",
+        "parameters": [
+          { "name": "min_magnitude", "in": "query", "required": false, "schema": { "type": "string", "default": "2.5" } }
+        ],
+        "responses": {
+          "200": { "description": "Global earthquake features" }
+        }
+      }
+    },
+    "/space-weather": {
+      "get": {
+        "summary": "Geomagnetic Storm & Kp-Index",
+        "description": "Returns planetary Kp-index, geomagnetic disturbance levels, and solar storm warnings from NOAA SWPC.",
+        "responses": {
+          "200": { "description": "Space weather telemetry" }
+        }
+      }
+    },
+    "/webcams": {
+      "get": {
+        "summary": "Public Surveillance Webcams",
+        "description": "Queries thousands of verified public highway, beach, alpine, and airport live cameras.",
+        "parameters": [
+          { "name": "query", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "country", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "Matching cameras" }
+        }
+      }
+    },
+    "/sitrep": {
+      "get": {
+        "summary": "Tactical Situation Report (SITREP)",
+        "description": "Synthesizes multi-sensor intelligence (weather, seismic, webcams, space weather) into an executive markdown briefing.",
+        "parameters": [
+          { "name": "location", "in": "query", "required": true, "schema": { "type": "string" }, "example": "Berlin" },
+          { "name": "latitude", "in": "query", "required": true, "schema": { "type": "number" }, "example": 52.52 },
+          { "name": "longitude", "in": "query", "required": true, "schema": { "type": "number" }, "example": 13.405 }
+        ],
+        "responses": {
+          "200": { "description": "Markdown formatted SITREP" }
+        }
+      }
+    }
+  }
+}

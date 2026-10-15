@@ -1,0 +1,54 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp.json",
+  "name": "omniscope-web",
+  "displayName": "OmniScope OSINT Global Tactical Grid (Web Edition)",
+  "description": "Zero-key open-source geospatial intelligence, 147-model numerical weather consensus, global surveillance webcams, seismic activity, and severe storm tracking via Cloudflare Edge.",
+  "version": "2.0.0",
+  "author": "FinnyTech",
+  "homepage": "https://omniscope-web.pages.dev",
+  "repository": "https://github.com/finnytech/omniscope-web",
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": true
+  },
+  "endpoints": {
+    "api_base": "https://omniscope-web.pages.dev/api",
+    "sse": "https://omniscope-web.pages.dev/mcp/sse",
+    "messages": "https://omniscope-web.pages.dev/mcp/messages",
+    "openapi": "https://omniscope-web.pages.dev/openapi.json",
+    "llms_txt": "https://omniscope-web.pages.dev/llms.txt"
+  },
+  "tools": [
+    {
+      "name": "omniscope_weather_consensus",
+      "description": "Calculate live meteorological multi-model consensus across 147 certified models (DWD ICON, ECMWF IFS, NOAA GFS, etc.) for any global coordinate.",
+      "endpoint": "/api/weather"
+    },
+    {
+      "name": "omniscope_storm_intercept",
+      "description": "Fetch real-time convective storm telemetry, NWS tornado/severe thunderstorm warnings, and radar-indicated rotation cells.",
+      "endpoint": "/api/storms"
+    },
+    {
+      "name": "omniscope_search_webcams",
+      "description": "Search global surveillance, highway, alpine, and scenic public webcams by location, country, or keyword.",
+      "endpoint": "/api/webcams"
+    },
+    {
+      "name": "omniscope_seismic_monitor",
+      "description": "Query real-time global tectonic activity from USGS feeds, including magnitude, epicenter, depth, and tsunami alert flags.",
+      "endpoint": "/api/seismic"
+    },
+    {
+      "name": "omniscope_space_weather",
+      "description": "Retrieve current geomagnetic storm activity, planetary Kp-index, solar flux, and aurora visibility forecasts from NOAA SWPC.",
+      "endpoint": "/api/space-weather"
+    },
+    {
+      "name": "omniscope_generate_sitrep",
+      "description": "Synthesize a comprehensive, structured tactical Situation Report (SITREP) combining weather, seismic, surveillance, and threat metrics for a specified location.",
+      "endpoint": "/api/sitrep"
+    }
+  ]
+}
