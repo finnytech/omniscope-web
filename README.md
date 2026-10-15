@@ -15,6 +15,7 @@
 > - **Canonical Live Web Dashboard**: [`https://omniscope-web.pages.dev`](https://omniscope-web.pages.dev)
 > - **Official Web Repository**: [`https://github.com/finnytech/omniscope-web`](https://github.com/finnytech/omniscope-web)
 > - **Official OSINT Native Desktop Repository**: [`https://github.com/finnytech/omniscope-osint`](https://github.com/finnytech/omniscope-osint)
+> - **Official Standalone MCP Suite**: [`https://github.com/finnytech/omniscope-mcp`](https://github.com/finnytech/omniscope-mcp)
 > 
 > Any versions hosted outside `*.pages.dev` or `github.com/finnytech/*` are unauthorized copies, lack our certified 147-model keyless consensus and Cloudflare Edge WAF security, and may contain modified or malicious code.
 
