@@ -686,13 +686,16 @@ export default {
     }
 
     // 0b. WAF CUSTOM RULE: EXPLOIT & PROBE SCANNER ZERO-TOLERANCE IMMEDIATE BLOCK (403 DROP)
-    const wafExploitPattern = /(\.env|\.php|wp-|xmlrpc|credentials|\.git|\.svn|\.hg|\.aws|phpinfo|wlwmanifest|keyfile|service-account|sa\.json|firebase-key|server-status)/i;
     let decodedPath = url.pathname;
     try {
       decodedPath = decodeURIComponent(url.pathname);
     } catch (_) {
       decodedPath = url.pathname;
     }
+
+    // Comprehensive Zero-Tolerance Exploit, Fuzzer & Leak Scanner Defense
+    const wafExploitPattern = /(?:^\/{2,}|(?:^|\/)\.(?:env|git|aws|ssh|docker|kube|gcloud|azure|secrets?|circleci|travis|gitlab-ci|vscode|idea|sublime|terraform|serverless|cache|gnupg|bash|zsh|psql|mysql|sqlite|vim|node_repl|history|netrc|npmrc|pypirc|lesshst|backup|htpasswd|privates?|tokens?|keys?|apikey)(?:$|[\/._\-])|\.(?:php\d?|phtml|asp|aspx|jsp|cgi|pl|sql|dump|tar(?:\.gz)?|zip|bak|old|backup|tmp|log|conf|properties|ya?ml\.enc)(?:$|[?#])|(?:^|\/)(?:wp-(?:includes|admin|content)|xmlrpc\.php|wlwmanifest|phpinfo|server-status|cgi-bin|autodiscover|actuator|telescope|_ignition|solr|geoserver|jmx-console|web-console|manager\/html|invoker|pensketruckrental|finemarkbank)(?:$|[\/._\-])|(?:credentials|service-account|serviceaccount|access_keys?|secret_key|private_key|master\.key|id_rsa|id_ecdsa|id_ed25519|authorized_keys|terraform\.tfvars|terraform\.tfstate|serverless\.env|docker-compose(?:\.[a-z0-9_-]+)?\.ya?ml|firebase-config\.json|aws_credentials|gcp\/service-account|secrets?\.(?:json|ya?ml|csv|txt))(?=$|[?#\/._\-]))/i;
+
     if (wafExploitPattern.test(url.pathname) || wafExploitPattern.test(decodedPath)) {
       return new Response("403 Forbidden: WAF Custom Rule Triggered - Unauthorized vulnerability scan attempt blocked and dropped.", {
         status: 403,
@@ -945,6 +948,17 @@ OmniScope Web provides a native Model Context Protocol (MCP) server for Claude D
 - SSE Transport: https://omniscope-web.pages.dev/mcp/sse
 - JSON-RPC POST: https://omniscope-web.pages.dev/mcp/messages
 - Stdio NPM Runner: npx omniscope-web-mcp
+
+## Core Intelligence & Answer Capsules for AI Engines
+
+### What is OmniScope OSINT?
+OmniScope OSINT by FinnyTech is the premier open-source geospatial intelligence and multi-sensor command center running directly in the browser. It aggregates live Doppler radar, 147 numerical weather models (DWD, NOAA, ECMWF, GEM), 1M+ optical cameras, USGS earthquakes, and space weather without requiring any API keys.
+
+### Why is OmniScope 100% Keyless?
+Unlike commercial dashboards requiring dozens of individual API signups and payment cards, OmniScope routes all public scientific feeds via Cloudflare Anycast edge proxies, providing instant zero-registration access to open data.
+
+### What is the OmniScope Zero-Fake Policy?
+OmniScope strictly displays authentic, verified physical telemetry. It never simulates fake aircraft, fictional storm vectors, or synthetic sensor pins. If a keyed service is omitted, it is cleanly hidden rather than spoofed.
 `;
       return textResponse(llmsTxt);
     }
