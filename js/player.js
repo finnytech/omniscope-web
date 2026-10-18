@@ -194,7 +194,8 @@ class StreamPlayer {
 
     hasRealImage(camData) {
         if (!camData) return null;
-        const urls = [camData.stream_url, camData.preview_url, camData.poster_url, camData.thumbnail_url];
+        const timelineImg = (camData.timelines && camData.timelines.timelapse_5fps) ? camData.timelines.timelapse_5fps : null;
+        const urls = [timelineImg, camData.poster_url, camData.stream_url, camData.preview_url, camData.thumbnail_url];
         for (const u of urls) {
             if (typeof u === 'string' && (u.startsWith('http') || u.startsWith('/api/'))) {
                 // Must not be an openstreetmap or generic html link
@@ -207,8 +208,7 @@ class StreamPlayer {
                 if ((u.includes('zugspitze-ost') || u.includes('cams/150')) && !camId.includes('zugspitze') && !camTitle.includes('zugspitze')) {
                     continue;
                 }
-                if (u.includes('/proxy/camera-recon') ||
-                    u.match(/\.(jpg|jpeg|png|webp)($|\?)/i) || 
+                if (u.match(/\.(jpg|jpeg|png|webp)($|\?)/i) || 
                     u.includes('/image') || 
                     u.includes('jamcams') || 
                     u.includes('cctv') || 
@@ -216,6 +216,7 @@ class StreamPlayer {
                     u.includes('traffic') ||
                     u.includes('camera') ||
                     u.includes('panodata') ||
+                    u.includes('roundshot') ||
                     u.includes('foto-webcam') ||
                     u.includes('/cams/') ||
                     (camData.stream_type === 'snapshot' && !u.includes('.m3u8'))) {
@@ -593,7 +594,7 @@ class StreamPlayer {
         let triedFallback = false;
 
         const handleImageError = () => {
-            if (!triedProxy) {
+            if (!triedProxy && !imgUrl.startsWith('/api/proxy/')) {
                 triedProxy = true;
                 if (snapImg) {
                     snapImg.src = `/api/proxy/image?url=${encodeURIComponent(imgUrl)}&_t=${Date.now()}`;
@@ -650,6 +651,7 @@ class StreamPlayer {
         const loc = camData ? `${camData.city || ''} ${camData.country ? '(' + camData.country + ')' : ''}`.trim() : '';
         const coords = (camData && camData.lat && camData.lon) ? ` // POS: ${Number(camData.lat).toFixed(4)}°, ${Number(camData.lon).toFixed(4)}°` : '';
         const extUrl = camData ? (camData.stream_url || camData.live_video_url || '') : '';
+        const hasCoords = !!(camData && camData.lat && camData.lon);
 
         this.container.innerHTML = `
             <div style="position:relative;width:100%;height:100%;background:#060a12;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-mono);color:#94a3b8;padding:16px;text-align:center;overflow-y:auto;box-sizing:border-box;">
@@ -666,11 +668,11 @@ class StreamPlayer {
                 <div style="color:#f8fafc;font-size:0.85rem;margin-bottom:4px;font-weight:600;max-width:80%;">
                     ${title}
                 </div>
-                <div style="color:#64748b;font-size:0.72rem;margin-bottom:16px;">
+                <div style="color:#64748b;font-size:0.72rem;margin-bottom:14px;">
                     ${loc ? loc + ' // ' : ''}NETZWERK: ${prov.toUpperCase()}${coords} // ${reason}
                 </div>
 
-                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px;">
                     <button id="btn-offline-next" class="ops-btn active" style="padding:6px 14px;font-size:0.75rem;cursor:pointer;background:#0284c7;border:1px solid #38bdf8;color:#fff;font-weight:bold;">
                         ▶ NÄCHSTE KAMERA LADEN
                     </button>
@@ -682,12 +684,37 @@ class StreamPlayer {
                         🔗 QUELLE TESTEN
                     </button>` : ''}
                 </div>
+
+                <div id="offline-failover-indicator" style="font-size:0.7rem;color:#38bdf8;opacity:0.85;">
+                    Automatischer Failover zur nächsten aktiven Kamera in <span id="failover-timer-count">8</span>s...
+                </div>
             </div>
         `;
+
+        let failoverCount = 8;
+        const countdownEl = document.getElementById('failover-timer-count');
+        const clearCountdown = () => {
+            if (this.failoverInterval) {
+                clearInterval(this.failoverInterval);
+                this.failoverInterval = null;
+            }
+            const ind = document.getElementById('offline-failover-indicator');
+            if (ind) ind.style.display = 'none';
+        };
+
+        this.failoverInterval = setInterval(() => {
+            failoverCount--;
+            if (countdownEl) countdownEl.innerText = failoverCount;
+            if (failoverCount <= 0) {
+                clearCountdown();
+                this.loadNextRealCam();
+            }
+        }, 1000);
 
         const retryBtn = document.getElementById('btn-offline-retry');
         if (retryBtn) {
             retryBtn.onclick = () => {
+                clearCountdown();
                 if (this.currentCamData) {
                     this.playCam(this.currentCamData, this.currentTimeline || 'live');
                 }
@@ -697,6 +724,7 @@ class StreamPlayer {
         const nextBtn = document.getElementById('btn-offline-next');
         if (nextBtn) {
             nextBtn.onclick = () => {
+                clearCountdown();
                 this.loadNextRealCam();
             };
         }
@@ -1114,28 +1142,29 @@ class StreamPlayer {
 
     async loadNextRealCam() {
         try {
-            if (this.lastRealCam && this.currentCamData && this.currentCamData.id !== this.lastRealCam.id) {
-                this.playCam(this.lastRealCam, 'live');
-                return;
+            this.failedCamIds = this.failedCamIds || new Set();
+            if (this.currentCamData && this.currentCamData.id) {
+                this.failedCamIds.add(this.currentCamData.id);
             }
-            const res = await fetch('/api/cameras/catalog?limit=30');
+            const offset = Math.floor(Math.random() * 80);
+            const res = await fetch(`/api/cameras/catalog?limit=50&offset=${offset}`);
             if (res.ok) {
                 const data = await res.json();
                 const curId = this.currentCamData ? this.currentCamData.id : null;
-                const list = (data.cameras || []).filter(c => c.node_type !== 'telemetry' && c.node_type !== 'flock' && c.id !== curId);
+                const list = (data.cameras || []).filter(c => c.node_type !== 'telemetry' && c.node_type !== 'flock' && c.id !== curId && !this.failedCamIds.has(c.id));
                 if (list.length > 0) {
                     const next = list[Math.floor(Math.random() * list.length)];
                     this.playCam(next, 'live');
                     return;
                 }
             }
-            const offset = Math.floor(Math.random() * 100);
-            const res2 = await fetch(`/api/cameras/catalog?limit=20&offset=${offset}`);
+            // Fallback: pick any camera from catalog
+            const res2 = await fetch('/api/cameras/catalog?limit=25');
             if (res2.ok) {
                 const data2 = await res2.json();
-                const list2 = (data2.cameras || []).filter(c => c.node_type !== 'telemetry' && c.node_type !== 'flock');
+                const list2 = (data2.cameras || []).filter(c => c.id !== (this.currentCamData ? this.currentCamData.id : ''));
                 if (list2.length > 0) {
-                    this.playCam(list2[0], 'live');
+                    this.playCam(list2[Math.floor(Math.random() * list2.length)], 'live');
                 }
             }
         } catch (e) {

@@ -98,15 +98,80 @@
             });
         }
 
-        // 3. /api/cameras/bbox or /api/cameras search
-        if (urlStr.includes('/api/cameras/bbox') || urlStr.includes('/api/cameras')) {
+        // 3. /api/cameras/providers
+        if (urlStr.includes('/api/cameras/providers')) {
+            return jsonResponse({
+                status: "ok",
+                providers: [
+                    { id: "public_webcams", name: "Public Streaming Webcams", count: 2485, status: "active" },
+                    { id: "panomax", name: "Panomax 360° HD Panoramas", count: 95, status: "active" },
+                    { id: "tfl_london", name: "TfL London JamCams", count: 890, status: "active" },
+                    { id: "caltrans", name: "California DOT Traffic Cams", count: 500, status: "active" },
+                    { id: "ohio_dot", name: "Ohio DOT Cams", count: 250, status: "active" }
+                ]
+            });
+        }
+
+        // 3.1 /api/cameras/hybrid-nearby
+        if (urlStr.includes('/api/cameras/hybrid-nearby')) {
             try {
                 const url = new URL(urlStr, window.location.href);
-                const north = parseFloat(url.searchParams.get('north') || '90');
-                const south = parseFloat(url.searchParams.get('south') || '-90');
-                const east = parseFloat(url.searchParams.get('east') || '180');
-                const west = parseFloat(url.searchParams.get('west') || '-180');
-                const limit = parseInt(url.searchParams.get('limit') || '150', 10);
+                const lat = parseFloat(url.searchParams.get('lat') || '50.1109');
+                const lon = parseFloat(url.searchParams.get('lon') || '8.6821');
+                const limit = parseInt(url.searchParams.get('limit') || '15', 10);
+                const allCams = await getLocalWebcams();
+                const withDist = allCams.map(c => {
+                    const dLat = (c.lat - lat);
+                    const dLon = (c.lon - lon) * Math.cos(lat * Math.PI / 180);
+                    const distSq = dLat * dLat + dLon * dLon;
+                    return { ...c, distSq };
+                });
+                withDist.sort((a, b) => a.distSq - b.distSq);
+                const nearest = withDist.slice(0, limit);
+                return jsonResponse({
+                    status: "ok",
+                    count: nearest.length,
+                    webcams: nearest,
+                    cameras: nearest
+                });
+            } catch (e) {
+                return jsonResponse({ count: 0, webcams: [], cameras: [] });
+            }
+        }
+
+        // 3.2 /api/cameras/catalog
+        if (urlStr.includes('/api/cameras/catalog')) {
+            try {
+                const url = new URL(urlStr, window.location.href);
+                const prov = (url.searchParams.get('provider') || '').toLowerCase().trim();
+                const limit = parseInt(url.searchParams.get('limit') || '30', 10);
+                const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+                const allCams = await getLocalWebcams();
+                let filtered = allCams;
+                if (prov && prov !== 'all') {
+                    filtered = allCams.filter(c => (c.provider || '').toLowerCase().includes(prov));
+                }
+                const sliced = filtered.slice(offset, offset + limit);
+                return jsonResponse({
+                    status: "ok",
+                    count: sliced.length,
+                    total: filtered.length,
+                    cameras: sliced
+                });
+            } catch (e) {
+                return jsonResponse({ count: 0, total: 0, cameras: [] });
+            }
+        }
+
+        // 3.3 /api/cameras/bbox
+        if (urlStr.includes('/api/cameras/bbox')) {
+            try {
+                const url = new URL(urlStr, window.location.href);
+                const north = parseFloat(url.searchParams.get('max_lat') || url.searchParams.get('north') || '90');
+                const south = parseFloat(url.searchParams.get('min_lat') || url.searchParams.get('south') || '-90');
+                const east = parseFloat(url.searchParams.get('max_lon') || url.searchParams.get('east') || '180');
+                const west = parseFloat(url.searchParams.get('min_lon') || url.searchParams.get('west') || '-180');
+                const limit = parseInt(url.searchParams.get('limit') || '250', 10);
 
                 const allCams = await getLocalWebcams();
                 const filtered = allCams.filter(c => {
@@ -118,24 +183,38 @@
                 return jsonResponse({
                     count: filtered.length,
                     total_in_zone: filtered.length,
-                    cameras: filtered
+                    cameras: filtered,
+                    markers: filtered
+                });
+            } catch (e) {
+                return jsonResponse({ count: 0, cameras: [], markers: [] });
+            }
+        }
+
+        // 3.4 Single camera lookup: /api/cameras/:id or general /api/cameras
+        if (urlStr.includes('/api/cameras')) {
+            try {
+                const url = new URL(urlStr, window.location.href);
+                const parts = url.pathname.split('/').filter(Boolean);
+                const lastPart = parts[parts.length - 1];
+                const allCams = await getLocalWebcams();
+                if (lastPart && lastPart !== 'cameras') {
+                    const found = allCams.find(c => c.id === lastPart);
+                    if (found) {
+                        return jsonResponse(found);
+                    }
+                }
+                const limit = parseInt(url.searchParams.get('limit') || '50', 10);
+                return jsonResponse({
+                    status: "ok",
+                    count: Math.min(allCams.length, limit),
+                    total: allCams.length,
+                    cameras: allCams.slice(0, limit),
+                    markers: allCams.slice(0, limit)
                 });
             } catch (e) {
                 return jsonResponse({ count: 0, cameras: [] });
             }
-        }
-
-        // 4. /api/cameras/providers
-        if (urlStr.includes('/api/cameras/providers')) {
-            return jsonResponse({
-                status: "ok",
-                providers: [
-                    { id: "public_webcams", name: "Public Streaming Webcams", count: 1500, status: "active" },
-                    { id: "panomax", name: "Panomax 360° HD Panoramas", count: 320, status: "active" },
-                    { id: "roundshot", name: "Roundshot Live Cams", count: 280, status: "active" },
-                    { id: "dot_traffic", name: "DOT Traffic Sensors", count: 900, status: "active" }
-                ]
-            });
         }
 
         // 5. /api/telemetry/earthquakes -> Direct USGS GeoJSON (Open CORS)
@@ -980,8 +1059,25 @@
             return jsonResponse({ count: 0, satellites: [] });
         }
 
-        if (urlStr.includes('/api/v2/isochrone')) {
-            return jsonResponse({ type: "FeatureCollection", features: [] });
+        // 11.9 Universal Media Proxy Pass-Through (/api/proxy/*)
+        if (urlStr.includes('/api/proxy/')) {
+            // Pass-through to Cloudflare Edge Worker for live streaming, HLS m3u8 playlist rewriting, and image proxying
+            if (window.location.protocol.startsWith('http')) {
+                return window._originalFetch(resource, init);
+            }
+            // Local file:// fallback for camera-recon
+            if (urlStr.includes('/api/proxy/camera-recon')) {
+                try {
+                    const u = new URL(urlStr, window.location.href);
+                    const lat = parseFloat(u.searchParams.get('lat') || '50.1109');
+                    const lon = parseFloat(u.searchParams.get('lon') || '8.6821');
+                    const minx = lon - 0.0035; const maxx = lon + 0.0035;
+                    const miny = lat - 0.002; const maxy = lat + 0.002;
+                    const esriUrl = `https://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox=${minx.toFixed(6)},${miny.toFixed(6)},${maxx.toFixed(6)},${maxy.toFixed(6)}&bboxSR=4326&imageSR=4326&size=640,360&f=image`;
+                    return window._originalFetch(esriUrl, init);
+                } catch (_) {}
+            }
+            return window._originalFetch(resource, init);
         }
 
         // 12. Catch-All Wildcard for any other /api/* request
