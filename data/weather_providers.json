@@ -13,7 +13,8 @@
     "no_key": true,
     "format": "JSON",
     "badge_color": "#38bdf8",
-    "description": "High-accuracy DWD weather stations, MOSMIX forecasts and alerts."
+    "description": "High-accuracy DWD weather stations, MOSMIX forecasts and alerts.",
+    "has_radar": true
   },
   {
     "id": "met_norway",
@@ -205,7 +206,8 @@
     "no_key": true,
     "format": "JSON",
     "badge_color": "#14b8a6",
-    "description": "2-hour real-time district nowcasts and 4-day monsoon tropical outlooks."
+    "description": "2-hour real-time district nowcasts and 4-day monsoon tropical outlooks.",
+    "has_radar": true
   },
   {
     "id": "usgs_water",
@@ -413,7 +415,8 @@
     "no_key": true,
     "format": "JSON",
     "badge_color": "#4ade80",
-    "description": "2.2 km mesh grid resolving local supercells, squalls, valley winds."
+    "description": "2.2 km mesh grid resolving local supercells, squalls, valley winds.",
+    "has_radar": true
   },
   {
     "id": "openmeteo_ecmwf",
@@ -541,7 +544,8 @@
     "name": "DWD ICON-EU (7km)",
     "no_key": true,
     "region": "Central Europe",
-    "type": "European Continental Synoptic Mesh"
+    "type": "European Continental Synoptic Mesh",
+    "has_radar": true
   },
   {
     "agency": "Météo-France",
@@ -637,7 +641,8 @@
     "name": "NOAA HRRR (3km Rapid Refresh)",
     "no_key": true,
     "region": "Continental USA (3km Mesh)",
-    "type": "Hourly Convective Supercell Model"
+    "type": "Hourly Convective Supercell Model",
+    "has_radar": true
   },
   {
     "agency": "China Meteorological Administration",
@@ -749,7 +754,8 @@
     "name": "Buienradar Benelux",
     "no_key": true,
     "region": "Benelux / North Sea",
-    "type": "5-Minute Precipitation Doppler Feed"
+    "type": "5-Minute Precipitation Doppler Feed",
+    "has_radar": true
   },
   {
     "agency": "Federal Institute for Geology, Geophysics & Climatology",
@@ -829,7 +835,8 @@
     "name": "CHMI Czechia Hydromet",
     "no_key": true,
     "region": "Bohemia & Moravia",
-    "type": "Synoptic Grid & River Gauges"
+    "type": "Synoptic Grid & River Gauges",
+    "has_radar": true
   },
   {
     "agency": "Xunta de Galicia Regional Weather Service",
@@ -1085,7 +1092,8 @@
     "name": "BMKG Indonesia Meteorology",
     "no_key": true,
     "region": "Maritime Continent & Equator",
-    "type": "Equatorial Convection & Seismic Weather"
+    "type": "Equatorial Convection & Seismic Weather",
+    "has_radar": true
   },
   {
     "agency": "Central Weather Administration",
@@ -1101,7 +1109,8 @@
     "name": "CWA Taiwan Central Weather",
     "no_key": true,
     "region": "Taiwan Strait & Western Pacific",
-    "type": "High-Density Radar & Typhoons"
+    "type": "High-Density Radar & Typhoons",
+    "has_radar": true
   },
   {
     "agency": "South African Weather Service",
@@ -1117,7 +1126,8 @@
     "name": "SAWS South African Weather",
     "no_key": true,
     "region": "Southern Africa / Cape Basin",
-    "type": "Sub-Saharan Severe Weather & Radar"
+    "type": "Sub-Saharan Severe Weather & Radar",
+    "has_radar": true
   },
   {
     "agency": "Instituto Nacional de Meteorología e Hidrología",
@@ -1277,7 +1287,8 @@
     "name": "RainViewer Global Doppler",
     "no_key": true,
     "region": "Global (1000+ Radars)",
-    "type": "Global Doppler Composite Grid"
+    "type": "Global Doppler Composite Grid",
+    "has_radar": true
   },
   {
     "agency": "Royal Meteorological Institute of Belgium",
@@ -1293,7 +1304,8 @@
     "name": "RMI Belgium (KMI / IRM)",
     "no_key": true,
     "region": "Benelux / Western Europe",
-    "type": "National Automated Synoptic Network"
+    "type": "National Automated Synoptic Network",
+    "has_radar": true
   },
   {
     "agency": "Servizio Meteorologico dell'Aeronautica Militare",
@@ -1341,7 +1353,8 @@
     "name": "SHMÚ Slovakia",
     "no_key": true,
     "region": "Tatra Mountains & Danube Basin",
-    "type": "National Hydrometeorological Network"
+    "type": "National Hydrometeorological Network",
+    "has_radar": true
   },
   {
     "agency": "Hellenic National Meteorological Service",
@@ -1565,7 +1578,8 @@
     "name": "DWD MOSMIX Guidance",
     "no_key": true,
     "region": "Central Europe & Global (5400 Stations)",
-    "type": "Model Output Statistics (MOS) Network"
+    "type": "Model Output Statistics (MOS) Network",
+    "has_radar": true
   },
   {
     "agency": "GeoSphere Austria",
@@ -1613,7 +1627,8 @@
     "name": "KNMI Doppler Composites",
     "no_key": true,
     "region": "North Sea & Rhine Delta",
-    "type": "Dual-Pol Doppler Radar Network"
+    "type": "Dual-Pol Doppler Radar Network",
+    "has_radar": true
   },
   {
     "agency": "Agencia Estatal de Meteorología",
@@ -1629,7 +1644,8 @@
     "name": "AEMET Radar & Rayos",
     "no_key": true,
     "region": "Iberian Peninsula, Balearic & Canaries",
-    "type": "Doppler Radar & Lightning Sensor Grid"
+    "type": "Doppler Radar & Lightning Sensor Grid",
+    "has_radar": true
   },
   {
     "agency": "Instituto Português do Mar e da Atmosfera",
@@ -1661,7 +1677,8 @@
     "name": "CHMI ALADIN Central Europe",
     "no_key": true,
     "region": "Bohemia & Central Europe",
-    "type": "Limited Area Numerical Model (ALADIN)"
+    "type": "Limited Area Numerical Model (ALADIN)",
+    "has_radar": true
   },
   {
     "agency": "Državni hidrometeorološki zavod",
@@ -1885,7 +1902,8 @@
     "name": "KMA Supercomputing Center",
     "no_key": true,
     "region": "Korean Peninsula & East Asia",
-    "type": "High-Performance Numerical Prediction Core"
+    "type": "High-Performance Numerical Prediction Core",
+    "has_radar": true
   },
   {
     "agency": "Central Weather Administration",
@@ -1901,7 +1919,8 @@
     "name": "CWA Doppler Radar Network",
     "no_key": true,
     "region": "Taiwan Strait & Western Pacific",
-    "type": "Typhoon & Mountain Torrential Rain Radar"
+    "type": "Typhoon & Mountain Torrential Rain Radar",
+    "has_radar": true
   },
   {
     "agency": "China Meteorological Administration",
@@ -1917,7 +1936,8 @@
     "name": "CMA National Center",
     "no_key": true,
     "region": "East Asia & Tibetan Plateau",
-    "type": "National Synoptic & Severe Weather Service"
+    "type": "National Synoptic & Severe Weather Service",
+    "has_radar": true
   },
   {
     "agency": "Malaysian Meteorological Department",

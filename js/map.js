@@ -1835,6 +1835,9 @@ class OperationsMap {
                                 <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:2px;" onclick="if(window.MapController && window.MapController.loadStationInMon02) window.MapController.loadStationInMon02('${st.id}', ${st.lat}, ${st.lon});">
                                     📊 DETAILS MON-02
                                 </button>
+                        <button onclick="window.lockRadarStationTarget('${st.id}', ${st.lat}, ${st.lon}, '${(st.name || '').replace(/'/g, '')}', '${(st.provider || 'Doppler Radar').replace(/'/g, '')}', ${st.elevation || 150})" class="ops-btn" style="margin-top:6px;width:100%;padding:5px 8px;font-size:10px;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(0,240,255,0.3);">
+                            🎯 ANVISIERE WETTERSTATION // RADAR DISH
+                        </button>
                             </div>
                         </div>
                     `, { offset: [0, -4] });
@@ -2764,7 +2767,7 @@ class OperationsMap {
                     ${noticeHtml}
                     <div style="margin-top:4px;font-size:10px;color:#64748b;">${headline}</div>
                     <div style="display:flex;gap:4px;margin-top:8px;">
-                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:${headerColor};color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.targetStorm({lat:${lat},lon:${lon},id:'${tg.alert_id||tg.id||''}',title:'${headline.replace(/'/g, "\\'")}',ef_scale:'${ef}',wind_speed:'${windDisplay}',is_tornado:true,is_ground_confirmed:${isGroundConfirmed}});}">
+                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:${headerColor};color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.targetStorm({lat:${lat},lon:${lon},id:'${tg.alert_id||tg.id||''}',title:'${headline.replace(/'/g, '')}',ef_scale:'${ef}',wind_speed:'${windDisplay}',is_tornado:true,is_ground_confirmed:${isGroundConfirmed}});}">
                             🎯 ANVISIEREN
                         </button>
                         <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.lockProximityGroundStation(${lat}, ${lon}); window.MapController.lockProximityCamera(${lat}, ${lon});}">
@@ -4390,6 +4393,11 @@ class OperationsMap {
                                 🔮 JEV SCAN HIER
                             </button>
                         </div>
+                        ${(window.isRadarStation ? window.isRadarStation(p) : true) ? `
+                        <button class="ops-btn" style="width:100%;margin-top:6px;padding:5px 8px;font-size:10px;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(0,240,255,0.3);" onclick="window.lockRadarStationTarget('${p.id}', ${p.lat}, ${p.lon}, '${(p.name || '').replace(/'/g, '')}', '${(p.agency || 'Radar Net').replace(/'/g, '')}', 150)">
+                            🎯 ANVISIERE WETTERSTATION // RADAR DISH
+                        </button>
+                        ` : ''}
                     </div>
                 `;
 
@@ -4519,6 +4527,11 @@ class OperationsMap {
                                 🔮 JEV SCAN
                             </button>
                         </div>
+                        ${(window.isRadarStation ? window.isRadarStation(st) : true) ? `
+                        <button class="ops-btn" style="width:100%;margin-top:6px;padding:5px 8px;font-size:10px;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(0,240,255,0.3);" onclick="window.lockRadarStationTarget('${st.id}', ${st.lat}, ${st.lon}, '${(st.name || '').replace(/'/g, '')}', '${(st.provider || meta.label || 'Doppler Radar').replace(/'/g, '')}', ${st.elevation || 150})">
+                            🎯 ANVISIERE WETTERSTATION // RADAR DISH
+                        </button>
+                        ` : ''}
                     </div>
                 `;
 
@@ -6549,6 +6562,30 @@ window.openSupercellDossier = async function(cellId, lat, lon) {
         targetLat,
         targetLon
     );
+};
+
+window.isRadarStation = function(st) {
+    if (!st) return false;
+    if (st.has_radar === true || st.has_radar === 'true' || st.radar === true) return true;
+    const txt = `${st.id || ''} ${st.name || ''} ${st.type || ''} ${st.provider || ''} ${st.agency || ''} ${st.description || ''} ${st.category || ''}`.toLowerCase();
+    return txt.includes('radar') || txt.includes('doppler') || txt.includes('nexrad') || txt.includes('aladin') || txt.includes('buienradar') || txt.includes('rainviewer') || txt.includes('dwd') || txt.includes('metar') || txt.includes('awos') || txt.includes('ndbc') || txt.includes('station');
+};
+
+window.lockRadarStationTarget = function(id, lat, lon, name, agency, elevation) {
+    console.log(`[OmniScope] Targeting Doppler Radar Station: ${name || id} at ${lat}, ${lon}`);
+    const target = {
+        id: id,
+        name: name || id,
+        agency: agency || 'Doppler Radar Site',
+        lat: Number(lat),
+        lon: Number(lon),
+        elevation: elevation || 150
+    };
+    if (window.MainPlayer && typeof window.MainPlayer.showRadarStationCommandDeck === 'function') {
+        window.MainPlayer.showRadarStationCommandDeck(target);
+    } else if (window.PlayerController && typeof window.PlayerController.showRadarStationCommandDeck === 'function') {
+        window.PlayerController.showRadarStationCommandDeck(target);
+    }
 };
 
 window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {

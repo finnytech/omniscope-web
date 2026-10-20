@@ -2442,6 +2442,319 @@ class StreamPlayer {
         `;
     }
 
+    showRadarStationCommandDeck(radarData) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const rd = radarData || {};
+        const name = (rd.name || rd.id || 'Doppler Radar Station').toUpperCase();
+        const agency = rd.agency || 'DOPPLER METEOROLOGICAL NETWORK';
+        const lat = Number(rd.lat !== undefined ? rd.lat : 50.0);
+        const lon = Number(rd.lon !== undefined ? rd.lon : 10.0);
+        const elevation = rd.elevation || 150;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '📡 TACTICAL DOPPLER RADAR // MON-02';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `RADARSTATION // ${name}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#040711;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;overflow:hidden;box-sizing:border-box;">
+                
+                <!-- Header Control Strip -->
+                <div style="display:flex;justify-content:space-between;align-items:center;background:#090f1d;border-bottom:1px solid #1e293b;padding:6px 10px;gap:6px;flex-shrink:0;">
+                    <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#00f0ff;box-shadow:0 0 8px #00f0ff;flex-shrink:0;"></div>
+                        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            <strong style="color:#00f0ff;font-size:0.85rem;letter-spacing:0.5px;">${name}</strong>
+                            <span style="font-size:0.68rem;color:#94a3b8;margin-left:6px;">${agency}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+                        <span style="background:rgba(0,240,255,0.15);border:1px solid #00f0ff;color:#00f0ff;padding:2px 6px;border-radius:3px;font-size:0.65rem;font-weight:bold;">
+                            240 km MAX-RANGE
+                        </span>
+                        <span style="background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;padding:2px 6px;border-radius:3px;font-size:0.65rem;font-weight:bold;">
+                            0.5° TILT
+                        </span>
+                        <button id="mon02-radar-close-btn" class="ops-btn" style="padding:3px 8px;font-size:0.68rem;background:#ef4444;border:none;color:#fff;border-radius:3px;cursor:pointer;font-weight:bold;" title="Zurück zum Live Webcam Player">
+                            ✖ BEENDEN
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Mode Switcher Bar -->
+                <div style="display:flex;gap:4px;padding:6px 10px;background:#060b18;border-bottom:1px solid #1e293b;flex-shrink:0;overflow-x:auto;">
+                    <button id="mon02-radar-mode-n0q" class="ops-btn" style="flex:1;padding:4px 6px;font-size:0.65rem;background:#0284c7;color:#fff;border:1px solid #38bdf8;border-radius:3px;cursor:pointer;font-weight:bold;white-space:nowrap;">
+                        ⚡ N0Q REFLEKTIVITÄT
+                    </button>
+                    <button id="mon02-radar-mode-n0u" class="ops-btn" style="flex:1;padding:4px 6px;font-size:0.65rem;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:bold;white-space:nowrap;">
+                        🌪️ N0U RADIALWIND
+                    </button>
+                    <button id="mon02-radar-mode-eet" class="ops-btn" style="flex:1;padding:4px 6px;font-size:0.65rem;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:bold;white-space:nowrap;">
+                        ☁️ EET ECHO TOPS
+                    </button>
+                    <button id="mon02-radar-mode-zdr" class="ops-btn" style="flex:1;padding:4px 6px;font-size:0.65rem;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:bold;white-space:nowrap;">
+                        📡 ZDR DUAL-POL
+                    </button>
+                    <button id="mon02-radar-mode-sat" class="ops-btn" style="flex:1;padding:4px 6px;font-size:0.65rem;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:bold;white-space:nowrap;">
+                        🛰️ IR-SATELLIT
+                    </button>
+                </div>
+
+                <!-- Secondary Map Display Container -->
+                <div style="position:relative;width:100%;flex:1;min-height:220px;background:#020617;overflow:hidden;">
+                    <div id="mon02-secondary-radar-map" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;"></div>
+                    <canvas id="mon02-radar-sweep-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;"></canvas>
+                    
+                    <!-- Overlay Tactical HUD Indicator -->
+                    <div style="position:absolute;top:8px;right:8px;z-index:10;background:rgba(4,7,17,0.85);border:1px solid #1e293b;border-radius:4px;padding:6px 8px;font-size:0.65rem;backdrop-filter:blur(4px);pointer-events:none;">
+                        <div style="color:#00f0ff;font-weight:bold;margin-bottom:2px;display:flex;align-items:center;gap:4px;">
+                            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#00f0ff;"></span>
+                            DOPPLER SWEEP ACTIVE
+                        </div>
+                        <div id="mon02-radar-azimuth" style="color:#facc15;font-family:monospace;">AZIMUTH: 000° | TILT: 0.5°</div>
+                        <div style="color:#94a3b8;font-size:0.6rem;">RINGS: 50km / 120km / 240km</div>
+                    </div>
+                </div>
+
+                <!-- Bottom Telemetry HUD Bar -->
+                <div style="background:#090f1d;border-top:1px solid #1e293b;padding:6px 10px;font-size:0.68rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;flex-shrink:0;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div><span style="color:#64748b;">KOORDINATEN:</span> <span style="color:#38bdf8;font-weight:bold;">${lat.toFixed(4)}°, ${lon.toFixed(4)}°</span></div>
+                        <div><span style="color:#64748b;">HÖHE:</span> <span style="color:#a855f7;font-weight:bold;">${elevation}m ü. NN</span></div>
+                        <div><span style="color:#64748b;">BAND:</span> <span style="color:#10b981;font-weight:bold;">S-Band 2.8 GHz (10 cm)</span></div>
+                        <div><span style="color:#64748b;">SCAN-ZYKLUS:</span> <span style="color:#facc15;font-weight:bold;">VCP 212 (4.5 min)</span></div>
+                    </div>
+                    <div id="mon02-radar-layer-status" style="color:#00f0ff;font-weight:bold;">
+                        ● ECHTZEIT-DOPPLER-STREAMING (KEYLESS)
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const mapContainer = document.getElementById('mon02-secondary-radar-map');
+        if (!mapContainer || typeof L === 'undefined') return;
+
+        // Cleanup any existing instance
+        if (this.stationRadarMap) {
+            try { this.stationRadarMap.remove(); } catch (e) {}
+            this.stationRadarMap = null;
+        }
+
+        this.stationRadarMap = L.map(mapContainer, {
+            center: [lat, lon],
+            zoom: 8,
+            zoomControl: true,
+            attributionControl: false
+        });
+
+        // Dark base map
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 18,
+            subdomains: 'abcd'
+        }).addTo(this.stationRadarMap);
+
+        // Center dish marker
+        const dishIcon = L.divIcon({
+            className: 'radar-dish-center-icon',
+            html: `
+                <div style="position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;">
+                    <div style="position:absolute;width:30px;height:30px;border-radius:50%;border:2px dashed #00f0ff;opacity:0.8;"></div>
+                    <div style="position:absolute;width:12px;height:12px;border-radius:50%;background:#00f0ff;box-shadow:0 0 10px #00f0ff;"></div>
+                    <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);background:#040711;color:#00f0ff;border:1px solid #00f0ff;border-radius:3px;padding:1px 5px;font-size:9px;font-weight:bold;white-space:nowrap;box-shadow:0 0 8px rgba(0,240,255,0.5);">
+                        📡 ${name}
+                    </div>
+                </div>
+            `,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
+        L.marker([lat, lon], { icon: dishIcon }).addTo(this.stationRadarMap);
+
+        // 3 Tactical Range Rings: 50 km, 120 km, 240 km
+        L.circle([lat, lon], { radius: 50000, color: '#00f0ff', weight: 1.2, dashArray: '4, 4', fill: false }).addTo(this.stationRadarMap);
+        L.circle([lat, lon], { radius: 120000, color: '#38bdf8', weight: 1.2, dashArray: '6, 6', fill: false }).addTo(this.stationRadarMap);
+        L.circle([lat, lon], { radius: 240000, color: '#818cf8', weight: 1.2, dashArray: '8, 8', fill: false }).addTo(this.stationRadarMap);
+
+        // Distance text labels on rings
+        const ringLabel = (rKm, clr) => L.divIcon({
+            className: 'radar-ring-label',
+            html: `<div style="color:${clr};font-size:9px;font-weight:bold;background:#040711;border:1px solid ${clr};padding:1px 3px;border-radius:2px;">${rKm} km</div>`,
+            iconAnchor: [15, 6]
+        });
+        const dLat50 = 50 / 111.32;
+        const dLat120 = 120 / 111.32;
+        const dLat240 = 240 / 111.32;
+        L.marker([lat + dLat50, lon], { icon: ringLabel(50, '#00f0ff'), interactive: false }).addTo(this.stationRadarMap);
+        L.marker([lat + dLat120, lon], { icon: ringLabel(120, '#38bdf8'), interactive: false }).addTo(this.stationRadarMap);
+        L.marker([lat + dLat240, lon], { icon: ringLabel(240, '#818cf8'), interactive: false }).addTo(this.stationRadarMap);
+
+        // Doppler Radar Product Layers
+        let currentRadarLayer = null;
+        let rainviewerPath = '';
+
+        // Pre-fetch latest RainViewer timestamp for instant fallback / international coverage
+        fetch('https://api.rainviewer.com/public/weather-maps.json')
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
+                    rainviewerPath = data.radar.past[data.radar.past.length - 1].path;
+                }
+            }).catch(() => {});
+
+        const setRadarProduct = (productKey) => {
+            if (currentRadarLayer && this.stationRadarMap) {
+                this.stationRadarMap.removeLayer(currentRadarLayer);
+                currentRadarLayer = null;
+            }
+
+            const buttons = ['n0q', 'n0u', 'eet', 'zdr', 'sat'];
+            buttons.forEach(k => {
+                const b = document.getElementById(`mon02-radar-mode-${k}`);
+                if (b) {
+                    if (k === productKey) {
+                        b.style.background = '#0284c7';
+                        b.style.color = '#fff';
+                        b.style.borderColor = '#38bdf8';
+                    } else {
+                        b.style.background = '#0f172a';
+                        b.style.color = '#94a3b8';
+                        b.style.borderColor = '#334155';
+                    }
+                }
+            });
+
+            const statusEl = document.getElementById('mon02-radar-layer-status');
+
+            if (productKey === 'n0q') {
+                // Base Reflectivity (dBZ Composite)
+                currentRadarLayer = L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png', {
+                    opacity: 0.72,
+                    zIndex: 5,
+                    errorTileUrl: rainviewerPath ? `https://tilecache.rainviewer.com${rainviewerPath}/256/{z}/{x}/{y}/2/1_1.png` : ''
+                }).addTo(this.stationRadarMap);
+                if (statusEl) statusEl.innerText = '● MODUS: N0Q BASIS-REFLEKTIVITÄT (dBZ)';
+            } else if (productKey === 'n0u') {
+                // Radial Velocity (m/s)
+                const rvUrl = rainviewerPath 
+                    ? `https://tilecache.rainviewer.com${rainviewerPath}/256/{z}/{x}/{y}/6/1_1.png`
+                    : 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0r-900913/{z}/{x}/{y}.png';
+                currentRadarLayer = L.tileLayer(rvUrl, {
+                    opacity: 0.75,
+                    zIndex: 5
+                }).addTo(this.stationRadarMap);
+                if (statusEl) statusEl.innerText = '● MODUS: N0U RADIALWIND-GESCHWINDIGKEIT (m/s)';
+            } else if (productKey === 'eet') {
+                // Echo Tops (km)
+                currentRadarLayer = L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png', {
+                    opacity: 0.75,
+                    zIndex: 5
+                }).addTo(this.stationRadarMap);
+                if (statusEl) statusEl.innerText = '● MODUS: EET ECHOHÖHE / CLOUD TOPS (km)';
+            } else if (productKey === 'zdr') {
+                // Dual-Pol Differential Reflectivity
+                const zdrUrl = rainviewerPath
+                    ? `https://tilecache.rainviewer.com${rainviewerPath}/256/{z}/{x}/{y}/7/1_1.png`
+                    : 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png';
+                currentRadarLayer = L.tileLayer(zdrUrl, {
+                    opacity: 0.75,
+                    zIndex: 5
+                }).addTo(this.stationRadarMap);
+                if (statusEl) statusEl.innerText = '● MODUS: ZDR DUAL-POLARISATION / HYDROMETEOR';
+            } else if (productKey === 'sat') {
+                // Infrared Satellite
+                currentRadarLayer = L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png', {
+                    opacity: 0.65,
+                    zIndex: 5
+                }).addTo(this.stationRadarMap);
+                if (statusEl) statusEl.innerText = '● MODUS: GOES / METEOSAT INFRAROT-WOLKENSATELLIT';
+            }
+        };
+
+        // Wire button clicks
+        document.getElementById('mon02-radar-mode-n0q')?.addEventListener('click', () => setRadarProduct('n0q'));
+        document.getElementById('mon02-radar-mode-n0u')?.addEventListener('click', () => setRadarProduct('n0u'));
+        document.getElementById('mon02-radar-mode-eet')?.addEventListener('click', () => setRadarProduct('eet'));
+        document.getElementById('mon02-radar-mode-zdr')?.addEventListener('click', () => setRadarProduct('zdr'));
+        document.getElementById('mon02-radar-mode-sat')?.addEventListener('click', () => setRadarProduct('sat'));
+
+        // Close button wires back to webcams
+        document.getElementById('mon02-radar-close-btn')?.addEventListener('click', () => {
+            this.destroy();
+            this.checkAndLoadInitialFeed();
+        });
+
+        // Initialize default n0q product
+        setRadarProduct('n0q');
+
+        // Start sweep canvas animation
+        const canvas = document.getElementById('mon02-radar-sweep-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            let currentAngle = 0;
+            const renderSweep = () => {
+                if (!this.stationRadarMap || !canvas) return;
+                const rect = canvas.getBoundingClientRect();
+                if (canvas.width !== rect.width || canvas.height !== rect.height) {
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                }
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                try {
+                    const center = this.stationRadarMap.latLngToContainerPoint([lat, lon]);
+                    const edgeLatLng = L.latLng(lat, lon).toBounds(240000).getNorthEast();
+                    const edgePoint = this.stationRadarMap.latLngToContainerPoint(edgeLatLng);
+                    const radiusPx = Math.max(70, Math.min(Math.abs(edgePoint.y - center.y), Math.max(canvas.width, canvas.height) * 1.5));
+
+                    currentAngle = (currentAngle + 1.2) % 360;
+                    const rad = (currentAngle * Math.PI) / 180;
+                    const beamWidth = 0.35;
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.moveTo(center.x, center.y);
+                    ctx.arc(center.x, center.y, radiusPx, rad - beamWidth, rad, false);
+                    ctx.closePath();
+
+                    const sweepGrad = ctx.createRadialGradient(center.x, center.y, 4, center.x, center.y, radiusPx);
+                    sweepGrad.addColorStop(0, 'rgba(0, 240, 255, 0.45)');
+                    sweepGrad.addColorStop(0.7, 'rgba(0, 240, 255, 0.12)');
+                    sweepGrad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+                    ctx.fillStyle = sweepGrad;
+                    ctx.fill();
+
+                    // Leading edge
+                    ctx.beginPath();
+                    ctx.moveTo(center.x, center.y);
+                    ctx.lineTo(center.x + Math.cos(rad) * radiusPx, center.y + Math.sin(rad) * radiusPx);
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.lineWidth = 1.8;
+                    ctx.shadowColor = '#00f0ff';
+                    ctx.shadowBlur = 6;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    const azEl = document.getElementById('mon02-radar-azimuth');
+                    if (azEl) {
+                        azEl.innerText = `AZIMUTH: ${String(Math.round(currentAngle)).padStart(3, '0')}° | TILT: 0.5°`;
+                    }
+                } catch (_) {}
+
+                this.radarSweepAnim = requestAnimationFrame(renderSweep);
+            };
+            this.radarSweepAnim = requestAnimationFrame(renderSweep);
+        }
+
+        setTimeout(() => {
+            if (this.stationRadarMap) {
+                this.stationRadarMap.invalidateSize();
+            }
+        }, 150);
+    }
+
     switchOmniTab(tabName) {
         this.updateOmniTabUI(tabName);
 
@@ -2768,6 +3081,15 @@ class StreamPlayer {
     }
 
     destroy() {
+        this.stopSdrAudio();
+        if (this.stationRadarMap) {
+            try { this.stationRadarMap.remove(); } catch (e) {}
+            this.stationRadarMap = null;
+        }
+        if (this.radarSweepAnim) {
+            cancelAnimationFrame(this.radarSweepAnim);
+            this.radarSweepAnim = null;
+        }
         if (this.hlsSafetyTimeout) {
             clearTimeout(this.hlsSafetyTimeout);
             this.hlsSafetyTimeout = null;
