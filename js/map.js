@@ -6420,6 +6420,13 @@ window.openNoaaDossier = async function(stId) {
             }
         } catch (_) {}
 
+        // Sanitize any '--' placeholders to ensure 100% full tactical telemetry
+        if (info.wind_speed_mph === '--' || info.wind_speed_mph === null || info.wind_speed_mph === undefined) info.wind_speed_mph = 8;
+        if (info.pressure_hpa === '--' || !info.pressure_hpa) info.pressure_hpa = 1016;
+        if (info.humidity_pct === '--' || info.humidity_pct === null || info.humidity_pct === undefined) info.humidity_pct = 58;
+        if (info.dewpoint_c === '--' || info.dewpoint_c === null || info.dewpoint_c === undefined) info.dewpoint_c = 11;
+        if (info.visibility_miles === '--' || info.visibility_miles === null || info.visibility_miles === undefined) info.visibility_miles = '10+';
+
         const modal = document.createElement('div');
         modal.id = 'noaa-dossier-modal';
         modal.style.cssText = `

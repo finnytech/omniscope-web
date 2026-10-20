@@ -59,17 +59,21 @@ body {
 .ops-header {
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-strong);
-    padding: 4px 10px;
+    padding: 2px 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 1000;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    min-height: 40px;
+    flex-wrap: nowrap;
+    gap: 4px 6px;
+    min-height: 36px;
     box-sizing: border-box;
-    overflow-x: hidden !important;
+    overflow-x: auto;
     overflow-y: hidden;
+    scrollbar-width: none;
+}
+.ops-header::-webkit-scrollbar {
+    display: none;
 }
 
 .ops-title-group {
