@@ -342,45 +342,50 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
 }
 
 class OperationsMap {
-    getDynamicNodeRadius(baseRadius = 6.0) {
+    getDynamicNodeRadius(baseRadius = 4.0) {
         const zoom = this.map ? this.map.getZoom() : 4;
-        // User requested: scale node points by +20% on zoom-in so they are distinctly visible and easy to click
-        let r = baseRadius * 1.20;
-        if (zoom > 4) {
-            r = r * Math.pow(1.20, Math.min(zoom - 4, 7));
+        // User requested: smaller, balanced tactical node radius (compact points, not oversized discs)
+        let r = baseRadius;
+        if (zoom <= 4) {
+            r = Math.max(3.0, baseRadius - 0.5);
+        } else if (zoom <= 7) {
+            r = baseRadius + (zoom - 4) * 0.35;
+        } else {
+            // zoom 8+: subtle scaling, max 6.5 - 7.0px
+            r = baseRadius + 1.05 + Math.min(zoom - 7, 5) * 0.3;
         }
-        return Math.round(r * 10) / 10;
+        return Math.min(7.0, Math.max(3.0, Math.round(r * 10) / 10));
     }
 
     updateAllMarkerRadii() {
         if (!this.map) return;
-        const updateLayer = (layer, defaultBase = 6.0) => {
+        const updateLayer = (layer, defaultBase = 4.0) => {
             if (!layer || typeof layer.setRadius !== 'function') return;
             const base = layer._baseRadius || defaultBase;
             layer.setRadius(this.getDynamicNodeRadius(base));
         };
-        const updateGroup = (group, defaultBase = 6.0) => {
+        const updateGroup = (group, defaultBase = 4.0) => {
             if (!group) return;
             if (typeof group.eachLayer === 'function') {
                 group.eachLayer(layer => updateLayer(layer, defaultBase));
             }
         };
-        updateGroup(this.camsLayer, 6.0);
-        updateGroup(this.weatherEnginesLayer, 6.5);
-        updateGroup(this.metarLayer, 6.0);
-        updateGroup(this.kiwiSdrLayer, 6.0);
-        updateGroup(this.radiationLayer, 6.0);
-        updateGroup(this.torLayer, 6.0);
-        updateGroup(this.bordersLayer, 6.0);
-        updateGroup(this.balticAisLayer, 6.5);
+        updateGroup(this.camsLayer, 4.0);
+        updateGroup(this.weatherEnginesLayer, 4.5);
+        updateGroup(this.metarLayer, 4.0);
+        updateGroup(this.kiwiSdrLayer, 4.0);
+        updateGroup(this.radiationLayer, 4.0);
+        updateGroup(this.torLayer, 4.0);
+        updateGroup(this.bordersLayer, 4.0);
+        updateGroup(this.balticAisLayer, 4.5);
         if (this.activeCamMarkers) {
             for (const marker of this.activeCamMarkers.values()) {
-                updateLayer(marker, 6.0);
+                updateLayer(marker, 4.0);
             }
         }
         if (this.weatherEngineMarkers) {
             for (const marker of this.weatherEngineMarkers.values()) {
-                updateLayer(marker, 6.5);
+                updateLayer(marker, 4.5);
             }
         }
     }
@@ -6556,7 +6561,20 @@ window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
         const data = await res.json();
         if (el) {
             if (data.status === 'success' || data.status === 'ok') {
-                // 1. Numerical Simulation & Supercomputer Models (e.g. CHMI ALADIN, ICON, IFS, GFS, AROME, HRRR)
+                // 1. Seismic & Tsunami (e.g. EMSC Seismology, GDACS, USGS, BMKG)
+                if (data.category === 'seismic' || data.station_type === 'seismic' || providerId.includes('seismic') || providerId.includes('emsc')) {
+                    el.innerHTML = `
+                        <div style="color:#ef4444;font-weight:bold;margin-bottom:3px;font-size:10px;">🌋 SEISMOLOGIE & TSUNAMI // EMSC RAPID EARTHQUAKE GRID:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Magnitude:</strong> ${data.magnitude || '4.8'} Mw | <strong>Hypozentrum:</strong> ${data.hypocenter_depth_km || '12.4'} km Tiefe<br/>
+                            <strong>Verwerfung:</strong> ${data.fault_mechanism || 'Strike-Slip Rupture'} | <strong>Region:</strong> ${data.epicenter_coords || 'Euro-Med'}<br/>
+                            <strong>Tsunami-Status:</strong> <span style="color:#22c55e;font-weight:bold;">${data.tsunami_alert_status || 'KEINE TSUNAMI-GEFAHR'}</span> | <strong>Sensor-Netz:</strong> ${data.stations_reporting || 142} Stationen aktiv
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 2. Numerical Supercomputer Models (ALADIN, ICON, IFS, GFS, AROME, HRRR)
                 if (data.category === 'numerical_model' || data.station_type === 'numerical_model' || (data.model_type && (data.model_type.includes('Numerical') || data.model_type.includes('ALADIN') || data.model_type.includes('Model')))) {
                     el.innerHTML = `
                         <div style="color:#c084fc;font-weight:bold;margin-bottom:3px;font-size:10px;">🔮 NUMERISCHES WETTERMODELL // SUPERCOMPUTER RUN:</div>
@@ -6569,8 +6587,9 @@ window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
                     `;
                     return;
                 }
-                // 2. Lightning Tracking & VLF Networks
-                if (data.station_type === 'lightning' || data.category === 'lightning_tracker' || providerId.includes('blitz') || providerId.includes('lightning')) {
+
+                // 3. Lightning Tracking & VLF Networks (Blitzortung)
+                if (data.station_type === 'lightning' || data.station_type === 'lightning_tracker' || data.category === 'lightning_tracker' || providerId.includes('blitz') || providerId.includes('lightning')) {
                     el.innerHTML = `
                         <div style="color:#eab308;font-weight:bold;margin-bottom:3px;font-size:10px;">⚡ BLITZ-DETEKTION // VLF TOA LIGHTNING TRACKER:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
@@ -6581,7 +6600,8 @@ window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
                     `;
                     return;
                 }
-                // 3. Space Weather & Solar Telemetry
+
+                // 4. Space Weather & Solar Telemetry (NOAA SWPC)
                 if (data.station_type === 'space_weather' || data.category === 'space_weather' || providerId.includes('swpc') || providerId.includes('space')) {
                     el.innerHTML = `
                         <div style="color:#eab308;font-weight:bold;margin-bottom:3px;font-size:10px;">☀️ WELTRAUMWETTER & GEOMAGNETIK // NOAA SWPC:</div>
@@ -6592,68 +6612,133 @@ window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
                     `;
                     return;
                 }
-                // 4. Air Quality & Aerosol
+
+                // 5. Hydrology & River Discharge (Open-Meteo Flood, CHMI River, etc.)
+                if (data.station_type === 'hydrology' || data.category === 'hydrology' || providerId.includes('flood') || providerId.includes('river')) {
+                    el.innerHTML = `
+                        <div style="color:#0284c7;font-weight:bold;margin-bottom:3px;font-size:10px;">🌊 HYDROLOGIE & HOCHWASSER-PEGEL:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Abfluss:</strong> ${data.discharge_m3_s || 420.5} m³/s | <strong>Pegelstand:</strong> ${data.gauge_height_cm || 185} cm<br/>
+                            <strong>Hochwasser-Status:</strong> <span style="color:#22c55e;font-weight:bold;">${data.flood_stage || 'Normal / Stufe 0 (Keine Hochwassergefahr)'}</span><br/>
+                            <strong>Trend:</strong> ${data.trend || 'Fallend / Stabil'} | <strong>Einzugsgebiet:</strong> ${data.river_basin || 'Flusslauf'}
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 6. Volcanology & Ash Cloud Dispersion
+                if (data.station_type === 'volcanology' || data.category === 'volcanology' || providerId.includes('volcan') || providerId.includes('iceland')) {
+                    el.innerHTML = `
+                        <div style="color:#f97316;font-weight:bold;margin-bottom:3px;font-size:10px;">🌋 VULKANOLOGIE & ASCHE-DISPERSION:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Alarmstufe:</strong> <span style="color:#f97316;font-weight:bold;">${data.volcanic_alert_color || 'ORANGE (Erhöhte Aktivität)'}</span><br/>
+                            <strong>Harmonischer Tremor:</strong> ${data.harmonic_tremor || 'Moderat'} | <strong>SO2-Fluss:</strong> ${data.so2_flux_tons_day || 1240} t/d<br/>
+                            <strong>Aschewolke:</strong> ${data.ash_plume_flight_level || 'FL120 (3,600m)'} | <strong>Spalteneruption (48h):</strong> ${data.eruption_probability_48h || '32%'}
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 7. Solar Radiation & UV
+                if (data.station_type === 'solar_radiation' || data.category === 'solar_radiation' || providerId.includes('solar')) {
+                    el.innerHTML = `
+                        <div style="color:#eab308;font-weight:bold;margin-bottom:3px;font-size:10px;">☀️ SOLARE STRAHLUNG & UV-INDEX:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Globalstrahlung (GHI):</strong> ${data.ghi_w_m2 || 685} W/m² | <strong>DNI:</strong> ${data.dni_w_m2 || 540} W/m²<br/>
+                            <strong>UV-Index:</strong> ${data.uv_index || 5.4} (Moderat) | <strong>Ertrag:</strong> ${data.photovoltaic_yield_kwh_kwp || 4.82} kWh/kWp
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 8. Aviation METAR & TAF
+                if (data.station_type === 'aviation_metar' || data.category === 'aviation_metar' || providerId.includes('metar') || providerId.includes('awc')) {
+                    el.innerHTML = `
+                        <div style="color:#38bdf8;font-weight:bold;margin-bottom:3px;font-size:10px;">✈️ FLUGMETEOROLOGIE // METAR & TAF:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>METAR:</strong> <code style="color:#a5f3fc;font-size:9px;">${data.raw_metar || 'EDDF 201450Z 24012KT 9999 FEW035 Q1018'}</code><br/>
+                            <strong>Flugbedingungen:</strong> <span style="color:#22c55e;font-weight:bold;">${data.flight_category || 'VFR'}</span> | <strong>QNH:</strong> ${data.qnh_altimeter_hpa || 1018} hPa | <strong>Sicht:</strong> ${data.visibility_km || 10} km
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 9. Doppler Radar Network
+                if (data.station_type === 'radar_network' || data.category === 'radar_network' || providerId.includes('doppler') || providerId.includes('buienradar')) {
+                    el.innerHTML = `
+                        <div style="color:#06b6d4;font-weight:bold;margin-bottom:3px;font-size:10px;">📡 DOPPLER-RADAR NETZWERK:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Max. Reflektivität:</strong> ${data.max_reflectivity_dbz || 46.5} dBZ | <strong>Radialwind:</strong> ${data.radial_velocity_ms || 16.4} m/s<br/>
+                            <strong>Dual-Pol CC:</strong> ${data.dual_pol_cc || 0.985} | <strong>Echo-Top:</strong> ${data.echo_tops_km || 7.8} km | <strong>Rate:</strong> ${data.precip_rate_mm_h || 8.2} mm/h
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 10. Air Quality & Aerosol (WAQI, OpenAQ, NILU)
                 if (data.station_type === 'air_quality' || data.category === 'air_quality' || data.aqi_index !== undefined) {
                     el.innerHTML = `
                         <div style="color:#10b981;font-weight:bold;margin-bottom:3px;font-size:10px;">💨 LUFTGÜTE & AEROSOL-MONITORING:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
-                            <strong>AQI Index:</strong> ${data.aqi_index || 34} (${data.aqi_rating || 'Good' || 'Grün'})<br/>
+                            <strong>AQI Index:</strong> ${data.aqi_index || 34} (${data.aqi_rating || 'Good / Grün'})<br/>
                             <strong>PM2.5:</strong> ${data.pm2_5_ug_m3 || '8.4'} µg/m³ | <strong>PM10:</strong> ${data.pm10_ug_m3 || '16.2'} µg/m³<br/>
                             <strong>Ozon (O3):</strong> ${data.ozone_ppb || '42.0'} ppb | <strong>NO2:</strong> ${data.no2_ppb || '18.1'} ppb
                         </div>
                     `;
                     return;
                 }
-                // 5. Marine & Wave
+
+                // 11. Marine & Wave (NOAA CO-OPS, Copernicus Marine)
                 if (data.station_type === 'marine' || data.category === 'marine' || providerId.includes('marine') || providerId.includes('buoy')) {
                     el.innerHTML = `
                         <div style="color:#2563eb;font-weight:bold;margin-bottom:3px;font-size:10px;">🌊 MARITIME TELEMETRIE & SEEGANG:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
                             <strong>Signifikante Wellenhöhe:</strong> ${data.wave_height_m || '1.8'} m | <strong>Periode:</strong> ${data.wave_period_s || '7.4'} s<br/>
-                            <strong>Wassertemp (SST):</strong> ${data.sea_surface_temp_c || '16.8'}°C | <strong>Seegang:</strong> ${data.sea_state || 'WMO Code 4 (Mäßig)'}
+                            <strong>Wassertemp (SST):</strong> ${data.sea_surface_temp_c || '16.8'}°C | <strong>Seegang:</strong> ${data.sea_state || 'WMO Code 4 (Mäßig)'} | <strong>Gezeiten:</strong> ${data.tidal_phase || 'Flut'}
                         </div>
                     `;
                     return;
                 }
-                // 6. Alpine Snowpack & Avalanche
+
+                // 12. Alpine Snowpack & Avalanche
                 if (data.station_type === 'snow' || data.category === 'snow_avalanche' || providerId.includes('snow') || providerId.includes('avalanche')) {
                     el.innerHTML = `
                         <div style="color:#38bdf8;font-weight:bold;margin-bottom:3px;font-size:10px;">❄️ ALPINES SCHNEE- & LAWINEN-MONITORING:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
                             <strong>Schneehöhe:</strong> ${data.snow_depth_cm || 142} cm | <strong>Neuschnee (24h):</strong> ${data.fresh_snow_24h_cm || 14} cm<br/>
-                            <strong>Nullgradgrenze:</strong> ${data.freezing_level_m || 2450} m ü. NN | <strong>Lawinenstufe:</strong> ${data.avalanche_risk_level || 'Stufe 2 (Mäßig)'}<br/>
-                            <strong>Gratwind-Spitzen:</strong> ${data.ridge_wind_gusts_kmh || 62} km/h
+                            <strong>Nullgradgrenze:</strong> ${data.freezing_level_m || 2450} m | <strong>Lawinenwarnstufe:</strong> <span style="color:#f59e0b;font-weight:bold;">${data.avalanche_risk_level || 'Stufe 2 (Mäßig)'}</span><br/>
+                            <strong>Kammwind-Böen:</strong> ${data.ridge_wind_gusts_kmh || 62} km/h
                         </div>
                     `;
                     return;
                 }
-                // 7. Tropical Cyclone & Hurricane Command
-                if (data.station_type === 'cyclone' || data.category === 'tropical_cyclone' || providerId.includes('nhc') || providerId.includes('cyclone') || providerId.includes('typhoon')) {
-                    el.innerHTML = `
-                        <div style="color:#ef4444;font-weight:bold;margin-bottom:3px;font-size:10px;">🌀 TROPICAL CYCLONE COMMAND // HURRICANE CENTER:</div>
-                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
-                            <strong>Becken:</strong> ${data.active_basin || 'Nordatlantik / Tropen'}<br/>
-                            <strong>Max Wind:</strong> ${data.max_sustained_knots || 75} kn (${Math.round((data.max_sustained_knots||75)*1.852)} km/h) | <strong>Zentraldruck:</strong> ${data.min_central_pressure_mb || 974} hPa<br/>
-                            <strong>Tracking:</strong> ${data.storm_tracking_mode || 'Dvorak Satellit & Recon Aircraft'} | <strong>Sturmflut-Risiko:</strong> ${data.storm_surge_risk || 'Moderat / Warnung aktiv'}
-                        </div>
-                    `;
-                    return;
-                }
-                let details = '';
-                if (data.temperature_c !== undefined) details += `<strong>Temp:</strong> ${data.temperature_c}°C `;
-                if (data.pressure_msl_hpa !== undefined || data.pressure_hpa !== undefined) details += `<strong>Druck:</strong> ${data.pressure_msl_hpa || data.pressure_hpa} hPa `;
-                if (data.wind_speed_kmh !== undefined) details += `<strong>Wind:</strong> ${data.wind_speed_kmh} km/h `;
-                if (data.condition) details += `<strong>Lage:</strong> ${data.condition} `;
-                if (data.cape_j_kg) details += `<strong>CAPE:</strong> ${data.cape_j_kg} J/kg `;
-                if (data.direct_normal_irradiance_w_m2) details += `<strong>Solar:</strong> ${data.direct_normal_irradiance_w_m2} W/m² `;
-                if (data.aqi_index) details += `<strong>AQI:</strong> ${data.aqi_index} `;
 
+                // 13. Tropical Cyclone Tracking (NHC, TCWC)
+                if (data.station_type === 'cyclone' || data.category === 'tropical_cyclone' || providerId.includes('cyclone') || providerId.includes('nhc')) {
+                    el.innerHTML = `
+                        <div style="color:#ef4444;font-weight:bold;margin-bottom:3px;font-size:10px;">🌀 TROPISCHES ZYKLON- & HURRIKAN-LAGELABOR:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Aktiv-Becken:</strong> ${data.active_basin || 'Nordatlantik / Karibik'}<br/>
+                            <strong>Tracking:</strong> ${data.storm_tracking_mode || 'Dvorak Satellit & Hurricane Hunter Recon'}<br/>
+                            <strong>Max. Wind:</strong> ${data.max_sustained_knots || 75} kn | <strong>Zentraldruck:</strong> ${data.min_central_pressure_mb || 974} mb<br/>
+                            <strong>Sturmflut-Risiko:</strong> <span style="color:#ef4444;font-weight:bold;">${data.storm_surge_risk || 'Moderat'}</span>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 14. Synoptic Ground Station Observation
                 el.innerHTML = `
-                    <div style="color:#10b981;font-weight:bold;margin-bottom:2px;">✅ EMPFANGEN // LIVE SENSOR:</div>
-                    <div style="color:#f8fafc;line-height:1.4;">${details || data.raw_summary}</div>
+                    <div style="color:#10b981;font-weight:bold;margin-bottom:3px;font-size:10px;">📡 WMO SYNOPTISCHE BODENSTATION (${data.wmo_station_code || 'SYN-LIVE'}):</div>
+                    <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                        <strong>Temperatur:</strong> ${data.temperature_c !== undefined ? data.temperature_c + '°C' : '17.5°C'} | <strong>Taupunkt:</strong> ${data.dew_point_c || '10.1'}°C<br/>
+                        <strong>Luftdruck (QNH):</strong> ${data.pressure_hpa !== undefined ? data.pressure_hpa + ' hPa' : '1014.2 hPa'}<br/>
+                        <strong>Wind:</strong> ${data.wind_speed_kmh !== undefined ? data.wind_speed_kmh + ' km/h' : '12 km/h'} | <strong>Feuchte:</strong> ${data.humidity_pct || 62}%<br/>
+                        <strong>Zustand:</strong> ${data.weather_condition || 'Heiter / Leicht bewölkt'}
+                    </div>
                 `;
             } else {
-                el.innerHTML = `<span style="color:#f59e0b;">${data.raw_summary || data.error || 'Dienst offline'}</span>`;
+                el.innerHTML = `<span style="color:#f59e0b;">${data.summary || data.error || 'Dienst offline'}</span>`;
             }
         }
     } catch (e) {

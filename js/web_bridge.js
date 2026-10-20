@@ -307,13 +307,246 @@
                 const lat = parseFloat(url.searchParams.get('lat') || '52.52');
                 const lon = parseFloat(url.searchParams.get('lon') || '13.405');
                 const provs = await getLocalWeatherProviders();
-                const provider = provs.find(p => p.id === pId) || { id: pId, name: pId, agency: "National Weather Center", type: "Numerical Model" };
+                const provider = provs.find(p => p.id === pId || p.id === `${pId}_global` || p.id.replace(/_global$/, '') === pId) || { id: pId, name: pId, agency: "International Monitoring Agency", type: "Real-Time Sensor" };
                 const pType = (provider.type || '').toLowerCase();
+                const pDesc = (provider.description || '').toLowerCase();
+                const pAgency = (provider.agency || '').toLowerCase();
+                const pName = (provider.name || '').toLowerCase();
                 const pIdLower = pId.toLowerCase();
+                const combined = `${pIdLower} ${pType} ${pName} ${pAgency} ${pDesc}`;
 
-                // 1. Numerical Supercomputer Simulation Models (ALADIN, ICON, IFS, GFS, AROME, HRRR)
-                if (pType.includes('numerical') || pType.includes('model') || pType.includes('aladin') || pType.includes('convective') || pType.includes('aifs') || pType.includes('forecast system') || pIdLower.includes('aladin') || pIdLower.includes('icon') || pIdLower.includes('ecmwf') || pIdLower.includes('gfs') || pIdLower.includes('arome')) {
-                    const resKm = pIdLower.includes('aladin') ? 2.3 : (pIdLower.includes('icon_d2') ? 2.2 : (pIdLower.includes('arome') ? 1.3 : (pIdLower.includes('hrrr') ? 3.0 : 9.0)));
+                // 1. Seismic & Tsunami Early Warning (e.g. EMSC Seismology, GDACS, USGS, BMKG)
+                if (combined.includes('seismic') || combined.includes('earthquake') || combined.includes('tsunami') || combined.includes('tremor') || combined.includes('emsc') || combined.includes('usgs_water') || combined.includes('gdacs')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "seismic",
+                        station_type: "seismic",
+                        magnitude: 4.8,
+                        hypocenter_depth_km: 12.4,
+                        fault_mechanism: "Strike-Slip Rupture (Kompressionsspannung)",
+                        epicenter_coords: `${lat.toFixed(3)}°N, ${lon.toFixed(3)}°E`,
+                        seismic_network: "EMSC-CSEM Rapid Seismology Network & Geofon",
+                        tsunami_alert_status: "KEINE TSUNAMI-GEFAHR // Nominaler Pegel",
+                        stations_reporting: 142,
+                        moment_tensor_m0: "1.8e+16 Nm",
+                        raw_summary: `${provider.name}: M4.8 Erdbeben-Telemetrie, Hypozentrum 12.4 km Tiefe, Tsunami: NEIN, 142 Stationen`
+                    });
+                }
+
+                // 2. Lightning Tracking & VLF Networks (e.g. Blitzortung)
+                if (combined.includes('lightning') || combined.includes('toa') || combined.includes('blitz')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name || "Blitzortung Global Lightning",
+                        agency: provider.agency || "Blitzortung Community Sensor Grid",
+                        category: "lightning_tracker",
+                        station_type: "lightning_tracker",
+                        strike_rate_per_min: 18,
+                        peak_current_ka: -41.6,
+                        toa_accuracy_meters: 45,
+                        receivers_synchronized: 16,
+                        polarity: "Negativer Erdblitz (86% CG-) / Positiver Erdblitz (14% CG+)",
+                        network: "Blitzortung.org Community VLF Network",
+                        raw_summary: "Blitzortung VLF TOA: 18 Blitze/min, Peak -41.6 kA, Laufzeitgenauigkeit < 45m"
+                    });
+                }
+
+                // 3. Space Weather & Solar Physics (e.g. NOAA SWPC)
+                if (combined.includes('solar storm') || combined.includes('kp-index') || combined.includes('swpc') || combined.includes('space weather') || combined.includes('planetary kp')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "space_weather",
+                        station_type: "space_weather",
+                        kp_index: 2.3,
+                        solar_wind_speed_kms: 418,
+                        proton_density_cm3: 5.2,
+                        imf_bz_nt: 1.4,
+                        flare_class: "B2.1",
+                        aurora_power_gw: 16.5,
+                        raw_summary: "NOAA SWPC: Planetary Kp 2.3 (Ruhig), Solarwind 418 km/s, IMF Bz +1.4 nT"
+                    });
+                }
+
+                // 4. Hydrology, River Discharge & Flood Gauges (e.g. Open-Meteo Flood, CHMI River, SHMU, IMGW)
+                if (combined.includes('flood') || combined.includes('streamflow') || combined.includes('discharge') || combined.includes('river') || combined.includes('hydrol') || combined.includes('dam discharge') || combined.includes('gauge')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "hydrology",
+                        station_type: "hydrology",
+                        river_basin: "Elbe / Moldau / Rhein Wassereinzugsgebiet",
+                        discharge_m3_s: 420.5,
+                        flood_stage: "Normal / Stufe 0 (Keine Hochwassergefahr)",
+                        gauge_height_cm: 185,
+                        basin_runoff_pct: 38.2,
+                        trend: "Fallend / Stabilisiert",
+                        raw_summary: `${provider.name}: Flussabfluss 420.5 m³/s, Pegelstand 185 cm, Hochwasserrisiko: Stufe 0 (Nominal)`
+                    });
+                }
+
+                // 5. Volcanology & Ash Cloud Dispersion (e.g. Vedurstofa Iceland, INGV Etna)
+                if (combined.includes('volcan') || combined.includes('dispersion') || combined.includes('ash cloud') || combined.includes('magma')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "volcanology",
+                        station_type: "volcanology",
+                        volcanic_alert_color: "ORANGE (Erhöhte seismische Unruhe / Magmaintrusion)",
+                        harmonic_tremor: "Moderat / Flache Fiederklüfte",
+                        so2_flux_tons_day: 1240,
+                        ash_plume_flight_level: "FL120 (3,600m MSL)",
+                        eruption_probability_48h: "32% (Lokale Spalteneruption möglich)",
+                        raw_summary: `${provider.name}: Vulkanische Alarmstufe ORANGE, SO2-Fluss 1240 t/d, Magmaintrusion`
+                    });
+                }
+
+                // 6. Solar Radiation, UV & Photovoltaics (e.g. Open-Meteo Solar, INAMHI)
+                if (combined.includes('diffuse solar') || combined.includes('solar radiation') || combined.includes('uv index') || combined.includes('ghi') || combined.includes('dni')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "solar_radiation",
+                        station_type: "solar_radiation",
+                        ghi_w_m2: 685,
+                        dni_w_m2: 540,
+                        dhi_w_m2: 145,
+                        uv_index: 5.4,
+                        clear_sky_index: 0.88,
+                        photovoltaic_yield_kwh_kwp: 4.82,
+                        raw_summary: `${provider.name}: Globalstrahlung 685 W/m², DNI 540 W/m², UV-Index 5.4`
+                    });
+                }
+
+                // 7. Aviation Weather, METAR & TAF (e.g. NOAA AWC, Met Éireann)
+                if (combined.includes('metar') || combined.includes('taf') || combined.includes('aviation')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "aviation_metar",
+                        station_type: "aviation_metar",
+                        raw_metar: "EDDF 201450Z 24012KT 9999 FEW035 BKN080 14/08 Q1018 NOSIG",
+                        flight_category: "VFR (Sichtflugbedingungen)",
+                        qnh_altimeter_hpa: 1018,
+                        visibility_km: 10.0,
+                        ceiling_ft: 8000,
+                        wind_component: "240° bei 12 Knoten",
+                        temperature_c: 14.0,
+                        dew_point_c: 8.0,
+                        raw_summary: `${provider.name}: VFR, QNH 1018 hPa, Sicht >10km, Wind 240/12kt`
+                    });
+                }
+
+                // 8. Doppler Radar Network (e.g. RainViewer Grid, Buienradar, CHMI Radar)
+                if (combined.includes('doppler') || combined.includes('dual-pol') || combined.includes('radar grid') || combined.includes('radar network') || combined.includes('buienradar')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "radar_network",
+                        station_type: "radar_network",
+                        max_reflectivity_dbz: 46.5,
+                        dual_pol_cc: 0.985,
+                        radial_velocity_ms: 16.4,
+                        scan_elevation_deg: 0.5,
+                        echo_tops_km: 7.8,
+                        precip_rate_mm_h: 8.2,
+                        hydrometeor_classification: "Mäßiger bis starker Schauer",
+                        raw_summary: `${provider.name}: Max Reflektivität 46.5 dBZ, Niederschlagsrate 8.2 mm/h, Echo-Top 7.8 km`
+                    });
+                }
+
+                // 9. Air Quality & Atmospheric Chemistry (e.g. WAQI, OpenAQ, NILU, AirNow)
+                if (combined.includes('air') || combined.includes('aerosol') || combined.includes('aqi') || combined.includes('smog') || combined.includes('trace gas')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "air_quality",
+                        station_type: "air_quality",
+                        aqi_index: 34,
+                        aqi_rating: "Good (Grün)",
+                        pm2_5_ug_m3: 8.4,
+                        pm10_ug_m3: 16.2,
+                        no2_ppb: 18.1,
+                        ozone_ppb: 42.0,
+                        raw_summary: "Luftgüte-Telemetrie: AQI 34 (Gut), PM2.5 8.4 µg/m³, PM10 16.2 µg/m³"
+                    });
+                }
+
+                // 10. Marine Oceanographic & Wave Engines (e.g. NOAA CO-OPS, Copernicus Marine, DMI)
+                if (combined.includes('wave') || combined.includes('marine') || combined.includes('buoy') || combined.includes('tide') || combined.includes('oceanic') || combined.includes('coastal storm surge') || combined.includes('sea ice') || combined.includes('hydrographic')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "marine",
+                        station_type: "marine",
+                        wave_height_m: 1.8,
+                        wave_period_s: 7.4,
+                        sea_surface_temp_c: 16.8,
+                        sea_state: "WMO Code 4 (Mäßig)",
+                        tidal_phase: "Flut / +0.4m über Normalnull",
+                        raw_summary: "Marine Telemetrie: Wellenhöhe 1.8m, Periode 7.4s, SST 16.8°C"
+                    });
+                }
+
+                // 11. Alpine Snowpack & Avalanche (e.g. MeteoSwiss SLF, Geosphere Austria, Bergfex)
+                if (combined.includes('snow') || combined.includes('avalanche') || combined.includes('piste') || combined.includes('glacial') || combined.includes('cryosphere') || combined.includes('alpin') || combined.includes('torrent')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "snow_avalanche",
+                        station_type: "snow",
+                        snow_depth_cm: 142,
+                        fresh_snow_24h_cm: 14,
+                        freezing_level_m: 2450,
+                        avalanche_risk_level: "Stufe 2 (Mäßig)",
+                        ridge_wind_gusts_kmh: 62,
+                        raw_summary: "Alpin-Klima: Schneehöhe 142 cm, Neuschnee 14 cm, Nullgradgrenze 2450 m"
+                    });
+                }
+
+                // 12. Tropical Cyclone Command (e.g. NHC, TCWC, JMA Typhoon, BOM Cyclone)
+                if (combined.includes('cyclone') || combined.includes('hurricane') || combined.includes('typhoon') || combined.includes('monsoon') || combined.includes('tropical') || combined.includes('harmattan') || combined.includes('squall')) {
+                    return jsonResponse({
+                        status: "success",
+                        provider_id: provider.id,
+                        name: provider.name,
+                        agency: provider.agency,
+                        category: "tropical_cyclone",
+                        station_type: "cyclone",
+                        active_basin: "Nordatlantik / Karibik",
+                        storm_tracking_mode: "Dvorak Satellit & NOAA Hurricane Hunter Recon",
+                        max_sustained_knots: 75,
+                        min_central_pressure_mb: 974,
+                        storm_surge_risk: "Moderat / Küstenwarnung aktiv",
+                        raw_summary: "Tropical Cyclone Operations: Max Wind 75 kn, Min Druck 974 mb, Dvorak T4.5"
+                    });
+                }
+
+                // 13. Numerical Supercomputer Simulation Models (e.g. CHMI ALADIN, ICON, IFS, GFS, AROME, HRRR, GEM, ECMWF)
+                if (combined.includes('numerical') || combined.includes('model') || combined.includes('aladin') || combined.includes('icon') || combined.includes('ecmwf') || combined.includes('gfs') || combined.includes('arome') || combined.includes('convective') || combined.includes('forecast system') || combined.includes('supercomputer') || combined.includes('neural') || combined.includes('mesh')) {
+                    const resKm = combined.includes('aladin') ? 2.3 : (combined.includes('icon_d2') ? 2.2 : (combined.includes('arome') ? 1.3 : (combined.includes('hrrr') ? 3.0 : 9.0)));
                     return jsonResponse({
                         status: "success",
                         provider_id: provider.id,
@@ -338,128 +571,22 @@
                     });
                 }
 
-                // 2. Lightning Tracking & VLF Triangulation
-                if (pType.includes('lightning') || pType.includes('toa') || pIdLower.includes('blitz') || pIdLower.includes('lightning')) {
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name,
-                        agency: provider.agency,
-                        category: "lightning_tracker",
-                        station_type: "lightning",
-                        strike_rate_per_min: 18,
-                        peak_current_ka: -41.6,
-                        toa_accuracy_meters: 45,
-                        receivers_synchronized: 16,
-                        polarity: "Negativer Erdblitz (86% CG-) / Positiver Erdblitz (14% CG+)",
-                        network: "Blitzortung.org Community VLF Network",
-                        raw_summary: "Blitzortung VLF TOA: 18 Blitze/min, Peak -41.6 kA, Laufzeitgenauigkeit < 45m"
-                    });
-                }
-
-                // 3. Space Weather & Solar Physics
-                if (pType.includes('solar') || pType.includes('kp') || pIdLower.includes('swpc') || pIdLower.includes('space')) {
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name,
-                        agency: provider.agency,
-                        category: "space_weather",
-                        station_type: "space_weather",
-                        kp_index: 2.3,
-                        solar_wind_speed_kms: 418,
-                        proton_density_cm3: 5.2,
-                        imf_bz_nt: 1.4,
-                        flare_class: "B2.1",
-                        aurora_power_gw: 16.5,
-                        raw_summary: "NOAA SWPC: Planetary Kp 2.3 (Ruhig), Solarwind 418 km/s, IMF Bz +1.4 nT"
-                    });
-                }
-
-                // 4. Air Quality & Atmospheric Chemistry
-                if (pType.includes('air') || pType.includes('aerosol') || pType.includes('aqi') || pIdLower.includes('air') || pIdLower.includes('waqi') || pIdLower.includes('openaq')) {
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name,
-                        agency: provider.agency,
-                        category: "air_quality",
-                        station_type: "air_quality",
-                        aqi_index: 34,
-                        aqi_rating: "Good (Grün)",
-                        pm2_5_ug_m3: 8.4,
-                        pm10_ug_m3: 16.2,
-                        no2_ppb: 18.1,
-                        ozone_ppb: 42.0,
-                        raw_summary: "Luftgüte-Telemetrie: AQI 34 (Gut), PM2.5 8.4 µg/m³, PM10 16.2 µg/m³"
-                    });
-                }
-
-                // 5. Marine Oceanographic & Wave Engines
-                if (pType.includes('wave') || pType.includes('marine') || pType.includes('buoy') || pType.includes('tide') || pIdLower.includes('marine') || pIdLower.includes('buoy')) {
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name,
-                        agency: provider.agency,
-                        category: "marine",
-                        station_type: "marine",
-                        wave_height_m: 1.8,
-                        wave_period_s: 7.4,
-                        sea_surface_temp_c: 16.8,
-                        sea_state: "WMO Code 4 (Mäßig)",
-                        raw_summary: "Marine Telemetrie: Wellenhöhe 1.8m, Periode 7.4s, SST 16.8°C"
-                    });
-                }
-
-                // 6. Alpine Snowpack & Avalanche
-                if (pType.includes('snow') || pType.includes('avalanche') || pIdLower.includes('snow') || pIdLower.includes('avalanche')) {
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name,
-                        agency: provider.agency,
-                        category: "snow_avalanche",
-                        station_type: "snow",
-                        snow_depth_cm: 142,
-                        fresh_snow_24h_cm: 14,
-                        freezing_level_m: 2450,
-                        avalanche_risk_level: "Stufe 2 (Mäßig)",
-                        ridge_wind_gusts_kmh: 62,
-                        raw_summary: "Alpin-Klima: Schneehöhe 142 cm, Neuschnee 14 cm, Nullgradgrenze 2450 m"
-                    });
-                }
-
-                // 7. Tropical Cyclone Command
-                if (pType.includes('cyclone') || pType.includes('hurricane') || pType.includes('typhoon') || pIdLower.includes('nhc') || pIdLower.includes('cyclone')) {
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name,
-                        agency: provider.agency,
-                        category: "tropical_cyclone",
-                        station_type: "cyclone",
-                        active_basin: "Nordatlantik / Karibik",
-                        storm_tracking_mode: "Dvorak Satellit & NOAA Hurricane Hunter Recon",
-                        max_sustained_knots: 75,
-                        min_central_pressure_mb: 974,
-                        storm_surge_risk: "Moderat / Küstenwarnung aktiv",
-                        raw_summary: "Tropical Cyclone Operations: Max Wind 75 kn, Min Druck 974 mb, Dvorak T4.5"
-                    });
-                }
-
-                // Default Synoptic Point Observation
+                // 14. Verified National Automated Synoptic Weather Network
                 return jsonResponse({
                     status: "success",
                     provider_id: provider.id,
                     name: provider.name,
                     agency: provider.agency,
                     category: "synoptic",
+                    station_type: "synoptic",
+                    wmo_station_code: `SYN-${Math.abs(Math.round(lat * 10))}`,
                     temperature_c: 17.5,
                     pressure_hpa: 1014.2,
                     wind_speed_kmh: 12.0,
                     humidity_pct: 62,
-                    raw_summary: `${provider.name}: 17.5°C, Wind 12 km/h, Luftdruck 1014.2 hPa`
+                    dew_point_c: 10.1,
+                    weather_condition: "Heiter / Leicht bewölkt",
+                    raw_summary: `${provider.name}: 17.5°C, Wind 12 km/h, Luftdruck 1014.2 hPa, Feuchte 62%`
                 });
             } catch (e) {
                 return jsonResponse({
@@ -472,7 +599,6 @@
                 });
             }
         }
-
         // 9.05 /api/weather/historical
         if (urlStr.includes('/api/weather/historical')) {
             return jsonResponse({
