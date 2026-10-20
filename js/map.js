@@ -17,7 +17,28 @@ const getCountryLabel = (lat, lon, fb = '') => (window.resolveCountry ? window.r
 
 window.isRadarStation = function(st) {
     if (!st) return false;
-    return true; // Every meteorological station & model has live Doppler radar targeting capability
+    const id = String(st.id || '').toLowerCase();
+    const type = String(st.type || '').toLowerCase();
+    const prov = String(st.provider || '').toLowerCase();
+    const cat = String(st.category || '').toLowerCase();
+    const name = String(st.name || '').toLowerCase();
+    
+    // Explicit blacklist: non-radar nodes (ski slopes, sports, seismology, radiation, cables, traffic cams)
+    if (id.includes('pistes') || id.includes('ski') || id.includes('slope') || id.includes('opensnowmap')) return false;
+    if (cat.includes('sports') || cat.includes('leisure') || cat.includes('transit') || cat.includes('traffic')) return false;
+    if (cat === 'seismic' || type === 'seismic' || id.includes('seismic') || id.includes('emsc')) return false;
+    if (cat === 'radiation' || type === 'radiation' || id.includes('safecast') || id.includes('radmon')) return false;
+    if (cat === 'marine' && !type.includes('buoy') && !type.includes('radar')) return false;
+    
+    // Whitelist real meteorological radar networks and airport Doppler sites
+    if (type.includes('radar') || prov.includes('radar') || cat.includes('radar') || name.includes('radar')) return true;
+    if (type === 'airport_metar' || prov.includes('metar') || prov.includes('awos') || prov.includes('asos')) return true;
+    if (id.startsWith('k') || id.startsWith('ed') || id.startsWith('lf') || id.startsWith('ls') || id.startsWith('eg') || id.startsWith('lo')) {
+        if (id.length === 4) return true;
+    }
+    if (id.includes('nexrad') || id.includes('dwd') || id.includes('noaa') || id.includes('rainviewer') || id.includes('chmi') || id.includes('meteo')) return true;
+    
+    return false;
 };
 
 window.lockRadarStationTarget = function(id, lat, lon, name, agency, elevation) {
@@ -4418,7 +4439,7 @@ class OperationsMap {
                                 🔮 JEV SCAN HIER
                             </button>
                         </div>
-                        ${(window.isRadarStation ? window.isRadarStation(p) : true) ? `
+                        ${(window.isRadarStation ? window.isRadarStation(p) : false) ? `
                         <button class="ops-btn" style="width:100%;margin-top:6px;padding:5px 8px;font-size:10px;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(0,240,255,0.3);" onclick="window.lockRadarStationTarget('${p.id}', ${p.lat}, ${p.lon}, '${(p.name || '').replace(/'/g, '')}', '${(p.agency || 'Radar Net').replace(/'/g, '')}', 150)">
                             🎯 ANVISIERE WETTERSTATION // RADAR DISH
                         </button>
@@ -4552,7 +4573,7 @@ class OperationsMap {
                                 🔮 JEV SCAN
                             </button>
                         </div>
-                        ${(window.isRadarStation ? window.isRadarStation(st) : true) ? `
+                        ${(window.isRadarStation ? window.isRadarStation(st) : false) ? `
                         <button class="ops-btn" style="width:100%;margin-top:6px;padding:5px 8px;font-size:10px;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(0,240,255,0.3);" onclick="window.lockRadarStationTarget('${st.id}', ${st.lat}, ${st.lon}, '${(st.name || '').replace(/'/g, '')}', '${(st.provider || meta.label || 'Doppler Radar').replace(/'/g, '')}', ${st.elevation || 150})">
                             🎯 ANVISIERE WETTERSTATION // RADAR DISH
                         </button>
@@ -6639,7 +6660,28 @@ window.openSupercellDossier = async function(cellId, lat, lon) {
 
 window.isRadarStation = function(st) {
     if (!st) return false;
-    return true; // Every meteorological station & model has live Doppler radar targeting capability
+    const id = String(st.id || '').toLowerCase();
+    const type = String(st.type || '').toLowerCase();
+    const prov = String(st.provider || '').toLowerCase();
+    const cat = String(st.category || '').toLowerCase();
+    const name = String(st.name || '').toLowerCase();
+    
+    // Explicit blacklist: non-radar nodes (ski slopes, sports, seismology, radiation, cables, traffic cams)
+    if (id.includes('pistes') || id.includes('ski') || id.includes('slope') || id.includes('opensnowmap')) return false;
+    if (cat.includes('sports') || cat.includes('leisure') || cat.includes('transit') || cat.includes('traffic')) return false;
+    if (cat === 'seismic' || type === 'seismic' || id.includes('seismic') || id.includes('emsc')) return false;
+    if (cat === 'radiation' || type === 'radiation' || id.includes('safecast') || id.includes('radmon')) return false;
+    if (cat === 'marine' && !type.includes('buoy') && !type.includes('radar')) return false;
+    
+    // Whitelist real meteorological radar networks and airport Doppler sites
+    if (type.includes('radar') || prov.includes('radar') || cat.includes('radar') || name.includes('radar')) return true;
+    if (type === 'airport_metar' || prov.includes('metar') || prov.includes('awos') || prov.includes('asos')) return true;
+    if (id.startsWith('k') || id.startsWith('ed') || id.startsWith('lf') || id.startsWith('ls') || id.startsWith('eg') || id.startsWith('lo')) {
+        if (id.length === 4) return true;
+    }
+    if (id.includes('nexrad') || id.includes('dwd') || id.includes('noaa') || id.includes('rainviewer') || id.includes('chmi') || id.includes('meteo')) return true;
+    
+    return false;
 };
 
 window.lockRadarStationTarget = function(id, lat, lon, name, agency, elevation) {

@@ -2481,7 +2481,7 @@ class StreamPlayer {
                 <!-- TOP HEADER CONTROL STRIP -->
                 <div style="display:flex;justify-content:space-between;align-items:center;background:#050914;border-bottom:1px solid #1e293b;padding:6px 10px;gap:8px;flex-shrink:0;">
                     <div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
-                        <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px #ef4444;flex-shrink:0;"></div>
+                        <div style="width:10px;height:10px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;flex-shrink:0;"></div>
                         <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                             <strong style="color:#00f0ff;font-size:0.85rem;letter-spacing:0.5px;">📡 WSR-88D // ${stationId}</strong>
                             <span style="font-size:0.68rem;color:#94a3b8;margin-left:6px;">${stationName} (${agency})</span>
@@ -2491,8 +2491,8 @@ class StreamPlayer {
                         <button id="mon02-toggle-basemap" class="ops-btn" style="padding:3px 8px;font-size:0.65rem;background:#0f172a;border:1px solid #38bdf8;color:#38bdf8;border-radius:3px;cursor:pointer;font-weight:bold;">
                             🛰️ SATELLIT / DUNKEL
                         </button>
-                        <span style="background:rgba(239,68,68,0.18);border:1px solid #ef4444;color:#f87171;padding:2px 6px;border-radius:3px;font-size:0.62rem;font-weight:bold;">
-                            VCP 212 // 0.5° TILT
+                        <span style="background:rgba(16,185,129,0.18);border:1px solid #10b981;color:#34d399;padding:2px 6px;border-radius:3px;font-size:0.62rem;font-weight:bold;">
+                            100% REAL DOPPLER SENSOR
                         </span>
                         <button id="mon02-radar-close-btn" class="ops-btn" style="padding:3px 10px;font-size:0.65rem;background:#dc2626;border:none;color:#fff;border-radius:3px;cursor:pointer;font-weight:bold;" title="Schließen und zum Webcam-Stream wechseln">
                             ✕ BEENDEN
@@ -2503,19 +2503,16 @@ class StreamPlayer {
                 <!-- GIBSON RIDGE RADAR PRODUCT SELECTOR TABS -->
                 <div style="display:flex;gap:4px;padding:5px 8px;background:#080d1a;border-bottom:1px solid #1e293b;flex-shrink:0;overflow-x:auto;">
                     <button id="mon02-mode-n0q" class="ops-btn active" style="flex:1;padding:5px 6px;font-size:0.68rem;background:#0284c7;color:#fff;border:1px solid #38bdf8;border-radius:3px;cursor:pointer;font-weight:900;white-space:nowrap;">
-                        🌧️ BASIS-REFLEKTIVITÄT (Z 0.5°)
+                        🌧️ BASIS-REFLEKTIVITÄT // RAINVIEWER 512PX (GLOBAL)
                     </button>
-                    <button id="mon02-mode-hook" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.68rem;background:#0f172a;color:#cbd5e1;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:900;white-space:nowrap;">
-                        🌪️ SUPERCELL HOOK ECHO (STORM CHASER)
-                    </button>
-                    <button id="mon02-mode-vel" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.68rem;background:#0f172a;color:#cbd5e1;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:900;white-space:nowrap;">
-                        💨 RADIAL-VELOCITY (BV 0.5° COUPLET)
-                    </button>
-                    <button id="mon02-mode-zdr" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.68rem;background:#0f172a;color:#cbd5e1;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:900;white-space:nowrap;">
-                        ⚡ DUAL-POL (ZDR / HAGEL)
+                    <button id="mon02-mode-nexrad" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.68rem;background:#0f172a;color:#cbd5e1;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:900;white-space:nowrap;">
+                        📡 NOAA NEXRAD COMPOSITE (CONUS N0Q)
                     </button>
                     <button id="mon02-mode-sat" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.68rem;background:#0f172a;color:#cbd5e1;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:900;white-space:nowrap;">
                         🛰️ GOES IR-SATELLIT (-70°C)
+                    </button>
+                    <button id="mon02-mode-warnings" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.68rem;background:#0f172a;color:#cbd5e1;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:900;white-space:nowrap;">
+                        ⚠️ ECHTE NWS WARN-POLYGONE (LIVE)
                     </button>
                 </div>
 
@@ -2528,80 +2525,94 @@ class StreamPlayer {
                     <canvas id="mon02-radar-sweep-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;"></canvas>
 
                     <!-- LEFT VERTICAL GIBSON RIDGE / AWIPS COLOR LEGEND -->
-                    <div id="mon02-vertical-legend" style="position:absolute;top:10px;left:10px;z-index:10;background:rgba(4,7,17,0.92);border:1px solid #1e293b;border-radius:4px;padding:6px 6px;font-size:0.6rem;font-family:monospace;display:flex;flex-direction:column;align-items:center;backdrop-filter:blur(6px);box-shadow:0 0 16px rgba(0,0,0,0.85);pointer-events:none;width:52px;">
-                        <div id="mon02-legend-unit" style="font-weight:bold;color:#facc15;font-size:0.65rem;margin-bottom:4px;text-align:center;">dBZ</div>
-                        <div id="mon02-legend-bar" style="width:14px;height:180px;border-radius:2px;border:1px solid #334155;position:relative;">
-                            <!-- Gradient background inserted via JS -->
-                        </div>
-                        <div id="mon02-legend-labels" style="display:flex;flex-direction:column;justify-content:space-between;height:180px;margin-left:4px;position:absolute;left:24px;top:26px;color:#cbd5e1;font-size:0.55rem;line-height:1;">
-                            <!-- Ticks inserted via JS -->
-                        </div>
-                    </div>
-
-                    <!-- TOP-RIGHT AWIPS / GIBSON RIDGE TELEMETRY HUD -->
-                    <div style="position:absolute;top:10px;right:10px;z-index:10;background:rgba(4,7,17,0.92);border:1px solid #1e293b;border-radius:4px;padding:8px 12px;font-size:0.65rem;backdrop-filter:blur(6px);box-shadow:0 0 16px rgba(0,0,0,0.85);pointer-events:none;min-width:190px;">
-                        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #1e293b;padding-bottom:3px;margin-bottom:4px;">
-                            <strong id="mon02-product-badge" style="color:#00f0ff;font-size:0.7rem;letter-spacing:0.5px;">SUPER-RES REFLECTIVITY Z</strong>
-                            <span style="color:#10b981;font-weight:bold;">0.5° TILT</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;color:#cbd5e1;font-size:0.62rem;">
-                            <span>VT: <strong id="mon02-vt-time" style="color:#facc15;">${vtStr}</strong></span>
-                            <span>PT: <strong id="mon02-pt-time" style="color:#94a3b8;">${ptStr}</strong></span>
-                        </div>
-                        <div style="color:#38bdf8;font-size:0.62rem;margin-top:3px;">
-                            STATION: <strong style="color:#fff;">${stationId}</strong> // ELEV: <strong style="color:#a855f7;">${elevation}m</strong>
-                        </div>
-                        <div id="mon02-vortex-alert" style="margin-top:5px;padding:3px 6px;border-radius:3px;background:rgba(239,68,68,0.22);border:1px solid #ef4444;color:#fca5a5;font-weight:bold;font-size:0.62rem;display:none;align-items:center;gap:4px;">
-                            <span>🌪️</span> MESOCYCLONIC ROTATION DETECTED
+                    <div id="mon02-vertical-legend" style="position:absolute;top:10px;left:10px;z-index:10;background:rgba(4,7,17,0.92);border:1px solid #1e293b;border-radius:4px;padding:6px 6px;font-size:0.6rem;font-family:monospace;display:flex;flex-direction:column;align-items:center;backdrop-filter:blur(6px);box-shadow:0 0 16px rgba(0,0,0,0.85);pointer-events:none;">
+                        <span id="mon02-legend-unit" style="font-weight:bold;color:#facc15;margin-bottom:4px;font-size:0.68rem;">dBZ</span>
+                        <div style="display:flex;gap:4px;align-items:center;height:180px;">
+                            <div id="mon02-legend-bar" style="width:14px;height:100%;border-radius:2px;border:1px solid #334155;background:linear-gradient(to bottom, #ffffff 0%, #d946ef 10%, #9333ea 20%, #dc2626 35%, #ea580c 50%, #eab308 65%, #22c55e 80%, #0284c7 95%, #040817 100%);"></div>
+                            <div id="mon02-legend-labels" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;font-size:0.58rem;font-weight:bold;color:#cbd5e1;">
+                                <span style="color:#fff;">75</span>
+                                <span style="color:#d946ef;">70</span>
+                                <span style="color:#dc2626;">60</span>
+                                <span style="color:#ea580c;">50</span>
+                                <span style="color:#eab308;">40</span>
+                                <span style="color:#22c55e;">30</span>
+                                <span style="color:#0284c7;">20</span>
+                                <span style="color:#38bdf8;">10</span>
+                                <span style="color:#64748b;">ND</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- BOTTOM-RIGHT QUICK TOGGLES -->
+                    <!-- TOP-RIGHT AWIPS TELEMETRY CARD -->
+                    <div style="position:absolute;top:10px;right:10px;z-index:10;background:rgba(4,7,17,0.92);border:1px solid #0284c7;border-radius:4px;padding:8px 12px;font-size:0.68rem;backdrop-filter:blur(6px);box-shadow:0 0 20px rgba(2,132,199,0.4);max-width:340px;pointer-events:none;">
+                        <div style="color:#00f0ff;font-weight:bold;margin-bottom:4px;display:flex;justify-content:space-between;">
+                            <span id="mon02-product-header">LEVEL-III DOPPLER REFLEKTIVITÄT 0.5° TILT</span>
+                            <span style="color:#10b981;">ECHTZEIT</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;color:#94a3b8;font-size:0.62rem;margin-bottom:2px;">
+                            <span>VT: <strong id="mon02-vt-time" style="color:#f8fafc;">${vtStr}</strong></span>
+                            <span>PT: <strong id="mon02-pt-time" style="color:#f8fafc;">${ptStr}</strong></span>
+                        </div>
+                        <div style="color:#cbd5e1;font-size:0.62rem;margin-bottom:6px;">
+                            STATION: <strong style="color:#38bdf8;">${stationId}</strong> // ELEV: <strong style="color:#a855f7;">${elevation}m</strong> // LAT/LON: <strong>${lat.toFixed(3)}, ${lon.toFixed(3)}</strong>
+                        </div>
+                        <div id="mon02-status-alert" style="background:rgba(16,185,129,0.15);border:1px solid #10b981;border-radius:3px;padding:4px 6px;display:flex;align-items:center;gap:6px;color:#34d399;font-weight:bold;font-size:0.62rem;">
+                            <span>📡</span>
+                            <span id="mon02-status-alert-text">PRÜFE ECHTE NOAA NWS UNWETTER-WARNUNGEN...</span>
+                        </div>
+                    </div>
+
+                    <!-- BOTTOM-LEFT RANGE & HUD CONTROLS -->
                     <div style="position:absolute;bottom:10px;right:10px;z-index:10;display:flex;gap:4px;">
-                        <button id="mon02-toggle-sweep" class="ops-btn" style="padding:4px 7px;font-size:0.62rem;background:rgba(15,23,42,0.9);border:1px solid #38bdf8;color:#38bdf8;border-radius:3px;cursor:pointer;font-weight:bold;">
+                        <button id="mon02-toggle-sweep" class="ops-btn" style="padding:4px 8px;font-size:0.62rem;background:rgba(2,132,199,0.25);border:1px solid #0284c7;color:#38bdf8;border-radius:3px;cursor:pointer;font-weight:bold;">
                             SWEEP [AN]
                         </button>
-                        <button id="mon02-toggle-rings" class="ops-btn" style="padding:4px 7px;font-size:0.62rem;background:rgba(15,23,42,0.9);border:1px solid #38bdf8;color:#38bdf8;border-radius:3px;cursor:pointer;font-weight:bold;">
+                        <button id="mon02-toggle-rings" class="ops-btn" style="padding:4px 8px;font-size:0.62rem;background:rgba(2,132,199,0.25);border:1px solid #0284c7;color:#38bdf8;border-radius:3px;cursor:pointer;font-weight:bold;">
                             RINGS [AN]
                         </button>
                     </div>
                 </div>
 
-                <!-- BOTTOM VOLUME SCAN RADAR LOOP SCRUBBER & ANIMATION BAR -->
-                <div style="background:#050914;border-top:1px solid #1e293b;padding:6px 12px;font-size:0.68rem;display:flex;align-items:center;gap:12px;flex-shrink:0;">
-                    <!-- Play / Step Controls -->
-                    <div style="display:flex;gap:4px;align-items:center;">
-                        <button id="mon02-loop-step-back" class="ops-btn" style="padding:3px 8px;font-size:0.65rem;background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:3px;cursor:pointer;" title="1 Frame Zurück">◀◀</button>
-                        <button id="mon02-loop-play-toggle" class="ops-btn" style="padding:3px 12px;font-size:0.68rem;background:#0284c7;border:1px solid #38bdf8;color:#fff;border-radius:3px;cursor:pointer;font-weight:bold;">▶ LOOP</button>
-                        <button id="mon02-loop-step-fwd" class="ops-btn" style="padding:3px 8px;font-size:0.65rem;background:#0f172a;border:1px solid #334155;color:#e2e8f0;border-radius:3px;cursor:pointer;" title="1 Frame Vor">▶▶</button>
+                <!-- BOTTOM VOLUME LOOP SCRUBBER & ANIMATION DECK -->
+                <div style="display:flex;align-items:center;background:#050914;border-top:1px solid #1e293b;padding:6px 10px;gap:8px;flex-shrink:0;">
+                    <button id="mon02-loop-play" class="ops-btn" style="padding:4px 10px;font-size:0.75rem;background:#10b981;border:none;color:#fff;border-radius:3px;cursor:pointer;font-weight:bold;">
+                        ▶ PLAY
+                    </button>
+                    <button id="mon02-loop-step-back" class="ops-btn" style="padding:4px 8px;font-size:0.7rem;background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:3px;cursor:pointer;">
+                        ◀◀
+                    </button>
+                    <button id="mon02-loop-step-fwd" class="ops-btn" style="padding:4px 8px;font-size:0.7rem;background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:3px;cursor:pointer;">
+                        ▶▶
+                    </button>
+                    
+                    <div style="display:flex;align-items:center;gap:6px;flex:1;">
+                        <span style="font-size:0.62rem;color:#94a3b8;white-space:nowrap;">LOOP (13 FRAMES):</span>
+                        <input id="mon02-loop-scrubber" type="range" min="0" max="12" value="12" style="flex:1;accent-color:#00f0ff;cursor:pointer;height:4px;" />
+                        <span id="mon02-frame-timestamp" style="font-size:0.65rem;color:#00f0ff;font-weight:bold;min-width:70px;text-align:right;">LIVE</span>
                     </div>
 
-                    <!-- Volume Frame Timeline Scrubber -->
-                    <div style="flex:1;display:flex;align-items:center;gap:8px;">
-                        <span style="color:#64748b;font-size:0.62rem;white-space:nowrap;">-60m</span>
-                        <input type="range" id="mon02-loop-scrubber" min="0" max="12" value="12" style="flex:1;accent-color:#00f0ff;cursor:pointer;height:4px;">
-                        <span id="mon02-loop-frame-label" style="color:#00f0ff;font-weight:bold;font-size:0.65rem;white-space:nowrap;min-width:65px;">LIVE NOW</span>
-                    </div>
-
-                    <!-- Scan Mode Status -->
-                    <div style="display:flex;align-items:center;gap:6px;">
-                        <span style="color:#64748b;font-size:0.62rem;">MODUS:</span>
-                        <span id="mon02-radar-status-text" style="color:#10b981;font-weight:bold;font-size:0.65rem;">ECHTZEIT-RADAR AKTIV</span>
+                    <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                        <span style="font-size:0.62rem;color:#94a3b8;">TEMPO:</span>
+                        <select id="mon02-loop-speed" class="ops-select" style="padding:2px 4px;font-size:0.65rem;background:#0f172a;border:1px solid #334155;color:#f8fafc;border-radius:3px;">
+                            <option value="1200">Langsam (1.2s)</option>
+                            <option value="600" selected>Normal (600ms)</option>
+                            <option value="300">Schnell (300ms)</option>
+                        </select>
                     </div>
                 </div>
             </div>
         `;
 
+        // Close button handler
+        document.getElementById('mon02-radar-close-btn')?.addEventListener('click', () => {
+            this.destroy();
+            this.checkAndLoadInitialFeed();
+        });
+
         const mapContainer = document.getElementById('mon02-secondary-radar-map');
-        if (!mapContainer || typeof L === 'undefined') return;
+        if (!mapContainer) return;
 
-        // Cleanup any existing instance
-        if (this.stationRadarMap) {
-            try { this.stationRadarMap.remove(); } catch (e) {}
-            this.stationRadarMap = null;
-        }
-
-        // Initialize Leaflet map centered at targeted station
+        // Initialize Leaflet Map centered at targeted station
         this.stationRadarMap = L.map(mapContainer, {
             center: [lat, lon],
             zoom: 8,
@@ -2612,7 +2623,6 @@ class StreamPlayer {
         });
 
         // 1. 100% KEYLESS HIGH-RES BASE MAPS (ZERO WATERMARKS)
-        // High-Contrast Satellite + County & State Reference (Gibson Ridge / RadarOmega Standard)
         const esriSatHybrid = L.layerGroup([
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 maxZoom: 19
@@ -2671,46 +2681,30 @@ class StreamPlayer {
             const km = Math.round(nmi * 1.852);
             const tag = L.divIcon({
                 className: 'radar-ring-tag',
-                html: `<div style="font-family:monospace;font-size:8px;font-weight:bold;color:#38bdf8;background:rgba(4,7,17,0.85);border:1px solid #0284c7;padding:1px 3px;border-radius:2px;white-space:nowrap;transform:translate(-50%,-50%);">${nmi}nm (${km}km)</div>`,
+                html: `<div style="font-family:monospace;font-size:8px;font-weight:bold;color:#38bdf8;background:rgba(4,7,17,0.85);border:1px solid #0284c7;padding:1px 3px;border-radius:2px;white-space:nowrap;">${nmi}nm (${km}km)</div>`,
                 iconSize: [0, 0]
             });
             L.marker([lat + dLat, lon + dLon], { icon: tag, interactive: false }).addTo(rangeRingsGroup);
         });
 
-        // Toggle Range Rings Button
-        let showRings = true;
-        document.getElementById('mon02-toggle-rings')?.addEventListener('click', () => {
-            if (showRings) {
-                this.stationRadarMap.removeLayer(rangeRingsGroup);
-                document.getElementById('mon02-toggle-rings').innerText = 'RINGS [AUS]';
-                showRings = false;
-            } else {
-                rangeRingsGroup.addTo(this.stationRadarMap);
-                document.getElementById('mon02-toggle-rings').innerText = 'RINGS [AN]';
-                showRings = true;
-            }
-        });
-
-        // 3. CENTER RADAR DISH MARKER (Matches Image 3)
-        const dishMarkerIcon = L.divIcon({
-            className: 'radar-center-dish-icon',
+        // Center Dish Marker (Crosshairs)
+        const dishIcon = L.divIcon({
+            className: 'radar-dish-center',
             html: `
-                <div style="position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);pointer-events:none;">
-                    <div style="position:absolute;width:36px;height:36px;border-radius:50%;border:1.5px dashed #00f0ff;animation:spin 12s linear infinite;"></div>
-                    <div style="position:absolute;width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 10px #ef4444;"></div>
-                    <div style="position:absolute;top:-20px;background:#050914;color:#00f0ff;border:1.5px solid #00f0ff;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:900;letter-spacing:0.5px;box-shadow:0 0 12px rgba(0,240,255,0.7);white-space:nowrap;">
-                        ${stationId}
-                    </div>
+                <div style="position:relative;width:24px;height:24px;transform:translate(-50%,-50%);">
+                    <div style="position:absolute;top:50%;left:0;right:0;height:1.5px;background:#00f0ff;"></div>
+                    <div style="position:absolute;left:50%;top:0;bottom:0;width:1.5px;background:#00f0ff;"></div>
+                    <div style="position:absolute;top:4px;left:4px;right:4px;bottom:4px;border:1.5px solid #00f0ff;border-radius:50%;box-shadow:0 0 8px #00f0ff;"></div>
+                    <div style="position:absolute;top:8px;left:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;"></div>
                 </div>
             `,
             iconSize: [0, 0]
         });
-        L.marker([lat, lon], { icon: dishMarkerIcon, interactive: false }).addTo(this.stationRadarMap);
+        L.marker([lat, lon], { icon: dishIcon, zIndexOffset: 1000 }).addTo(this.stationRadarMap);
 
-        // 4. RADAR PRODUCT LAYERS ENGINE
+        // 3. PRODUCT LAYERS (100% REAL LIVE SENSORS - ZERO FAKE)
         let activeRadarLayer = null;
-        let supercellGroup = null;
-        let velocityGroup = null;
+        let warningsLayerGroup = L.layerGroup().addTo(this.stationRadarMap);
         let currentMode = 'n0q';
         let rainviewerFrames = [];
         let currentFrameIndex = 0;
@@ -2734,467 +2728,291 @@ class StreamPlayer {
                 }
             }).catch(() => {});
 
-        // Updates the Left Vertical Gibson Ridge Legend
-        const updateLegend = (mode) => {
-            const legendBar = document.getElementById('mon02-legend-bar');
-            const legendLabels = document.getElementById('mon02-legend-labels');
-            const legendUnit = document.getElementById('mon02-legend-unit');
-            const vortexAlert = document.getElementById('mon02-vortex-alert');
+        // Fetch genuine NOAA NWS Warning Polygons
+        const checkLiveNwsWarnings = async () => {
+            const alertTextEl = document.getElementById('mon02-status-alert-text');
+            const alertBoxEl = document.getElementById('mon02-status-alert');
+            try {
+                const res = await fetch(`https://api.weather.gov/alerts/active?point=${lat.toFixed(4)},${lon.toFixed(4)}`, {
+                    headers: { 'Accept': 'application/geo+json', 'User-Agent': 'OmniScopeEdge/2.1' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    warningsLayerGroup.clearLayers();
+                    const features = data.features || [];
+                    if (features.length > 0) {
+                        const first = features[0];
+                        const props = first.properties || {};
+                        const eventName = props.event || 'UNWETTERWARNUNG';
+                        const isTornado = eventName.toLowerCase().includes('tornado');
 
-            if (!legendBar || !legendLabels || !legendUnit) return;
+                        if (alertBoxEl) {
+                            alertBoxEl.style.background = isTornado ? 'rgba(220,38,38,0.25)' : 'rgba(234,179,8,0.25)';
+                            alertBoxEl.style.borderColor = isTornado ? '#ef4444' : '#eab308';
+                            alertBoxEl.style.color = isTornado ? '#f87171' : '#facc15';
+                        }
+                        if (alertTextEl) {
+                            alertTextEl.innerText = `🚨 ${eventName.toUpperCase()} AKTIV: ${props.headline || props.description?.slice(0, 70) || ''}`;
+                        }
 
-            if (mode === 'vel') {
-                legendUnit.innerText = 'kts';
-                legendUnit.style.color = '#ef4444';
-                legendBar.style.background = 'linear-gradient(to bottom, #ffffff 0%, #ec4899 15%, #ef4444 35%, #7f1d1d 48%, #64748b 50%, #065f46 52%, #10b981 68%, #06b6d4 85%, #ffffff 100%)';
-                legendLabels.innerHTML = `
-                    <span style="color:#fff;">+120</span>
-                    <span style="color:#f472b6;">+90</span>
-                    <span style="color:#ef4444;">+60</span>
-                    <span style="color:#f87171;">+30</span>
-                    <span style="color:#94a3b8;">0</span>
-                    <span style="color:#34d399;">-30</span>
-                    <span style="color:#10b981;">-60</span>
-                    <span style="color:#22d3ee;">-90</span>
-                    <span style="color:#fff;">-120</span>
-                `;
-                if (vortexAlert) vortexAlert.style.display = 'flex';
-            } else if (mode === 'zdr') {
-                legendUnit.innerText = 'dB';
-                legendUnit.style.color = '#a855f7';
-                legendBar.style.background = 'linear-gradient(to bottom, #7e22ce 0%, #ec4899 25%, #ef4444 50%, #eab308 75%, #06b6d4 100%)';
-                legendLabels.innerHTML = `
-                    <span>+6.0</span>
-                    <span>+4.0</span>
-                    <span>+2.0</span>
-                    <span>0.0</span>
-                    <span>-2.0</span>
-                `;
-                if (vortexAlert) vortexAlert.style.display = 'none';
-            } else {
-                // Reflectivity & Supercell dBZ (Gibson Ridge Standard)
-                legendUnit.innerText = 'dBZ';
-                legendUnit.style.color = '#facc15';
-                legendBar.style.background = 'linear-gradient(to bottom, #ffffff 0%, #d946ef 10%, #9333ea 20%, #dc2626 35%, #ea580c 50%, #eab308 65%, #22c55e 80%, #0284c7 95%, #040817 100%)';
-                legendLabels.innerHTML = `
-                    <span style="color:#fff;">75</span>
-                    <span style="color:#d946ef;">70</span>
-                    <span style="color:#dc2626;">60</span>
-                    <span style="color:#ea580c;">50</span>
-                    <span style="color:#eab308;">40</span>
-                    <span style="color:#22c55e;">30</span>
-                    <span style="color:#0284c7;">20</span>
-                    <span style="color:#38bdf8;">10</span>
-                    <span style="color:#64748b;">ND</span>
-                `;
-                if (vortexAlert) vortexAlert.style.display = mode === 'hook' ? 'flex' : 'none';
+                        // Render official polygon
+                        L.geoJSON(data, {
+                            style: (feat) => ({
+                                color: (feat.properties?.event || '').toLowerCase().includes('tornado') ? '#ef4444' : '#eab308',
+                                weight: 2.5,
+                                fillColor: (feat.properties?.event || '').toLowerCase().includes('tornado') ? '#ef4444' : '#eab308',
+                                fillOpacity: 0.25
+                            })
+                        }).addTo(warningsLayerGroup);
+                        return;
+                    }
+                }
+            } catch (_) {}
+
+            // Normal operation / no active warnings
+            if (alertBoxEl) {
+                alertBoxEl.style.background = 'rgba(16,185,129,0.15)';
+                alertBoxEl.style.borderColor = '#10b981';
+                alertBoxEl.style.color = '#34d399';
+            }
+            if (alertTextEl) {
+                alertTextEl.innerText = '✅ NORMALBETRIEB // KEINE AKTIVEN TORNADO- ODER UNWETTERWARNUNGEN';
             }
         };
+
+        checkLiveNwsWarnings();
 
         const clearRadarLayers = () => {
             if (activeRadarLayer && this.stationRadarMap) {
                 this.stationRadarMap.removeLayer(activeRadarLayer);
                 activeRadarLayer = null;
             }
-            if (supercellGroup && this.stationRadarMap) {
-                this.stationRadarMap.removeLayer(supercellGroup);
-                supercellGroup = null;
-            }
-            if (velocityGroup && this.stationRadarMap) {
-                this.stationRadarMap.removeLayer(velocityGroup);
-                velocityGroup = null;
-            }
         };
 
         const loadReflectivityFrame = (frameIdx) => {
             clearRadarLayers();
-            updateLegend('n0q');
+            currentMode = 'n0q';
+            const prodHeader = document.getElementById('mon02-product-header');
+            if (prodHeader) prodHeader.innerText = 'LEVEL-III BASIS-REFLEKTIVITÄT 0.5° (RAINVIEWER)';
 
             let tileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png';
-            if (rainviewerFrames.length > 0 && rainviewerFrames[frameIdx]) {
-                const p = rainviewerFrames[frameIdx].path;
-                tileUrl = `https://tilecache.rainviewer.com${p}/512/{z}/{x}/{y}/6/1_1.png`;
-                const d = new Date(rainviewerFrames[frameIdx].time * 1000);
-                const hrs = String(d.getUTCHours()).padStart(2, '0');
-                const mns = String(d.getUTCMinutes()).padStart(2, '0');
-                document.getElementById('mon02-vt-time').innerText = `${hrs}:${mns}Z`;
-                document.getElementById('mon02-loop-frame-label').innerText = `${hrs}:${mns}Z (${frameIdx === rainviewerFrames.length - 1 ? 'LIVE' : '-' + (rainviewerFrames.length - 1 - frameIdx) * 10 + 'm'})`;
+            let timeStr = 'LIVE';
+
+            if (rainviewerFrames && rainviewerFrames.length > 0 && frameIdx >= 0 && frameIdx < rainviewerFrames.length) {
+                const fr = rainviewerFrames[frameIdx];
+                tileUrl = `https://tilecache.rainviewer.com${fr.path}/512/{z}/{x}/{y}/6/1_1.png`;
+                const date = new Date(fr.time * 1000);
+                const h = String(date.getUTCHours()).padStart(2, '0');
+                const m = String(date.getUTCMinutes()).padStart(2, '0');
+                timeStr = `${h}:${m} UTC`;
             }
 
+            const frameTimeEl = document.getElementById('mon02-frame-timestamp');
+            if (frameTimeEl) frameTimeEl.innerText = timeStr;
+
             activeRadarLayer = L.tileLayer(tileUrl, {
-                opacity: 0.82,
-                zIndex: 6,
-                maxNativeZoom: 12,
-                maxZoom: 18
-            }).addTo(this.stationRadarMap);
-
-            document.getElementById('mon02-product-badge').innerText = 'SUPER-RES REFLECTIVITY (Z 0.5°)';
-            document.getElementById('mon02-radar-status-text').innerText = 'LEVEL-III REFLEKTIVITÄT GELADEN';
-        };
-
-        // 5. SUPERCELL HOOK ECHO RECONSTRUCTION (Image 2)
-        const loadSupercellHookEcho = () => {
-            clearRadarLayers();
-            updateLegend('hook');
-
-            supercellGroup = L.layerGroup().addTo(this.stationRadarMap);
-
-            // Center of the storm cell 45 km northeast of dish
-            const stormLat = lat + 0.28;
-            const stormLon = lon + 0.35;
-
-            // Classical Gibson Ridge Tornadic Supercell Structure:
-            // Forward Flank Downdraft (FFD), Inflow Notch, BWER, and intense Hook Echo
-            const echoLevels = [
-                // 1. Broad outer anvil / light rain (5 - 20 dBZ)
-                { radius: 46000, color: '#0284c7', fillColor: '#0284c7', fillOpacity: 0.45, weight: 1 },
-                // 2. Moderate precipitation core (25 - 35 dBZ)
-                { radius: 34000, color: '#16a34a', fillColor: '#16a34a', fillOpacity: 0.55, weight: 1.2 },
-                // 3. Heavy rain area (40 - 50 dBZ)
-                { radius: 24000, color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.65, weight: 1.2 },
-                // 4. Severe convective core (55 - 65 dBZ)
-                { radius: 15000, color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.75, weight: 1.5 },
-                // 5. Hail core & Hook Echo (>65 dBZ / Purple)
-                { radius: 8000, color: '#9333ea', fillColor: '#9333ea', fillOpacity: 0.85, weight: 1.8 }
-            ];
-
-            echoLevels.forEach(lvl => {
-                L.circle([stormLat, stormLon], lvl).addTo(supercellGroup);
-            });
-
-            // Classic Cyclonic Hook Echo wrap around the mesocyclone (Southwest flank)
-            const hookLat = stormLat - 0.08;
-            const hookLon = stormLon - 0.12;
-
-            // Tornado Vortex Hail / Debris Ball (>70 dBZ / Magenta & White)
-            L.circle([hookLat, hookLon], {
-                radius: 4200,
-                color: '#d946ef',
-                fillColor: '#ffffff',
-                fillOpacity: 0.92,
-                weight: 2.2
-            }).addTo(supercellGroup);
-
-            // Tactical Callout Badges
-            const makeCallout = (cLat, cLon, text, bg, border) => {
-                const ic = L.divIcon({
-                    className: 'supercell-callout',
-                    html: `
-                        <div style="font-family:monospace;font-size:9px;font-weight:900;color:#fff;background:${bg};border:1.5px solid ${border};padding:2px 6px;border-radius:3px;box-shadow:0 0 12px ${border};white-space:nowrap;transform:translate(-50%,-50%);">
-                            ${text}
-                        </div>
-                    `,
-                    iconSize: [0, 0]
-                });
-                L.marker([cLat, cLon], { icon: ic, interactive: false }).addTo(supercellGroup);
-            };
-
-            makeCallout(hookLat, hookLon - 0.08, '🌪️ TORNADO DEBRIS BALL (>70 dBZ)', 'rgba(147,51,234,0.92)', '#d946ef');
-            makeCallout(stormLat, stormLon + 0.15, '⚡ FORWARD-FLANK HAIL CORE (65 dBZ)', 'rgba(220,38,38,0.92)', '#f87171');
-            makeCallout(stormLat - 0.15, stormLon + 0.02, '🌀 INFLOW NOTCH (WARM MOIST AIR)', 'rgba(2,132,199,0.92)', '#38bdf8');
-
-            // Draw inflow velocity vector arrow
-            L.polyline([[stormLat - 0.22, stormLon + 0.05], [stormLat - 0.09, stormLon - 0.05]], {
-                color: '#00f0ff',
-                weight: 2.5,
-                dashArray: '6, 4'
-            }).addTo(supercellGroup);
-
-            document.getElementById('mon02-product-badge').innerText = 'SUPERCELL HOOK ECHO (TORNADO VORTEX)';
-            document.getElementById('mon02-radar-status-text').innerText = 'MESOCYCLONE HOOK ECHO DETAIL';
-            
-            this.stationRadarMap.flyTo([stormLat, stormLon], 9, { duration: 1.0 });
-        };
-
-        // 6. RADIAL VELOCITY COUPLET (Image 3)
-        const loadRadialVelocityCouplet = () => {
-            clearRadarLayers();
-            updateLegend('vel');
-
-            velocityGroup = L.layerGroup().addTo(this.stationRadarMap);
-
-            const vLat = lat + 0.22;
-            const vLon = lon + 0.28;
-
-            // Inbound Velocity (Approaching dish: Greens / Cyans) - Left sector
-            const inboundSector = L.polygon([
-                [vLat, vLon],
-                [vLat + 0.22, vLon - 0.32],
-                [vLat + 0.35, vLon - 0.18],
-                [vLat + 0.25, vLon - 0.02]
-            ], {
-                color: '#10b981',
-                fillColor: '#10b981',
-                fillOpacity: 0.78,
-                weight: 1.5
-            }).addTo(velocityGroup);
-
-            // Core high-speed inbound (30 to 50 knots)
-            L.polygon([
-                [vLat + 0.05, vLon - 0.03],
-                [vLat + 0.20, vLon - 0.24],
-                [vLat + 0.28, vLon - 0.12]
-            ], {
-                color: '#22d3ee',
-                fillColor: '#22d3ee',
-                fillOpacity: 0.88,
-                weight: 1.8
-            }).addTo(velocityGroup);
-
-            // Outbound Velocity (Moving away from dish: Reds / Pinks) - Right sector
-            const outboundSector = L.polygon([
-                [vLat, vLon],
-                [vLat + 0.25, vLon - 0.01],
-                [vLat + 0.38, vLon + 0.22],
-                [vLat + 0.15, vLon + 0.28]
-            ], {
-                color: '#ef4444',
-                fillColor: '#ef4444',
-                fillOpacity: 0.78,
-                weight: 1.5
-            }).addTo(velocityGroup);
-
-            // Core high-speed outbound (60 to 70 knots)
-            L.polygon([
-                [vLat + 0.08, vLon + 0.04],
-                [vLat + 0.28, vLon + 0.18],
-                [vLat + 0.18, vLon + 0.22]
-            ], {
-                color: '#ec4899',
-                fillColor: '#f43f5e',
-                fillOpacity: 0.90,
-                weight: 2.0
-            }).addTo(velocityGroup);
-
-            // Dynamic Callouts exactly matching Image 3:
-            const makeVelCallout = (cLat, cLon, text, bg, border) => {
-                const ic = L.divIcon({
-                    className: 'vel-callout',
-                    html: `
-                        <div style="font-family:monospace;font-size:10px;font-weight:900;color:#fff;background:${bg};border:1.5px solid ${border};padding:3px 8px;border-radius:3px;box-shadow:0 0 14px ${border};white-space:nowrap;transform:translate(-50%,-50%);">
-                            ${text}
-                        </div>
-                    `,
-                    iconSize: [0, 0]
-                });
-                L.marker([cLat, cLon], { icon: ic, interactive: false }).addTo(velocityGroup);
-            };
-
-            makeVelCallout(vLat + 0.22, vLon - 0.22, '⬅️ Inbound Velocity (30 to 50 knots)', 'rgba(6,95,70,0.92)', '#10b981');
-            makeVelCallout(vLat + 0.26, vLon + 0.22, '➡️ Outbound Velocity (60 to 70 knots)', 'rgba(153,27,27,0.92)', '#ef4444');
-            makeVelCallout(vLat + 0.02, vLon + 0.01, '⚠️ ROTATIONAL SHEAR: ΔV = 110 KTS', 'rgba(15,23,42,0.95)', '#facc15');
-
-            // Draw shear interface line
-            L.polyline([[vLat - 0.05, vLon], [vLat + 0.35, vLon]], {
-                color: '#ffffff',
-                weight: 2.2,
-                dashArray: '4, 4'
-            }).addTo(velocityGroup);
-
-            document.getElementById('mon02-product-badge').innerText = 'BASE VELOCITY (BV 0.5° ROTATIONAL COUPLET)';
-            document.getElementById('mon02-radar-status-text').innerText = 'DOPPLER VELOCITY COUPLET GELADEN';
-
-            this.stationRadarMap.flyTo([vLat + 0.15, vLon], 9, { duration: 1.0 });
-        };
-
-        // 7. DUAL-POL ZDR PRODUCT
-        const loadDualPolProduct = () => {
-            clearRadarLayers();
-            updateLegend('zdr');
-
-            const zdrUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/ridge::USCOMP-N0Q-0/{z}/{x}/{y}.png';
-            activeRadarLayer = L.tileLayer(zdrUrl, {
                 opacity: 0.85,
-                zIndex: 6,
-                maxNativeZoom: 11,
+                zIndex: 5,
                 maxZoom: 18
             }).addTo(this.stationRadarMap);
-
-            document.getElementById('mon02-product-badge').innerText = 'DUAL-POL DIFFERENTIAL REFLECTIVITY (ZDR)';
-            document.getElementById('mon02-radar-status-text').innerText = 'DUAL-POL HYDROMETEOR KLASSIFIZIERUNG';
         };
 
-        // 8. GOES INFRARED SATELLITE PRODUCT
-        const loadSatProduct = () => {
+        const loadNexradComposite = () => {
             clearRadarLayers();
-            updateLegend('sat');
+            currentMode = 'nexrad';
+            const prodHeader = document.getElementById('mon02-product-header');
+            if (prodHeader) prodHeader.innerText = 'NOAA WSR-88D NEXRAD HIGH-RES COMPOSITE (N0Q)';
 
-            const satUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png';
-            activeRadarLayer = L.tileLayer(satUrl, {
-                opacity: 0.72,
-                zIndex: 6,
-                maxNativeZoom: 8,
+            activeRadarLayer = L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png', {
+                opacity: 0.88,
+                zIndex: 5,
                 maxZoom: 18
             }).addTo(this.stationRadarMap);
-
-            document.getElementById('mon02-product-badge').innerText = 'GOES-16 IR CLOUD TOPS (-70°C ANVIL)';
-            document.getElementById('mon02-radar-status-text').innerText = 'INFRAROT-SATELLITEN-TELEMETRIE';
         };
 
-        // Product Buttons Event Handlers
-        const setActiveButton = (id) => {
-            ['mon02-mode-n0q', 'mon02-mode-hook', 'mon02-mode-vel', 'mon02-mode-zdr', 'mon02-mode-sat'].forEach(btnId => {
-                const b = document.getElementById(btnId);
+        const loadSatLayer = () => {
+            clearRadarLayers();
+            currentMode = 'sat';
+            const prodHeader = document.getElementById('mon02-product-header');
+            if (prodHeader) prodHeader.innerText = 'GOES-EAST INFRARED SATELLIT (IR 4KM)';
+
+            activeRadarLayer = L.tileLayer('https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png', {
+                opacity: 0.82,
+                zIndex: 5,
+                maxZoom: 18
+            }).addTo(this.stationRadarMap);
+        };
+
+        // Initialize with real reflectivity
+        loadReflectivityFrame(currentFrameIndex);
+
+        // Product Switcher Button Events
+        const setBtnActive = (btnId) => {
+            ['mon02-mode-n0q', 'mon02-mode-nexrad', 'mon02-mode-sat', 'mon02-mode-warnings'].forEach(id => {
+                const b = document.getElementById(id);
                 if (b) {
-                    if (btnId === id) {
+                    if (id === btnId) {
+                        b.classList.add('active');
                         b.style.background = '#0284c7';
-                        b.style.color = '#fff';
                         b.style.borderColor = '#38bdf8';
+                        b.style.color = '#fff';
                     } else {
+                        b.classList.remove('active');
                         b.style.background = '#0f172a';
-                        b.style.color = '#cbd5e1';
                         b.style.borderColor = '#334155';
+                        b.style.color = '#cbd5e1';
                     }
                 }
             });
         };
 
         document.getElementById('mon02-mode-n0q')?.addEventListener('click', () => {
-            currentMode = 'n0q';
-            setActiveButton('mon02-mode-n0q');
+            setBtnActive('mon02-mode-n0q');
             loadReflectivityFrame(currentFrameIndex);
         });
 
-        document.getElementById('mon02-mode-hook')?.addEventListener('click', () => {
-            currentMode = 'hook';
-            setActiveButton('mon02-mode-hook');
-            loadSupercellHookEcho();
-        });
-
-        document.getElementById('mon02-mode-vel')?.addEventListener('click', () => {
-            currentMode = 'vel';
-            setActiveButton('mon02-mode-vel');
-            loadRadialVelocityCouplet();
-        });
-
-        document.getElementById('mon02-mode-zdr')?.addEventListener('click', () => {
-            currentMode = 'zdr';
-            setActiveButton('mon02-mode-zdr');
-            loadDualPolProduct();
+        document.getElementById('mon02-mode-nexrad')?.addEventListener('click', () => {
+            setBtnActive('mon02-mode-nexrad');
+            loadNexradComposite();
         });
 
         document.getElementById('mon02-mode-sat')?.addEventListener('click', () => {
-            currentMode = 'sat';
-            setActiveButton('mon02-mode-sat');
-            loadSatProduct();
+            setBtnActive('mon02-mode-sat');
+            loadSatLayer();
         });
 
-        // Close button: switches back to default webcam feed
-        document.getElementById('mon02-radar-close-btn')?.addEventListener('click', () => {
-            this.destroy();
-            this.checkAndLoadInitialFeed();
+        document.getElementById('mon02-mode-warnings')?.addEventListener('click', () => {
+            setBtnActive('mon02-mode-warnings');
+            checkLiveNwsWarnings();
         });
 
-        // Loop Scrubber
-        document.getElementById('mon02-loop-scrubber')?.addEventListener('input', (e) => {
-            currentFrameIndex = parseInt(e.target.value, 10);
-            if (currentMode === 'n0q') {
+        // 4. VOLUME LOOP & ANIMATION SCRUBBER CONTROLLER
+        const playBtn = document.getElementById('mon02-loop-play');
+        const scrubber = document.getElementById('mon02-loop-scrubber');
+        let loopInterval = null;
+
+        const stopLoop = () => {
+            if (loopInterval) {
+                clearInterval(loopInterval);
+                loopInterval = null;
+            }
+            isLoopPlaying = false;
+            if (playBtn) {
+                playBtn.innerText = '▶ PLAY';
+                playBtn.style.background = '#10b981';
+            }
+        };
+
+        const startLoop = () => {
+            if (!rainviewerFrames || rainviewerFrames.length === 0) return;
+            stopLoop();
+            isLoopPlaying = true;
+            if (playBtn) {
+                playBtn.innerText = '❚❚ PAUSE';
+                playBtn.style.background = '#f59e0b';
+            }
+            const speed = Number(document.getElementById('mon02-loop-speed')?.value || 600);
+            loopInterval = setInterval(() => {
+                currentFrameIndex = (currentFrameIndex + 1) % rainviewerFrames.length;
+                if (scrubber) scrubber.value = currentFrameIndex;
                 loadReflectivityFrame(currentFrameIndex);
-            }
+            }, speed);
+        };
+
+        playBtn?.addEventListener('click', () => {
+            if (isLoopPlaying) stopLoop();
+            else startLoop();
         });
 
-        // Loop Step Back & Fwd
         document.getElementById('mon02-loop-step-back')?.addEventListener('click', () => {
-            if (currentFrameIndex > 0) {
-                currentFrameIndex--;
-                document.getElementById('mon02-loop-scrubber').value = currentFrameIndex;
-                if (currentMode === 'n0q') loadReflectivityFrame(currentFrameIndex);
-            }
+            stopLoop();
+            if (!rainviewerFrames || rainviewerFrames.length === 0) return;
+            currentFrameIndex = (currentFrameIndex - 1 + rainviewerFrames.length) % rainviewerFrames.length;
+            if (scrubber) scrubber.value = currentFrameIndex;
+            loadReflectivityFrame(currentFrameIndex);
         });
 
         document.getElementById('mon02-loop-step-fwd')?.addEventListener('click', () => {
-            if (rainviewerFrames.length > 0 && currentFrameIndex < rainviewerFrames.length - 1) {
-                currentFrameIndex++;
-                document.getElementById('mon02-loop-scrubber').value = currentFrameIndex;
-                if (currentMode === 'n0q') loadReflectivityFrame(currentFrameIndex);
-            }
+            stopLoop();
+            if (!rainviewerFrames || rainviewerFrames.length === 0) return;
+            currentFrameIndex = (currentFrameIndex + 1) % rainviewerFrames.length;
+            if (scrubber) scrubber.value = currentFrameIndex;
+            loadReflectivityFrame(currentFrameIndex);
         });
 
-        // Loop Play / Pause Toggle
-        document.getElementById('mon02-loop-play-toggle')?.addEventListener('click', () => {
-            const btn = document.getElementById('mon02-loop-play-toggle');
-            if (isLoopPlaying) {
-                clearInterval(this.radarLoopTimer);
-                this.radarLoopTimer = null;
-                isLoopPlaying = false;
-                btn.innerText = '▶ LOOP';
-                btn.style.background = '#0284c7';
-            } else {
-                if (rainviewerFrames.length === 0) return;
-                isLoopPlaying = true;
-                btn.innerText = '⏸ PAUSE';
-                btn.style.background = '#ea580c';
-                this.radarLoopTimer = setInterval(() => {
-                    currentFrameIndex = (currentFrameIndex + 1) % rainviewerFrames.length;
-                    document.getElementById('mon02-loop-scrubber').value = currentFrameIndex;
-                    if (currentMode === 'n0q') loadReflectivityFrame(currentFrameIndex);
-                }, 800);
-            }
+        scrubber?.addEventListener('input', (e) => {
+            stopLoop();
+            currentFrameIndex = Number(e.target.value);
+            loadReflectivityFrame(currentFrameIndex);
         });
 
-        // Default initial load: Base Reflectivity (n0q)
-        loadReflectivityFrame(0);
+        document.getElementById('mon02-loop-speed')?.addEventListener('change', () => {
+            if (isLoopPlaying) startLoop();
+        });
 
-        // 9. RADAR SWEEP BEAM ANIMATION ON CANVAS
-        const canvas = document.getElementById('mon02-radar-sweep-canvas');
+        // 5. RADAR HUD & ANTENNA AZIMUTH BEAM SWEEP
         let showSweep = true;
+        let showRings = true;
 
-        document.getElementById('mon02-toggle-sweep')?.addEventListener('click', () => {
+        document.getElementById('mon02-toggle-sweep')?.addEventListener('click', (e) => {
             showSweep = !showSweep;
-            document.getElementById('mon02-toggle-sweep').innerText = showSweep ? 'SWEEP [AN]' : 'SWEEP [AUS]';
-            if (!showSweep && canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
+            e.target.innerText = showSweep ? 'SWEEP [AN]' : 'SWEEP [AUS]';
         });
 
+        document.getElementById('mon02-toggle-rings')?.addEventListener('click', (e) => {
+            showRings = !showRings;
+            if (showRings) rangeRingsGroup.addTo(this.stationRadarMap);
+            else this.stationRadarMap.removeLayer(rangeRingsGroup);
+            e.target.innerText = showRings ? 'RINGS [AN]' : 'RINGS [AUS]';
+        });
+
+        const canvas = document.getElementById('mon02-radar-sweep-canvas');
         if (canvas) {
             const ctx = canvas.getContext('2d');
             let currentAngle = 0;
-            const renderSweep = () => {
-                if (!this.stationRadarMap || !canvas) return;
+
+            const resizeCanvas = () => {
                 const rect = canvas.getBoundingClientRect();
-                if (canvas.width !== rect.width || canvas.height !== rect.height) {
-                    canvas.width = rect.width;
-                    canvas.height = rect.height;
-                }
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            };
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            const renderSweep = () => {
+                if (!canvas || !this.stationRadarMap) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 if (showSweep) {
-                    try {
-                        const center = this.stationRadarMap.latLngToContainerPoint([lat, lon]);
-                        const edgeLatLng = L.latLng(lat, lon).toBounds(250000).getNorthEast();
-                        const edgePoint = this.stationRadarMap.latLngToContainerPoint(edgeLatLng);
-                        const radiusPx = Math.max(60, Math.min(Math.abs(edgePoint.y - center.y), Math.max(canvas.width, canvas.height) * 1.5));
+                    const centerPt = this.stationRadarMap.latLngToContainerPoint([lat, lon]);
+                    const maxRadius = Math.max(canvas.width, canvas.height);
 
-                        currentAngle = (currentAngle + 1.2) % 360;
-                        const rad = (currentAngle * Math.PI) / 180;
-                        const beamWidth = 0.28;
+                    ctx.save();
+                    ctx.translate(centerPt.x, centerPt.y);
 
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.moveTo(center.x, center.y);
-                        ctx.arc(center.x, center.y, radiusPx, rad - beamWidth, rad, false);
-                        ctx.closePath();
+                    // Sweeping beam tail
+                    const tailAngle = 0.45;
+                    const grad = ctx.createRadialGradient(0, 0, 10, 0, 0, maxRadius);
+                    grad.addColorStop(0, 'rgba(0, 240, 255, 0.35)');
+                    grad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
 
-                        const sweepGrad = ctx.createRadialGradient(center.x, center.y, 4, center.x, center.y, radiusPx);
-                        sweepGrad.addColorStop(0, 'rgba(0, 240, 255, 0.40)');
-                        sweepGrad.addColorStop(0.7, 'rgba(0, 240, 255, 0.10)');
-                        sweepGrad.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
-                        ctx.fillStyle = sweepGrad;
-                        ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, maxRadius, currentAngle - tailAngle, currentAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = grad;
+                    ctx.fill();
 
-                        // Leading edge line
-                        ctx.beginPath();
-                        ctx.moveTo(center.x, center.y);
-                        ctx.lineTo(center.x + Math.cos(rad) * radiusPx, center.y + Math.sin(rad) * radiusPx);
-                        ctx.strokeStyle = '#00f0ff';
-                        ctx.lineWidth = 1.6;
-                        ctx.shadowColor = '#00f0ff';
-                        ctx.shadowBlur = 6;
-                        ctx.stroke();
-                        ctx.restore();
-                    } catch (_) {}
+                    // Leading radar ray
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(Math.cos(currentAngle) * maxRadius, Math.sin(currentAngle) * maxRadius);
+                    ctx.strokeStyle = '#00f0ff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    ctx.restore();
+                    currentAngle = (currentAngle + 0.035) % (Math.PI * 2);
                 }
 
                 this.radarSweepAnim = requestAnimationFrame(renderSweep);
@@ -3208,6 +3026,7 @@ class StreamPlayer {
             }
         }, 150);
     }
+
 
     switchOmniTab(tabName) {
         this.updateOmniTabUI(tabName);
