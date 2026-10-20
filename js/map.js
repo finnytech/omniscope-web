@@ -3462,31 +3462,9 @@ class OperationsMap {
                 });
             }
 
-            // Smoothly advance vessels along course vector
-            if (hasVessels && this.activeVessels && this.activeVessels.length > 0) {
-                this.activeVessels.forEach(v => {
-                    if (v.speed_kts && v.speed_kts > 0.5) {
-                        const spd_ms = v.speed_kts * 0.514444;
-                        const cog_deg = v.course_deg !== undefined ? v.course_deg : (v.heading || 0.0);
-                        const cog_rad = cog_deg * Math.PI / 180.0;
-
-                        const dlat = (spd_ms * Math.cos(cog_rad) * dt) / 111320.0;
-                        const cosLat = Math.max(0.01, Math.cos((v.latitude || 0) * Math.PI / 180.0));
-                        const dlon = (spd_ms * Math.sin(cog_rad) * dt) / (111320.0 * cosLat);
-
-                        v.latitude = (v.latitude || 0) + dlat;
-                        v.longitude = (v.longitude || 0) + dlon;
-
-                        // Viewport culling: only update DOM if marker is on screen!
-                        if (bounds.contains([v.latitude, v.longitude])) {
-                            const m = this.vesselMarkers.get(v.mmsi);
-                            if (m) {
-                                m.setLatLng([v.latitude, v.longitude]);
-                            }
-                        }
-                    }
-                });
-            }
+            // Strict Zero Boats on Land Policy:
+            // Vessel dead-reckoning is strictly disabled so vessels never extrapolate or sail across dry land.
+            // Marine AIS coordinates remain strictly anchored to verified transponder telemetries only.
         }, 1000);
     }
 
