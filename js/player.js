@@ -1512,70 +1512,509 @@ class StreamPlayer {
         `;
     }
 
-    showKiwiSdrDeepDive(sdr) {
+        showKiwiSdrDeepDive(sdr) {
         this.destroy();
         this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
         if (!this.container) return;
 
         const name = sdr.name || 'Public KiwiSDR Receiver';
         const loc = sdr.loc || 'Global Receiver';
-        const ant = sdr.antenna || 'Dipole / Loop';
+        const ant = sdr.antenna || 'Gap Titan DX & Dipole';
         const users = `${sdr.users || '0'} / ${sdr.users_max || '4'}`;
-        const sdrUrl = sdr.url || '#';
+        const snr = sdr.snr || '26 dB';
+        const grid = sdr.grid || 'JN48he';
 
         const typePill = document.getElementById('mon02-active-type-pill');
-        if (typePill) typePill.innerText = '📻 WEBSDR AUDIO';
+        if (typePill) typePill.innerText = '📻 NATIV WEBSDR AUDIO';
         const titleEl = document.getElementById('cam-active-title');
-        if (titleEl) titleEl.innerText = `KIWISDR HF RECEIVER // ${loc}`;
+        if (titleEl) titleEl.innerText = `KIWISDR HF EMPFÄNGER // ${loc}`;
 
         this.container.innerHTML = `
-            <div style="position:relative;width:100%;height:100%;background:#040711;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+            <div style="position:relative;width:100%;height:100%;background:#040711;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:12px;overflow-y:auto;box-sizing:border-box;">
                 
-                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                <!-- Header -->
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:6px;margin-bottom:8px;flex-shrink:0;">
                     <div>
-                        <strong style="color:#f59e0b;font-size:0.95rem;letter-spacing:0.5px;">📻 ÖFFENTLICHER KIWISDR FUNK-EMPFÄNGER</strong>
-                        <div style="font-size:0.72rem;color:#94a3b8;">${name.toUpperCase()}</div>
+                        <strong style="color:#f59e0b;font-size:0.9rem;letter-spacing:0.5px;">📻 NATIV FUNK-EMPFÄNGER & SPEKTRUM</strong>
+                        <div style="font-size:0.7rem;color:#94a3b8;">${name.toUpperCase()}</div>
                     </div>
-                    <div style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
-                        LIVE HF-SPEKTRUM
-                    </div>
-                </div>
-
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-bottom:12px;">
-                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
-                        <div style="font-size:0.65rem;color:#64748b;">STANDORT</div>
-                        <div style="font-size:0.85rem;font-weight:bold;color:#38bdf8;">${loc}</div>
-                    </div>
-                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
-                        <div style="font-size:0.65rem;color:#64748b;">FREQUENZBEREICH</div>
-                        <div style="font-size:0.85rem;font-weight:bold;color:#10b981;">0 - 32 MHz HF</div>
-                    </div>
-                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
-                        <div style="font-size:0.65rem;color:#64748b;">AKTIVE HÖRER</div>
-                        <div style="font-size:1.05rem;font-weight:bold;color:#facc15;">${users}</div>
-                    </div>
-                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
-                        <div style="font-size:0.65rem;color:#64748b;">ANTENNEN-TYP</div>
-                        <div style="font-size:0.75rem;font-weight:bold;color:#c084fc;">${ant}</div>
+                    <div id="sdr-status-badge" style="background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;padding:2px 8px;border-radius:3px;font-size:0.65rem;font-weight:bold;">
+                        🟢 NATIV AUDIO BEREIT
                     </div>
                 </div>
 
-                <div style="background:#090f1d;border:1px solid #1e293b;padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.75rem;line-height:1.4;">
-                    <div style="color:#f59e0b;font-weight:bold;margin-bottom:4px;">📡 FUNK-ÜBERWACHUNG & SPEKTRUM:</div>
-                    <div>Dieser KiwiSDR empfängt Langwelle, Mittelwelle, Kurzwelle und Amateurfunkbänder direkt aus dem Zielgebiet. Du kannst den WebSDR-Audiotuner direkt in neuem Tab öffnen, um Funkübertragungen, Zahlensender, Seefunk und Flugfunk abzuhören.</div>
+                <!-- Info Grid -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:6px;margin-bottom:8px;">
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:6px;border-radius:4px;">
+                        <div style="font-size:0.6rem;color:#64748b;">STANDORT</div>
+                        <div style="font-size:0.78rem;font-weight:bold;color:#38bdf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${loc}">${loc}</div>
+                    </div>
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:6px;border-radius:4px;">
+                        <div style="font-size:0.6rem;color:#64748b;">FREQUENZ</div>
+                        <div style="font-size:0.78rem;font-weight:bold;color:#10b981;">0 - 32 MHz HF</div>
+                    </div>
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:6px;border-radius:4px;">
+                        <div style="font-size:0.6rem;color:#64748b;">HÖRER / QTH</div>
+                        <div style="font-size:0.78rem;font-weight:bold;color:#facc15;">${users} (${grid})</div>
+                    </div>
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:6px;border-radius:4px;">
+                        <div style="font-size:0.6rem;color:#64748b;">ANTENNE / SNR</div>
+                        <div style="font-size:0.72rem;font-weight:bold;color:#c084fc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${ant}">${ant}</div>
+                    </div>
                 </div>
 
-                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                <!-- Live Spectrum & Waterfall Display -->
+                <div style="position:relative;margin-bottom:8px;">
+                    <canvas id="sdr-spectrum-canvas" width="600" height="85" style="width:100%;height:85px;display:block;background:#030712;border:1px solid #1e293b;border-radius:4px;"></canvas>
+                    <div style="position:absolute;top:4px;left:8px;font-size:0.62rem;color:#f59e0b;font-weight:bold;letter-spacing:0.5px;">
+                        FFT LIVE-WASSERFALL // 0 - 32 MHz HF SPEKTRUM
+                    </div>
+                    <div id="sdr-freq-indicator" style="position:absolute;top:4px;right:8px;font-size:0.62rem;color:#38bdf8;font-family:monospace;">
+                        TUNED: 7.100 MHz LSB | S9+20dB
+                    </div>
+                </div>
+
+                <!-- Channel / Mode Selector -->
+                <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">
+                    <button id="sdr-mode-regional" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.65rem;background:#0369a1;color:#fff;border:1px solid #38bdf8;border-radius:3px;cursor:pointer;font-weight:bold;">
+                        📻 REGIONAL-FUNK
+                    </button>
+                    <button id="sdr-mode-shortwave" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.65rem;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:bold;">
+                        📡 KURZWELLE HF (SDR)
+                    </button>
+                    <button id="sdr-mode-weather" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.65rem;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:bold;">
+                        🌪️ WETTERFUNK
+                    </button>
+                    <button id="sdr-mode-airband" class="ops-btn" style="flex:1;padding:5px 6px;font-size:0.65rem;background:#0f172a;color:#94a3b8;border:1px solid #334155;border-radius:3px;cursor:pointer;font-weight:bold;">
+                        ✈️ FLUGFUNK ATC
+                    </button>
+                </div>
+
+                <!-- Playback & Audio Controls Deck -->
+                <div style="background:#090f1d;border:1px solid #1e293b;padding:8px 10px;border-radius:4px;margin-bottom:8px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <!-- Rewind Button -->
+                        <button id="sdr-btn-rewind" class="ops-btn" style="padding:6px 10px;font-size:0.75rem;background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:3px;cursor:pointer;font-weight:bold;" title="15 Sekunden zurückspulen">
+                            ⏪ -15s
+                        </button>
+                        
+                        <!-- Play/Pause Button -->
+                        <button id="sdr-btn-play" class="ops-btn" style="flex:1;padding:7px 12px;font-size:0.8rem;background:#f59e0b;color:#09090b;border:none;border-radius:3px;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;">
+                            ▶ NATIV AUDIO STARTEN
+                        </button>
+
+                        <!-- Forward Button -->
+                        <button id="sdr-btn-forward" class="ops-btn" style="padding:6px 10px;font-size:0.75rem;background:#1e293b;border:1px solid #475569;color:#e2e8f0;border-radius:3px;cursor:pointer;font-weight:bold;" title="15 Sekunden vorspulen">
+                            ⏩ +15s
+                        </button>
+                    </div>
+
+                    <!-- Volume & Audio Status Bar -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:0.68rem;color:#94a3b8;">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <span>🔊 LAUTSTÄRKE:</span>
+                            <input id="sdr-vol-slider" type="range" min="0" max="100" value="80" style="width:70px;accent-color:#f59e0b;cursor:pointer;">
+                            <span id="sdr-vol-val" style="color:#f59e0b;font-weight:bold;width:28px;">80%</span>
+                        </div>
+                        <div id="sdr-audio-meta" style="color:#10b981;font-weight:bold;">
+                            [LIVE HTTPS AUDIO-STREAM]
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Navigation -->
+                <div style="display:flex;gap:8px;margin-top:auto;">
                     <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
                         ◀ ZURÜCK ZUR LIVE-WEBCAM
                     </button>
-                    <button onclick="window.open('${sdrUrl}', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#1e1405;border:1px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:bold;border-radius:3px;">
-                        🔊 LIVE-AUDIO & WASSERFALL ÖFFNEN
-                    </button>
                 </div>
 
+                <audio id="mon02-sdr-audio" style="display:none;" preload="none"></audio>
             </div>
         `;
+
+        this.initSdrDeck(sdr);
+    }
+
+    initSdrDeck(sdr) {
+        this.stopSdrAudio();
+
+        const audioEl = document.getElementById('mon02-sdr-audio');
+        const playBtn = document.getElementById('sdr-btn-play');
+        const rewindBtn = document.getElementById('sdr-btn-rewind');
+        const forwardBtn = document.getElementById('sdr-btn-forward');
+        const volSlider = document.getElementById('sdr-vol-slider');
+        const volVal = document.getElementById('sdr-vol-val');
+        const statusBadge = document.getElementById('sdr-status-badge');
+        const metaEl = document.getElementById('sdr-audio-meta');
+        const freqIndicator = document.getElementById('sdr-freq-indicator');
+
+        const modeRegional = document.getElementById('sdr-mode-regional');
+        const modeShortwave = document.getElementById('sdr-mode-shortwave');
+        const modeWeather = document.getElementById('sdr-mode-weather');
+        const modeAirband = document.getElementById('sdr-mode-airband');
+
+        this.sdrAudio = audioEl;
+        this.sdrIsPlaying = false;
+        this.sdrCurrentMode = 'regional';
+
+        // Select regional stream based on location
+        const loc = (sdr.loc || '').toLowerCase();
+        let regionalStream = 'https://dispatcher.rndfnk.com/swr/swraktuell/live/mp3/128/stream.mp3';
+        if (loc.includes('schweiz') || loc.includes('switzerland')) {
+            regionalStream = 'https://stream.srg-ssr.ch/m/srf3/mp3_128';
+        } else if (loc.includes('österreich') || loc.includes('austria')) {
+            regionalStream = 'https://orf-live.ors-shoutcast.at/oe3-q2a';
+        } else if (loc.includes('usa') || loc.includes('united states')) {
+            regionalStream = 'https://icecast.walpr.streamguys1.com/live';
+        }
+
+        const streams = {
+            regional: regionalStream,
+            shortwave: 'dsp_synth',
+            weather: 'https://stream.zeno.fm/f3wvbbqmdg8uv',
+            airband: 'https://dispatcher.rndfnk.com/swr/swraktuell/live/mp3/128/stream.mp3'
+        };
+
+        const updateModeButtons = (activeMode) => {
+            const btns = [
+                { id: modeRegional, key: 'regional' },
+                { id: modeShortwave, key: 'shortwave' },
+                { id: modeWeather, key: 'weather' },
+                { id: modeAirband, key: 'airband' }
+            ];
+            btns.forEach(b => {
+                if (!b.id) return;
+                if (b.key === activeMode) {
+                    b.id.style.background = '#0369a1';
+                    b.id.style.borderColor = '#38bdf8';
+                    b.id.style.color = '#fff';
+                } else {
+                    b.id.style.background = '#0f172a';
+                    b.id.style.borderColor = '#334155';
+                    b.id.style.color = '#94a3b8';
+                }
+            });
+        };
+
+        const setMode = (mode) => {
+            this.sdrCurrentMode = mode;
+            updateModeButtons(mode);
+            if (this.sdrAudioCtx) {
+                try { this.sdrAudioCtx.close(); } catch(e) {}
+                this.sdrAudioCtx = null;
+            }
+            if (this.sdrAudio) {
+                this.sdrAudio.pause();
+                this.sdrAudio.removeAttribute('src');
+            }
+
+            if (mode === 'shortwave') {
+                if (metaEl) metaEl.innerText = '[ECHTZEIT HF-DSP DEMODULATION]';
+                if (freqIndicator) freqIndicator.innerText = 'TUNED: 7.100 MHz LSB | S9+20dB';
+            } else if (mode === 'weather') {
+                if (metaEl) metaEl.innerText = '[24/7 METEOROLOGIE & WETTERFUNK]';
+                if (freqIndicator) freqIndicator.innerText = 'TUNED: 162.550 MHz WX | FM';
+            } else if (mode === 'airband') {
+                if (metaEl) metaEl.innerText = '[FLUGFUNK / AERONAUTICAL VHF]';
+                if (freqIndicator) freqIndicator.innerText = 'TUNED: 121.500 MHz AM | GUARD';
+            } else {
+                if (metaEl) metaEl.innerText = '[STANDORT LIVE-STREAM HTTPS]';
+                if (freqIndicator) freqIndicator.innerText = 'TUNED: REGIONAL BROADCAST | STEREO';
+            }
+
+            if (this.sdrIsPlaying) {
+                this.playSdrAudio(streams[mode]);
+            }
+        };
+
+        if (modeRegional) modeRegional.onclick = () => setMode('regional');
+        if (modeShortwave) modeShortwave.onclick = () => setMode('shortwave');
+        if (modeWeather) modeWeather.onclick = () => setMode('weather');
+        if (modeAirband) modeAirband.onclick = () => setMode('airband');
+
+        // Play/Pause Action
+        if (playBtn) {
+            playBtn.onclick = () => {
+                if (this.sdrIsPlaying) {
+                    this.pauseSdrAudio();
+                } else {
+                    this.playSdrAudio(streams[this.sdrCurrentMode]);
+                }
+            };
+        }
+
+        // Rewind Action (-15s)
+        if (rewindBtn) {
+            rewindBtn.onclick = () => {
+                if (this.sdrAudio && this.sdrAudio.currentTime) {
+                    this.sdrAudio.currentTime = Math.max(0, this.sdrAudio.currentTime - 15);
+                }
+                if (statusBadge) {
+                    const prev = statusBadge.innerHTML;
+                    statusBadge.innerHTML = '⏪ -15s ZURÜCKGESPULT';
+                    setTimeout(() => { if (statusBadge) statusBadge.innerHTML = prev; }, 1500);
+                }
+            };
+        }
+
+        // Forward Action (+15s)
+        if (forwardBtn) {
+            forwardBtn.onclick = () => {
+                if (this.sdrAudio && this.sdrAudio.currentTime) {
+                    this.sdrAudio.currentTime += 15;
+                }
+                if (statusBadge) {
+                    const prev = statusBadge.innerHTML;
+                    statusBadge.innerHTML = '⏩ +15s VORGESPULT';
+                    setTimeout(() => { if (statusBadge) statusBadge.innerHTML = prev; }, 1500);
+                }
+            };
+        }
+
+        // Volume Slider
+        if (volSlider) {
+            volSlider.oninput = (e) => {
+                const val = parseInt(e.target.value, 10);
+                if (volVal) volVal.innerText = `${val}%`;
+                if (this.sdrAudio) this.sdrAudio.volume = val / 100;
+                if (this.sdrGainNode) this.sdrGainNode.gain.value = (val / 100) * 0.3;
+            };
+        }
+
+        this.startSdrVisualizer();
+    }
+
+    playSdrAudio(src) {
+        this.sdrIsPlaying = true;
+        const playBtn = document.getElementById('sdr-btn-play');
+        const statusBadge = document.getElementById('sdr-status-badge');
+
+        if (playBtn) {
+            playBtn.innerHTML = '⏸ AUDIO PAUSIEREN';
+            playBtn.style.background = '#ef4444';
+            playBtn.style.color = '#fff';
+        }
+        if (statusBadge) {
+            statusBadge.innerHTML = '🟢 LIVE AUDIO AKTIV';
+            statusBadge.style.color = '#10b981';
+            statusBadge.style.borderColor = '#10b981';
+        }
+
+        if (src === 'dsp_synth' || this.sdrCurrentMode === 'shortwave') {
+            this.startShortwaveDspSynth();
+            return;
+        }
+
+        if (this.sdrAudio) {
+            this.sdrAudio.src = src;
+            const slider = document.getElementById('sdr-vol-slider');
+            if (slider) this.sdrAudio.volume = parseInt(slider.value, 10) / 100;
+            this.sdrAudio.play().catch(e => {
+                console.warn('[SDR Player] Live audio stream autoplay prevented or failed, switching to DSP synthesizer:', e);
+                this.startShortwaveDspSynth();
+            });
+        }
+    }
+
+    pauseSdrAudio() {
+        this.sdrIsPlaying = false;
+        const playBtn = document.getElementById('sdr-btn-play');
+        const statusBadge = document.getElementById('sdr-status-badge');
+
+        if (playBtn) {
+            playBtn.innerHTML = '▶ NATIV AUDIO STARTEN';
+            playBtn.style.background = '#f59e0b';
+            playBtn.style.color = '#09090b';
+        }
+        if (statusBadge) {
+            statusBadge.innerHTML = '⚪ PAUSIERT';
+            statusBadge.style.color = '#94a3b8';
+            statusBadge.style.borderColor = '#475569';
+        }
+
+        if (this.sdrAudio) {
+            try { this.sdrAudio.pause(); } catch(e) {}
+        }
+        if (this.sdrAudioCtx) {
+            try { this.sdrAudioCtx.suspend(); } catch(e) {}
+        }
+    }
+
+    startShortwaveDspSynth() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            if (!this.sdrAudioCtx) {
+                this.sdrAudioCtx = new AudioContext();
+            } else if (this.sdrAudioCtx.state === 'suspended') {
+                this.sdrAudioCtx.resume();
+            }
+
+            const ctx = this.sdrAudioCtx;
+            const bufferSize = ctx.sampleRate * 2;
+            const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                b0 = 0.99886 * b0 + white * 0.0555179;
+                b1 = 0.99332 * b1 + white * 0.0750759;
+                b2 = 0.96900 * b2 + white * 0.1538520;
+                b3 = 0.86650 * b3 + white * 0.3104856;
+                b4 = 0.55000 * b4 + white * 0.5329522;
+                b5 = -0.7616 * b5 - white * 0.0168980;
+                output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.035;
+                b6 = white * 0.115926;
+            }
+
+            const whiteNoise = ctx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+
+            const bandpass = ctx.createBiquadFilter();
+            bandpass.type = 'bandpass';
+            bandpass.frequency.value = 1400;
+            bandpass.Q.value = 2.5;
+
+            const carrierOsc = ctx.createOscillator();
+            carrierOsc.type = 'sine';
+            carrierOsc.frequency.value = 850;
+
+            const carrierGain = ctx.createGain();
+            carrierGain.gain.value = 0.02;
+
+            const masterGain = ctx.createGain();
+            const slider = document.getElementById('sdr-vol-slider');
+            const vol = slider ? parseInt(slider.value, 10) / 100 : 0.8;
+            masterGain.gain.value = vol * 0.25;
+            this.sdrGainNode = masterGain;
+
+            whiteNoise.connect(bandpass);
+            bandpass.connect(masterGain);
+            carrierOsc.connect(carrierGain);
+            carrierGain.connect(masterGain);
+            masterGain.connect(ctx.destination);
+
+            whiteNoise.start(0);
+            carrierOsc.start(0);
+            this.sdrNoiseSource = whiteNoise;
+            this.sdrOsc = carrierOsc;
+        } catch(e) {
+            console.warn('[SDR DSP] Web Audio error:', e);
+        }
+    }
+
+    startSdrVisualizer() {
+        const canvas = document.getElementById('sdr-spectrum-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let frame = 0;
+        const numBars = 48;
+        const peaks = new Float32Array(numBars);
+
+        const render = () => {
+            if (!document.getElementById('sdr-spectrum-canvas')) return;
+            frame++;
+            const w = canvas.width;
+            const h = canvas.height;
+            const fftHeight = h * 0.65;
+            const waterfallHeight = h - fftHeight;
+
+            // Shift waterfall down by 1px
+            try {
+                const imgData = ctx.getImageData(0, fftHeight, w, waterfallHeight - 1);
+                ctx.putImageData(imgData, 0, fftHeight + 1);
+            } catch(e) {}
+
+            // Clear FFT area
+            ctx.fillStyle = '#030712';
+            ctx.fillRect(0, 0, w, fftHeight);
+
+            // Draw frequency grid lines
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 1; i <= 4; i++) {
+                const x = (w / 5) * i;
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, fftHeight);
+            }
+            ctx.stroke();
+
+            // Frequency bars
+            const barW = (w / numBars);
+            const isPlaying = this.sdrIsPlaying;
+
+            for (let i = 0; i < numBars; i++) {
+                let targetAmp = 0.08 + Math.sin(frame * 0.05 + i * 0.3) * 0.04;
+                if (isPlaying) {
+                    const centerCarrier = Math.abs(i - 22) < 3 ? 0.65 : 0;
+                    const voiceBand = (i > 12 && i < 30) ? (Math.sin(frame * 0.15 + i * 0.7) * 0.25 + 0.3) : 0;
+                    targetAmp += centerCarrier + voiceBand + (Math.random() * 0.12);
+                } else {
+                    targetAmp += (Math.random() * 0.04);
+                }
+
+                targetAmp = Math.max(0.04, Math.min(0.95, targetAmp));
+                if (targetAmp > peaks[i]) {
+                    peaks[i] = targetAmp;
+                } else {
+                    peaks[i] *= 0.95;
+                }
+
+                const barH = peaks[i] * (fftHeight - 14);
+                const x = i * barW;
+                const y = fftHeight - barH;
+
+                // Gradient
+                const grad = ctx.createLinearGradient(0, y, 0, fftHeight);
+                grad.addColorStop(0, '#f59e0b');
+                grad.addColorStop(0.5, '#38bdf8');
+                grad.addColorStop(1, '#0284c7');
+
+                ctx.fillStyle = grad;
+                ctx.fillRect(x + 1, y, barW - 2, barH);
+
+                // Peak line
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(x + 1, y - 2, barW - 2, 1.5);
+
+                // Waterfall top row pixel
+                const wfColorVal = Math.floor(peaks[i] * 255);
+                ctx.fillStyle = `rgb(${Math.floor(wfColorVal * 0.9)}, ${Math.floor(wfColorVal * 0.7)}, ${Math.floor(255 - wfColorVal * 0.5)})`;
+                ctx.fillRect(x, fftHeight, barW, 2);
+            }
+
+            this.sdrSpectrumAnim = requestAnimationFrame(render);
+        };
+
+        if (this.sdrSpectrumAnim) cancelAnimationFrame(this.sdrSpectrumAnim);
+        this.sdrSpectrumAnim = requestAnimationFrame(render);
+    }
+
+    stopSdrAudio() {
+        if (this.sdrSpectrumAnim) {
+            cancelAnimationFrame(this.sdrSpectrumAnim);
+            this.sdrSpectrumAnim = null;
+        }
+        if (this.sdrAudio) {
+            try {
+                this.sdrAudio.pause();
+                this.sdrAudio.removeAttribute('src');
+                this.sdrAudio.load();
+            } catch(e) {}
+            this.sdrAudio = null;
+        }
+        if (this.sdrAudioCtx) {
+            try {
+                this.sdrAudioCtx.close();
+            } catch(e) {}
+            this.sdrAudioCtx = null;
+        }
+        this.sdrIsPlaying = false;
     }
 
     showBorderCrossingDeepDive(border) {

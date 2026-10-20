@@ -949,6 +949,32 @@ class OperationsMap {
         if (btnFocusNoaa) btnFocusNoaa.addEventListener('click', () => this.focusNoaaUsa());
         if (sideBtnFocusNoaa) sideBtnFocusNoaa.addEventListener('click', () => this.focusNoaaUsa());
 
+        // v2.1.0 New Tactical Focus Buttons
+        const sideBtnFocusCables = document.getElementById('side-btn-focus-cables');
+        if (sideBtnFocusCables) {
+            sideBtnFocusCables.addEventListener('click', () => {
+                this.map.setView([20.0, 10.0], 3);
+            });
+        }
+        const sideBtnFocusRadiation = document.getElementById('side-btn-focus-radiation');
+        if (sideBtnFocusRadiation) {
+            sideBtnFocusRadiation.addEventListener('click', () => {
+                this.map.setView([50.0, 10.0], 6);
+            });
+        }
+        const sideBtnFocusBaltic = document.getElementById('side-btn-focus-baltic');
+        if (sideBtnFocusBaltic) {
+            sideBtnFocusBaltic.addEventListener('click', () => {
+                this.map.setView([58.5, 19.0], 6);
+            });
+        }
+        const sideBtnFocusBorders = document.getElementById('side-btn-focus-borders');
+        if (sideBtnFocusBorders) {
+            sideBtnFocusBorders.addEventListener('click', () => {
+                this.map.setView([30.5, -104.0], 6);
+            });
+        }
+
         const sideNoaaOpacity = document.getElementById('side-noaa-radar-opacity');
         if (sideNoaaOpacity) {
             sideNoaaOpacity.addEventListener('input', (e) => {
@@ -3265,6 +3291,10 @@ class OperationsMap {
         // 10. UN/EU GDACS Multi-Hazard Alerts (every 90s)
         this.fetchGdacsDisasters();
         setInterval(() => this.fetchGdacsDisasters(), 90000);
+
+        // 10b. Baltic AIS Realtime Vessel Tracking (Digitraffic live dataset)
+        this.fetchBalticAis();
+        setInterval(() => this.fetchBalticAis(), 30000);
 
         // 11. Safecast Global Radiation Telemetry (every 90s)
         this.fetchSafecastRadiation();
@@ -6552,8 +6582,8 @@ OperationsMap.prototype.fetchSubmarineCables = async function() {
         const cableLayer = L.geoJSON(geojson, {
             style: () => ({
                 color: '#00f0ff',
-                weight: 2.2,
-                opacity: 0.85,
+                weight: 3.2,
+                opacity: 0.92,
                 lineCap: 'round',
                 lineJoin: 'round',
                 className: 'subsea-cable-path'
@@ -6567,10 +6597,10 @@ OperationsMap.prototype.fetchSubmarineCables = async function() {
                 });
 
                 layer.on('mouseover', () => {
-                    layer.setStyle({ color: '#facc15', weight: 4.5, opacity: 1.0 });
+                    layer.setStyle({ color: '#facc15', weight: 5.0, opacity: 1.0 });
                 });
                 layer.on('mouseout', () => {
-                    layer.setStyle({ color: '#00f0ff', weight: 2.2, opacity: 0.85 });
+                    layer.setStyle({ color: '#00f0ff', weight: 3.2, opacity: 0.92 });
                 });
                 layer.on('click', async (ev) => {
                     this.notifyLayerClicked(ev);
@@ -6591,6 +6621,33 @@ OperationsMap.prototype.fetchSubmarineCables = async function() {
             }
         });
         this.cablesLayer.addLayer(cableLayer);
+
+        // Also fetch and plot landing stations
+        try {
+            const lpRes = await fetch('/api/cyber/landing-points');
+            if (lpRes.ok) {
+                const lpData = await lpRes.json();
+                const lpFeatures = lpData.features || [];
+                lpFeatures.forEach(lp => {
+                    const coords = lp.geometry ? lp.geometry.coordinates : null;
+                    if (!coords || coords.length < 2) return;
+                    const lpName = lp.properties ? (lp.properties.name || lp.properties.id) : 'Cable Station';
+                    const ptMarker = L.circleMarker([coords[1], coords[0]], {
+                        radius: 3.5,
+                        fillColor: '#00f0ff',
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 0.95,
+                        fillOpacity: 0.9
+                    });
+                    ptMarker.bindTooltip(`📍 <strong>${lpName}</strong><br><span style="font-size:0.65rem;color:#00f0ff;">Untersee-Landestation</span>`, {
+                        direction: 'top',
+                        offset: [0, -4]
+                    });
+                    this.cablesLayer.addLayer(ptMarker);
+                });
+            }
+        } catch (_) {}
     } catch (e) {
         console.warn("Submarine cables fetch error:", e);
     }
@@ -6686,6 +6743,61 @@ OperationsMap.prototype.fetchSafecastRadiation = async function() {
         });
     } catch (e) {
         console.warn("Safecast fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.fetchBalticAis = async function() {
+    try {
+        const res = await fetch('/api/maritime/baltic-ais');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const features = data.features || (Array.isArray(data) ? data : []);
+        this.balticAisLayer.clearLayers();
+
+        const limit = Math.min(features.length, 600);
+        for (let i = 0; i < limit; i++) {
+            const f = features[i];
+            const geom = f.geometry || {};
+            const coords = geom.coordinates || [];
+            const lon = coords[0];
+            const lat = coords[1];
+            if (lat === undefined || lon === undefined || isNaN(lat) || isNaN(lon)) continue;
+
+            const p = f.properties || {};
+            const mmsi = p.mmsi || f.mmsi || 'Unknown';
+            const sog = p.sog !== undefined ? p.sog : 0;
+            const cog = p.cog !== undefined ? p.cog : 0;
+
+            const shipIcon = L.divIcon({
+                className: 'baltic-ship-icon',
+                html: `
+                    <div style="transform: rotate(${cog}deg); width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" style="filter: drop-shadow(0 0 4px #06b6d4);">
+                            <polygon points="12,2 22,22 12,18 2,22" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
+                        </svg>
+                    </div>
+                `,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+
+            const marker = L.marker([lat, lon], { icon: shipIcon });
+            marker.bindTooltip(`🚢 <strong>BALTIC AIS // MMSI ${mmsi}</strong><br>Speed: ${sog} kn • Kurs: ${cog}°<br><span style="font-size:0.65rem;color:#38bdf8;">Klick für Schiffs-Dossier MON-02</span>`, {
+                direction: 'top',
+                offset: [0, -6]
+            });
+
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                if (window.MainPlayer && window.MainPlayer.showVesselDeepDive) {
+                    window.MainPlayer.showVesselDeepDive({ properties: p, mmsi: mmsi, lat: lat, lon: lon });
+                }
+            });
+
+            this.balticAisLayer.addLayer(marker);
+        }
+    } catch (e) {
+        console.warn("Baltic AIS fetch error:", e);
     }
 };
 

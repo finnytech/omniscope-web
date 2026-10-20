@@ -155,7 +155,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23030712' stroke='%2338bdf8' stroke-width='6'/><circle cx='50' cy='50' r='20' fill='none' stroke='%2306b6d4' stroke-width='4'/><line x1='50' y1='5' x2='50' y2='95' stroke='%2338bdf8' stroke-width='3'/><line x1='5' y1='50' x2='95' y2='50' stroke='%2338bdf8' stroke-width='3'/></svg>" />
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/cyberpunk.css?v=6.0" />
+    <link rel="stylesheet" href="css/cyberpunk.css?v=2.2.0" />
 </head>
 <body>
     <!-- Top Operations Header -->
@@ -909,6 +909,122 @@
                                 </div>
                             </div>
                             <div class="sidebar-hint" style="color:#f59e0b;">100% Keyless • 356 weltweite Transit-Anbieter & Verkehrsbehörden</div>
+                        </div>
+
+                        <!-- Group 13: 🌐 Seekabel (550+ Subsea Fiber Cables) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #00f0ff;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-cables" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#00f0ff;font-weight:bold;">🌐 SEEKABEL (SUBSEA FIBER)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <button id="side-btn-focus-cables" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(0,240,255,0.15);border:1px solid #00f0ff;color:#00f0ff;font-weight:bold;cursor:pointer;">
+                                    🌐 FOKUS GLOBALE OZEANE (SEEKABEL)
+                                </button>
+                            </div>
+                            <div class="sidebar-hint" style="color:#00f0ff;">550+ globale Unterseekabel & Landestationen</div>
+                        </div>
+
+                        <!-- Group 14: ⚠️ GDACS Katastrophen & Krisen -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #ef4444;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-gdacs" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#ef4444;font-weight:bold;">⚠️ GDACS KATASTROPHEN & KRISEN</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#ef4444;">UN / EU Erdbeben, Zyklone, Fluten & Vulkane</div>
+                        </div>
+
+                        <!-- Group 15: ☢️ Strahlung (Radmon & Safecast) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #a3e635;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-radiation" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#a3e635;font-weight:bold;">☢️ STRAHLUNG (GEIGER-RASTER)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <button id="side-btn-focus-radiation" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(163,230,53,0.15);border:1px solid #a3e635;color:#a3e635;font-weight:bold;cursor:pointer;">
+                                    ☢️ FOKUS STRAHLUNGS-GRID (EUROPA)
+                                </button>
+                            </div>
+                            <div class="sidebar-hint" style="color:#a3e635;">320+ Live-Geigerzähler weltweit (CPM & µSv/h)</div>
+                        </div>
+
+                        <!-- Group 16: 🚢 Ostsee AIS Schiffe (Digitraffic) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #38bdf8;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-baltic-ais" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#38bdf8;font-weight:bold;">🚢 OSTSEE AIS (SCHIFFSVERKEHR)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <button id="side-btn-focus-baltic" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#38bdf8;font-weight:bold;cursor:pointer;">
+                                    🚢 FOKUS OSTSEE / BALTIC AIS
+                                </button>
+                            </div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">Digitraffic Baltic Live Maritime AIS Vektoren</div>
+                        </div>
+
+                        <!-- Group 17: ✈️ Flughafen METAR & TAF (AWC) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #f59e0b;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-metar" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#f59e0b;font-weight:bold;">✈️ FLUGHAFEN METAR & TAF</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#f59e0b;">NOAA AWC ICAO Flugplatzwetter & Teletype</div>
+                        </div>
+
+                        <!-- Group 18: 📻 WebSDR Funk (KiwiSDR) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #fbbf24;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-kiwisdr" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#fbbf24;font-weight:bold;">📻 WEBSDR FUNK (KIWISDR)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#fbbf24;">1.200+ weltweite HF-Empfänger (0–32 MHz)</div>
+                        </div>
+
+                        <!-- Group 19: 🛂 Grenzwartezeiten (US CBP) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #10b981;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-borders" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#10b981;font-weight:bold;">🛂 GRENZWARTEZEITEN (US CBP)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <button id="side-btn-focus-borders" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;font-weight:bold;cursor:pointer;">
+                                    🛂 FOKUS US / MEXIKO GRENZEN
+                                </button>
+                            </div>
+                            <div class="sidebar-hint" style="color:#10b981;">US Customs & Border Protection Live Delays</div>
+                        </div>
+
+                        <!-- Group 20: 🧅 Tor Relays & Exit Nodes -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #c084fc;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-tor" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#c084fc;font-weight:bold;">🧅 TOR RELAYS (ONIONOO)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#c084fc;">The Tor Project Guard & Exit Nodes</div>
                         </div>
                     </div>
                 </aside>
@@ -1955,13 +2071,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- OmniScope Web Serverless Client-Side Bridge -->
-    <script src="js/web_bridge.js"></script>
+    <script src="js/web_bridge.js?v=2.2.0"></script>
 
     <script src="js/audio.js?v=7.4"></script>
     <script src="js/ram_cleaner.js?v=7.4"></script>
-    <script src="js/player.js?v=7.4"></script>
+    <script src="js/player.js?v=2.2.0"></script>
     <script src="js/globe.js?v=7.4"></script>
-    <script src="js/map.js?v=7.4"></script>
+    <script src="js/map.js?v=2.2.0"></script>
     <script src="js/settings.js?v=7.4"></script>
     <script src="js/app.js?v=7.4"></script>
     <script src="js/upgrade.js?v=2.7"></script>

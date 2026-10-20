@@ -728,38 +728,53 @@
             });
         }
 
-        // 9.4 /api/weather/stations/nearby or bbox
+                // 9.4 /api/weather/stations/nearby or bbox (100% Real Live AWC / NOAA Network)
         if (urlStr.includes('/api/weather/stations/nearby') || urlStr.includes('/api/weather/stations/bbox')) {
             try {
                 const url = new URL(urlStr, window.location.href);
                 const lat = parseFloat(url.searchParams.get('lat') || url.searchParams.get('min_lat') || '52.52');
                 const lon = parseFloat(url.searchParams.get('lon') || url.searchParams.get('min_lon') || '13.405');
-                const stations = [
-                    { id: "WMO_" + Math.round(lat*100) + "_" + Math.round(lon*100), name: "WMO Ground Met Station", lat: lat + 0.04, lon: lon - 0.03, elevation_m: 45, provider: "WMO / NOAA Global Grid" },
-                    { id: "MESO_" + Math.round(lat*100) + "_" + Math.round(lon*100), name: "Regional Mesonet Sensor", lat: lat - 0.05, lon: lon + 0.04, elevation_m: 62, provider: "Mesonet High-Res Sensor" }
-                ];
-                return jsonResponse({ count: stations.length, stations: stations });
+                const deltaLat = 1.6;
+                const deltaLon = 2.2;
+                const minLat = (lat - deltaLat).toFixed(4);
+                const minLon = (lon - deltaLon).toFixed(4);
+                const maxLat = (lat + deltaLat).toFixed(4);
+                const maxLon = (lon + deltaLon).toFixed(4);
+
+                const awcRes = await fetch(`https://aviationweather.gov/api/data/metar?format=geojson&bbox=${minLat},${minLon},${maxLat},${maxLon}`);
+                if (awcRes.ok) {
+                    const data = await awcRes.json();
+                    const stations = (data.features || []).map(f => {
+                        const p = f.properties || {};
+                        const coords = f.geometry ? f.geometry.coordinates : [lon, lat];
+                        const dLat = coords[1] - lat;
+                        const dLon = (coords[0] - lon) * Math.cos(lat * Math.PI / 180);
+                        const distKm = Math.round(Math.sqrt(dLat * dLat + dLon * dLon) * 111.32);
+                        return {
+                            id: p.id || 'METAR',
+                            name: p.site || `Aviation Met Station ${p.id}`,
+                            lat: coords[1],
+                            lon: coords[0],
+                            elevation_m: coords[2] || 0,
+                            provider: 'WMO / NOAA AWC',
+                            distance_km: distKm,
+                            temp_c: p.temp !== null && p.temp !== undefined ? p.temp : null,
+                            wind_speed_kt: p.wspd || 0,
+                            altim_hpa: p.altim || 1013,
+                            raw: p.rawOb || ''
+                        };
+                    }).sort((a, b) => a.distance_km - b.distance_km);
+                    return jsonResponse({ count: stations.length, stations: stations });
+                }
             } catch (e) {
-                return jsonResponse({ count: 0, stations: [] });
+                console.warn('Weather stations live fetch error:', e);
             }
+            return jsonResponse({ count: 0, stations: [] });
         }
 
         // 9.5 /api/weather/supercell/
         if (urlStr.includes('/api/weather/supercell/')) {
-            try {
-                const url = new URL(urlStr, window.location.href);
-                const lat = parseFloat(url.searchParams.get('lat') || '35.0');
-                const lon = parseFloat(url.searchParams.get('lon') || '-97.0');
-                return jsonResponse({
-                    status: "ok",
-                    stations: [
-                        { id: "OK_MESO_1", name: "Oklahoma Mesonet Radar Station", lat: lat + 0.03, lon: lon + 0.02, distance_km: 4.2, temp_c: 24.5, wind_speed_mph: 42, pressure_hpa: 1008.2 },
-                        { id: "NOAA_RAD_2", name: "NOAA Surface Observation Mast", lat: lat - 0.04, lon: lon - 0.03, distance_km: 6.8, temp_c: 23.8, wind_speed_mph: 58, pressure_hpa: 1006.9 }
-                    ]
-                });
-            } catch (e) {
-                return jsonResponse({ status: "ok", stations: [] });
-            }
+            return jsonResponse({ status: "ok", stations: [] });
         }
 
         // 10. /api/space/weather

@@ -868,6 +868,59 @@ async function handleBorderWaitTimes(url) {
   }
 }
 
+async function handleWeatherStations(url) {
+  try {
+    const lat = parseFloat(url.searchParams.get("lat") || url.searchParams.get("min_lat") || "50.0");
+    const lon = parseFloat(url.searchParams.get("lon") || url.searchParams.get("min_lon") || "10.0");
+    const deltaLat = 1.6;
+    const deltaLon = 2.2;
+    const minLat = (lat - deltaLat).toFixed(4);
+    const minLon = (lon - deltaLon).toFixed(4);
+    const maxLat = (lat + deltaLat).toFixed(4);
+    const maxLon = (lon + deltaLon).toFixed(4);
+
+    const awcRes = await fetch(`https://aviationweather.gov/api/data/metar?format=geojson&bbox=${minLat},${minLon},${maxLat},${maxLon}`, {
+      headers: { "User-Agent": "OmniScope-OSINT/2.1 (contact@omniscope.dev)" },
+      cf: { cacheTtl: 300, cacheEverything: true }
+    });
+
+    if (!awcRes.ok) throw new Error(`HTTP ${awcRes.status}`);
+    const data = await awcRes.json();
+    const stations = (data.features || []).map(f => {
+      const p = f.properties || {};
+      const coords = f.geometry ? f.geometry.coordinates : [lon, lat];
+      const dLat = coords[1] - lat;
+      const dLon = (coords[0] - lon) * Math.cos(lat * Math.PI / 180);
+      const distKm = Math.round(Math.sqrt(dLat * dLat + dLon * dLon) * 111.32);
+      return {
+        id: p.id || "METAR",
+        name: p.site || `Aviation Met Station ${p.id}`,
+        lat: coords[1],
+        lon: coords[0],
+        elevation: coords[2] || 0,
+        elevation_m: coords[2] || 0,
+        provider: "WMO / NOAA AWC",
+        distance_km: distKm,
+        temp_c: p.temp !== null && p.temp !== undefined ? p.temp : null,
+        dewp_c: p.dewp !== null && p.dewp !== undefined ? p.dewp : null,
+        wind_speed_kt: p.wspd || 0,
+        wind_dir: p.wdir || 0,
+        altim_hpa: p.altim || 1013,
+        flight_cat: p.fltcat || "VFR",
+        raw_metar: p.rawOb || ""
+      };
+    }).sort((a, b) => a.distance_km - b.distance_km);
+
+    return jsonResponse({
+      status: "ok",
+      count: stations.length,
+      stations: stations
+    }, 200, { "Cache-Control": "public, max-age=300" });
+  } catch (err) {
+    return jsonResponse({ status: "error", count: 0, stations: [], message: err.message }, 200);
+  }
+}
+
 async function handleAsteroids(url) {
   try {
     const distMax = url.searchParams.get("dist-max") || "0.05";
@@ -1470,6 +1523,11 @@ Available at: https://omniscope-web.pages.dev/openapi.json
       // 5.2 /api/weather & /api/weather/live & /api/weather/consensus
       if (url.pathname === "/api/weather" || url.pathname === "/api/weather/live" || url.pathname === "/api/weather/consensus") {
         return handleWeather(url);
+      }
+
+            // 5.2b /api/weather/stations/nearby & bbox
+      if (url.pathname === "/api/weather/stations/nearby" || url.pathname === "/api/weather/stations/bbox") {
+        return handleWeatherStations(url);
       }
 
       // 5.3 /api/weather/providers
