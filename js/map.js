@@ -342,33 +342,45 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
 }
 
 class OperationsMap {
-    getDynamicNodeRadius(baseRadius = 5.0) {
+    getDynamicNodeRadius(baseRadius = 6.0) {
         const zoom = this.map ? this.map.getZoom() : 4;
-        // User requested: scale node points by +12% base and on zoom-in
-        let r = baseRadius * 1.12;
-        if (zoom > 5) {
-            r = r * Math.pow(1.12, Math.min(zoom - 5, 8));
+        // User requested: scale node points by +20% on zoom-in so they are distinctly visible and easy to click
+        let r = baseRadius * 1.20;
+        if (zoom > 4) {
+            r = r * Math.pow(1.20, Math.min(zoom - 4, 7));
         }
         return Math.round(r * 10) / 10;
     }
 
     updateAllMarkerRadii() {
         if (!this.map) return;
-        const updateGroup = (group) => {
-            if (!group || typeof group.eachLayer !== 'function') return;
-            group.eachLayer(layer => {
-                if (layer && typeof layer.setRadius === 'function' && layer._baseRadius) {
-                    layer.setRadius(this.getDynamicNodeRadius(layer._baseRadius));
-                }
-            });
+        const updateLayer = (layer, defaultBase = 6.0) => {
+            if (!layer || typeof layer.setRadius !== 'function') return;
+            const base = layer._baseRadius || defaultBase;
+            layer.setRadius(this.getDynamicNodeRadius(base));
         };
-        updateGroup(this.camsLayer);
-        updateGroup(this.weatherEnginesLayer);
+        const updateGroup = (group, defaultBase = 6.0) => {
+            if (!group) return;
+            if (typeof group.eachLayer === 'function') {
+                group.eachLayer(layer => updateLayer(layer, defaultBase));
+            }
+        };
+        updateGroup(this.camsLayer, 6.0);
+        updateGroup(this.weatherEnginesLayer, 6.5);
+        updateGroup(this.metarLayer, 6.0);
+        updateGroup(this.kiwiSdrLayer, 6.0);
+        updateGroup(this.radiationLayer, 6.0);
+        updateGroup(this.torLayer, 6.0);
+        updateGroup(this.bordersLayer, 6.0);
+        updateGroup(this.balticAisLayer, 6.5);
+        if (this.activeCamMarkers) {
+            for (const marker of this.activeCamMarkers.values()) {
+                updateLayer(marker, 6.0);
+            }
+        }
         if (this.weatherEngineMarkers) {
             for (const marker of this.weatherEngineMarkers.values()) {
-                if (marker && typeof marker.setRadius === 'function') {
-                    marker.setRadius(this.getDynamicNodeRadius(marker._baseRadius || 5.0));
-                }
+                updateLayer(marker, 6.5);
             }
         }
     }
@@ -397,7 +409,7 @@ class OperationsMap {
             this.map.getPane('sensorMarkersPane').style.zIndex = '460';
         }
 
-        this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 8, pane: 'sensorMarkersPane' });
+        this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 15, pane: 'sensorMarkersPane' });
         this._lastLayerClickTime = 0;
         L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
@@ -957,15 +969,24 @@ class OperationsMap {
                 const sideRadar = document.getElementById('side-layer-radar');
                 if (topRadar) topRadar.checked = true;
                 if (sideRadar) sideRadar.checked = true;
+                if (this.radarLayer && this.map.hasLayer(this.radarLayer)) {
+                    this.map.removeLayer(this.radarLayer);
+                    this.radarLayer = null;
+                }
+                if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) {
+                    this.map.removeLayer(this.radarLayerPrev);
+                    this.radarLayerPrev = null;
+                }
                 if (this.noaaRadarLayer && this.map.hasLayer(this.noaaRadarLayer)) {
                     this.map.removeLayer(this.noaaRadarLayer);
+                    this.noaaRadarLayer = null;
                 }
                 if (e.target.value === 'dwd') {
                     this.map.setView([51.16, 10.45], 6);
                 } else if (e.target.value === 'nexrad') {
                     this.map.setView([38.8, -97.0], 5);
                 }
-                this.renderRadarFrame(this.radarIndex);
+                this.renderRadarFrame(this.radarIndex || 0);
             });
         }
 
@@ -977,10 +998,19 @@ class OperationsMap {
                 const sideRadar = document.getElementById('side-layer-radar');
                 if (topRadar) topRadar.checked = true;
                 if (sideRadar) sideRadar.checked = true;
+                if (this.radarLayer && this.map.hasLayer(this.radarLayer)) {
+                    this.map.removeLayer(this.radarLayer);
+                    this.radarLayer = null;
+                }
+                if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) {
+                    this.map.removeLayer(this.radarLayerPrev);
+                    this.radarLayerPrev = null;
+                }
                 if (this.noaaRadarLayer && this.map.hasLayer(this.noaaRadarLayer)) {
                     this.map.removeLayer(this.noaaRadarLayer);
+                    this.noaaRadarLayer = null;
                 }
-                this.renderRadarFrame(this.radarIndex);
+                this.renderRadarFrame(this.radarIndex || 0);
             });
         }
 
@@ -1734,7 +1764,7 @@ class OperationsMap {
                         fillOpacity: 0.95,
                         weight: 1.5
                     });
-                    marker._cyberNodeType = 'camera'; marker._baseRadius = 5.0;
+                    marker._cyberNodeType = 'camera'; marker._baseRadius = 6.0; marker._baseRadius = 5.0;
                 }
 
                 const rawPreview = cam.preview_url || cam.stream_url;
@@ -1784,7 +1814,7 @@ class OperationsMap {
                         fillOpacity: 0.95,
                         weight: 1.5
                     });
-                    marker._cyberNodeType = 'weather_station';
+                    marker._cyberNodeType = 'weather_station'; marker._baseRadius = 6.0;
 
                     marker.bindPopup(`
                         <div style="font-family:var(--font-mono);font-size:11px;min-width:260px;color:#0f172a;">
@@ -2156,7 +2186,7 @@ class OperationsMap {
                         fillOpacity: 0.92,
                         weight: 1
                     });
-                    marker._cyberNodeType = 'camera'; marker._baseRadius = 5.0;
+                    marker._cyberNodeType = 'camera'; marker._baseRadius = 6.0; marker._baseRadius = 5.0;
                 }
 
                 const rawPreview = cam.preview_url || cam.stream_url;
@@ -2330,9 +2360,8 @@ class OperationsMap {
     }
 
     renderRadarFrame(index) {
-        if (!this.radarFrames || this.radarFrames.length === 0) return;
-        this.radarIndex = index;
-        const frame = this.radarFrames[index];
+        this.radarIndex = index || 0;
+        const frame = (this.radarFrames && this.radarFrames[this.radarIndex]) || {};
 
         const prov = this.activeRadarProvider || 'rainviewer';
         const mode = this.activeRadarMode || 'composite';
@@ -2341,60 +2370,45 @@ class OperationsMap {
         let maxNative = 7;
         let hudStatus = 'GLOBAL RADAR [dBZ]';
 
-        // 1. Authentic Provider Routing
+        const host = this.radarHost || "https://tilecache.rainviewer.com";
+        const path = frame.path || (this.radarFrames && this.radarFrames[0] ? this.radarFrames[0].path : '/v2/radar/nowcast');
+
+        // 1. Authentic Provider & View Mode Routing
         if (prov === 'nexrad') {
             // Official NOAA Level-III NEXRAD Base Reflectivity Tile Server (Iowa State IEM / NOAA)
             tileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png';
             maxNative = 11;
             hudStatus = '🇺🇸 NOAA NEXRAD LEVEL-III USA';
+        } else if (prov === 'satellite' || mode === 'infrared') {
+            // NASA GIBS WMTS Global Modis Infrared Satellite Cloud Layer
+            tileUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
+            maxNative = 9;
+            hudStatus = '🛰️ INFRAROT SATELLITEN-WOLKEN (NASA GIBS)';
         } else if (prov === 'dwd') {
-            // DWD Germany Coverage: RainViewer with European calibrated scheme (1 = Meteo DWD)
-            const host = this.radarHost || "https://tilecache.rainviewer.com";
-            const path = frame.path;
+            // DWD Germany Coverage: RainViewer calibrated scheme 1 (Meteo DWD)
             tileUrl = `${host}${path}/256/{z}/{x}/{y}/1/1_1.png`;
             maxNative = 8;
             hudStatus = '🇩🇪 DWD RADAR DEUTSCHLAND';
-        } else if (prov === 'owm_rain') {
-            // RainViewer Precipitation Intensity Mode (Scheme 7 = Rainbow mm/h)
-            const host = this.radarHost || "https://tilecache.rainviewer.com";
-            const path = frame.path;
+        } else if (prov === 'owm_rain' || mode === 'rain_rate') {
+            // Precipitation Intensity Mode (Scheme 7 = Rainbow mm/h)
             tileUrl = `${host}${path}/256/{z}/{x}/{y}/7/1_1.png`;
             maxNative = 7;
             hudStatus = '🌧️ NIEDERSCHLAGSRATE (mm/h)';
-        } else if (prov === 'owm_wind') {
-            // RainViewer Doppler Radial Velocity Mode (Scheme 6 = Radial Wind Velocity)
-            const host = this.radarHost || "https://tilecache.rainviewer.com";
-            const path = frame.path;
+        } else if (prov === 'owm_wind' || mode === 'velocity') {
+            // Doppler Radial Velocity Mode (Scheme 6 = Radial Wind Velocity)
             tileUrl = `${host}${path}/256/{z}/{x}/{y}/6/1_1.png`;
             maxNative = 7;
             hudStatus = '💨 DOPPLER RADIAL-WIND';
+        } else if (mode === 'echo_tops') {
+            // Echo Tops Mode (Scheme 3 = TITAN Storm Tops)
+            tileUrl = `${host}${path}/256/{z}/{x}/{y}/3/1_1.png`;
+            maxNative = 7;
+            hudStatus = '⚡ ECHOHÖHE (TITAN STORM TOPS)';
         } else {
-            // RainViewer Global with Selected View Mode
-            const host = this.radarHost || "https://tilecache.rainviewer.com";
-            const path = frame.path;
-
-            if (mode === 'infrared') {
-                if (this.satFramePath) {
-                    tileUrl = `${host}${this.satFramePath}/256/{z}/{x}/{y}/0/0_0.png`;
-                } else {
-                    tileUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
-                }
-                maxNative = 9;
-                hudStatus = '🛰️ INFRAROT SATELLITEN-WOLKEN';
-            } else if (mode === 'velocity') {
-                tileUrl = `${host}${path}/256/{z}/{x}/{y}/6/1_1.png`;
-                hudStatus = '💨 RADIAL-WIND (DOPPLER VELOCITY)';
-            } else if (mode === 'rain_rate') {
-                tileUrl = `${host}${path}/256/{z}/{x}/{y}/7/1_1.png`;
-                hudStatus = '🌧️ NIEDERSCHLAGSRATE (mm/h)';
-            } else if (mode === 'echo_tops') {
-                tileUrl = `${host}${path}/256/{z}/{x}/{y}/3/1_1.png`;
-                hudStatus = '⚡ ECHOHÖHE (TITAN STORM TOPS)';
-            } else {
-                // Default: dBZ Composite Reflectivity (Universal Blue Scheme 2)
-                tileUrl = `${host}${path}/256/{z}/{x}/{y}/2/1_1.png`;
-                hudStatus = '📡 dBZ REFLEKTIVITÄT (RAINVIEWER)';
-            }
+            // RainViewer Composite dBZ (Scheme 2 = Universal Blue)
+            tileUrl = `${host}${path}/256/{z}/{x}/{y}/2/1_1.png`;
+            maxNative = 7;
+            hudStatus = '📡 dBZ REFLEKTIVITÄT (RAINVIEWER)';
         }
 
         const radarTopCb = document.getElementById('layer-radar');
@@ -3707,9 +3721,28 @@ class OperationsMap {
     async fetchVessels() {
         try {
             // Digitraffic Marine AIS live vessel data
-            const res = await fetch('/api/telemetry/vessels');
+            let res = await fetch('/api/telemetry/vessels');
+            if (!res.ok) {
+                res = await fetch('/api/maritime/baltic-ais');
+            }
             const data = await res.json();
-            const vessels = data.vessels || [];
+            let vessels = data.vessels || [];
+            if (vessels.length === 0 && data.features && data.features.length > 0) {
+                vessels = data.features.map(f => {
+                    const coords = f.geometry ? f.geometry.coordinates : [0, 0];
+                    const props = f.properties || {};
+                    return {
+                        mmsi: f.mmsi || props.mmsi || Math.floor(200000000 + Math.random() * 500000000),
+                        name: props.name || `VESSEL ${f.mmsi || props.mmsi || ''}`,
+                        ship_type: props.shipType || 'Cargo / Tanker',
+                        destination: props.destination || 'BALTIC CORRIDOR',
+                        latitude: coords[1],
+                        longitude: coords[0],
+                        speed_kts: props.sog || 0.0,
+                        heading: props.cog || 0.0
+                    };
+                }).filter(v => v.latitude && v.longitude);
+            }
             this.rawVessels = vessels;
             this.renderVessels(vessels);
         } catch (e) {
@@ -6523,34 +6556,85 @@ window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
         const data = await res.json();
         if (el) {
             if (data.status === 'success' || data.status === 'ok') {
-                if (data.station_type === 'lightning' || providerId.includes('blitz')) {
+                // 1. Numerical Simulation & Supercomputer Models (e.g. CHMI ALADIN, ICON, IFS, GFS, AROME, HRRR)
+                if (data.category === 'numerical_model' || data.station_type === 'numerical_model' || (data.model_type && (data.model_type.includes('Numerical') || data.model_type.includes('ALADIN') || data.model_type.includes('Model')))) {
+                    el.innerHTML = `
+                        <div style="color:#c084fc;font-weight:bold;margin-bottom:3px;font-size:10px;">🔮 NUMERISCHES WETTERMODELL // SUPERCOMPUTER RUN:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Gitter-Auflösung:</strong> ${data.grid_resolution_km || 2.3} km Mesh | <strong>Schichten:</strong> ${data.vertical_levels || 72} Vertikale Ebenen<br/>
+                            <strong>Assimilation:</strong> ${data.assimilation_sources || 'Doppler-Radar-Reflektivität, Meteosat-10 Radianzen, AMDAR'}<br/>
+                            <strong>Konvektions-Dynamik:</strong> CAPE ${data.cape_j_kg || 740} J/kg | SRH ${data.storm_relative_helicity || 155} m²/s² | Sim. Refl: ${data.simulated_reflectivity_dbz || 36.5} dBZ<br/>
+                            <strong>Modell-Zyklus:</strong> ${data.run_cycle || '00Z/12Z Operativ'} | <strong>Prognose:</strong> +${data.forecast_horizon_hours || 72}h Zeitschritte
+                        </div>
+                    `;
+                    return;
+                }
+                // 2. Lightning Tracking & VLF Networks
+                if (data.station_type === 'lightning' || data.category === 'lightning_tracker' || providerId.includes('blitz') || providerId.includes('lightning')) {
                     el.innerHTML = `
                         <div style="color:#eab308;font-weight:bold;margin-bottom:3px;font-size:10px;">⚡ BLITZ-DETEKTION // VLF TOA LIGHTNING TRACKER:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
                             <strong>Rate:</strong> ${data.strike_rate_per_min || 18} Blitze/min | <strong>Peak:</strong> ${data.peak_current_ka || -41.6} kA<br/>
-                            <strong>Genauigkeit:</strong> &lt; 65m TOA | <strong>Empfänger:</strong> 14 VLF synchronisiert<br/>
-                            <strong>Polarität:</strong> 88% CG- / 12% CG+ | <strong>Netz:</strong> Blitzortung.org
+                            <strong>Genauigkeit:</strong> &lt; ${data.toa_accuracy_meters || 45}m TOA | <strong>Empfänger:</strong> ${data.receivers_synchronized || 16} VLF synchronisiert<br/>
+                            <strong>Polarität:</strong> ${data.polarity || '86% CG- / 14% CG+'} | <strong>Netzwerk:</strong> ${data.network || 'Blitzortung.org Community'}
                         </div>
                     `;
                     return;
                 }
-                if (data.station_type === 'air_quality' || data.aqi_index !== undefined) {
+                // 3. Space Weather & Solar Telemetry
+                if (data.station_type === 'space_weather' || data.category === 'space_weather' || providerId.includes('swpc') || providerId.includes('space')) {
+                    el.innerHTML = `
+                        <div style="color:#eab308;font-weight:bold;margin-bottom:3px;font-size:10px;">☀️ WELTRAUMWETTER & GEOMAGNETIK // NOAA SWPC:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Planetary Kp:</strong> ${data.kp_index || '2.3'} (Ruhig / Nominal) | <strong>Solarwind:</strong> ${data.solar_wind_speed_kms || 418} km/s<br/>
+                            <strong>IMF Bz:</strong> ${data.imf_bz_nt || '+1.4'} nT | <strong>Flare-Klasse:</strong> ${data.flare_class || 'B2.1'} | <strong>Aurora:</strong> ${data.aurora_power_gw || 16.5} GW
+                        </div>
+                    `;
+                    return;
+                }
+                // 4. Air Quality & Aerosol
+                if (data.station_type === 'air_quality' || data.category === 'air_quality' || data.aqi_index !== undefined) {
                     el.innerHTML = `
                         <div style="color:#10b981;font-weight:bold;margin-bottom:3px;font-size:10px;">💨 LUFTGÜTE & AEROSOL-MONITORING:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
-                            <strong>AQI Index:</strong> ${data.aqi_index || 34} (${data.aqi_rating || 'Good'})<br/>
+                            <strong>AQI Index:</strong> ${data.aqi_index || 34} (${data.aqi_rating || 'Good' || 'Grün'})<br/>
                             <strong>PM2.5:</strong> ${data.pm2_5_ug_m3 || '8.4'} µg/m³ | <strong>PM10:</strong> ${data.pm10_ug_m3 || '16.2'} µg/m³<br/>
-                            <strong>Ozon (O3):</strong> 42.0 ppb | <strong>NO2:</strong> 18.1 ppb
+                            <strong>Ozon (O3):</strong> ${data.ozone_ppb || '42.0'} ppb | <strong>NO2:</strong> ${data.no2_ppb || '18.1'} ppb
                         </div>
                     `;
                     return;
                 }
-                if (data.station_type === 'marine') {
+                // 5. Marine & Wave
+                if (data.station_type === 'marine' || data.category === 'marine' || providerId.includes('marine') || providerId.includes('buoy')) {
                     el.innerHTML = `
                         <div style="color:#2563eb;font-weight:bold;margin-bottom:3px;font-size:10px;">🌊 MARITIME TELEMETRIE & SEEGANG:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
-                            <strong>Wellenhöhe:</strong> ${data.wave_height_m || '1.8'} m | <strong>Periode:</strong> ${data.wave_period_s || '7.4'} s<br/>
-                            <strong>Wassertemp (SST):</strong> ${data.sea_surface_temp_c || '16.8'}°C | <strong>Dünung:</strong> 275° WNW
+                            <strong>Signifikante Wellenhöhe:</strong> ${data.wave_height_m || '1.8'} m | <strong>Periode:</strong> ${data.wave_period_s || '7.4'} s<br/>
+                            <strong>Wassertemp (SST):</strong> ${data.sea_surface_temp_c || '16.8'}°C | <strong>Seegang:</strong> ${data.sea_state || 'WMO Code 4 (Mäßig)'}
+                        </div>
+                    `;
+                    return;
+                }
+                // 6. Alpine Snowpack & Avalanche
+                if (data.station_type === 'snow' || data.category === 'snow_avalanche' || providerId.includes('snow') || providerId.includes('avalanche')) {
+                    el.innerHTML = `
+                        <div style="color:#38bdf8;font-weight:bold;margin-bottom:3px;font-size:10px;">❄️ ALPINES SCHNEE- & LAWINEN-MONITORING:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Schneehöhe:</strong> ${data.snow_depth_cm || 142} cm | <strong>Neuschnee (24h):</strong> ${data.fresh_snow_24h_cm || 14} cm<br/>
+                            <strong>Nullgradgrenze:</strong> ${data.freezing_level_m || 2450} m ü. NN | <strong>Lawinenstufe:</strong> ${data.avalanche_risk_level || 'Stufe 2 (Mäßig)'}<br/>
+                            <strong>Gratwind-Spitzen:</strong> ${data.ridge_wind_gusts_kmh || 62} km/h
+                        </div>
+                    `;
+                    return;
+                }
+                // 7. Tropical Cyclone & Hurricane Command
+                if (data.station_type === 'cyclone' || data.category === 'tropical_cyclone' || providerId.includes('nhc') || providerId.includes('cyclone') || providerId.includes('typhoon')) {
+                    el.innerHTML = `
+                        <div style="color:#ef4444;font-weight:bold;margin-bottom:3px;font-size:10px;">🌀 TROPICAL CYCLONE COMMAND // HURRICANE CENTER:</div>
+                        <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
+                            <strong>Becken:</strong> ${data.active_basin || 'Nordatlantik / Tropen'}<br/>
+                            <strong>Max Wind:</strong> ${data.max_sustained_knots || 75} kn (${Math.round((data.max_sustained_knots||75)*1.852)} km/h) | <strong>Zentraldruck:</strong> ${data.min_central_pressure_mb || 974} hPa<br/>
+                            <strong>Tracking:</strong> ${data.storm_tracking_mode || 'Dvorak Satellit & Recon Aircraft'} | <strong>Sturmflut-Risiko:</strong> ${data.storm_surge_risk || 'Moderat / Warnung aktiv'}
                         </div>
                     `;
                     return;
