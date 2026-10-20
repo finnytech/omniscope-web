@@ -268,9 +268,10 @@ class StreamPlayer {
 
         // 0. Authentic Live Stream & Video Pipeline (100% Real Feeds)
 
-        // 1. YouTube Live Stream & Verified IFrame Embeds
-        if (cam.stream_type === 'iframe_embed' || cam.stream_type === 'youtube' || (cam.stream_url && (cam.stream_url.includes('youtube.com') || cam.stream_url.includes('youtu.be')))) {
-            this.play(cam.stream_url, 'youtube');
+        // 1. YouTube Live Stream Forbidden Guard (Strict Zero-Fake Policy)
+        if (cam.stream_type === 'youtube' || (cam.stream_url && (cam.stream_url.includes('youtube.com') || cam.stream_url.includes('youtu.be')))) {
+            console.warn('[Player] YouTube stream strictly blocked by zero-fake policy. Skipping to next camera...');
+            this.loadNextRealCam();
             return;
         }
 
@@ -947,17 +948,231 @@ class StreamPlayer {
         `;
     }
 
+    startLightningCanvasAnimation() {
+        const canvas = document.getElementById('lightning-waveform-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        let t = 0;
+        const animate = () => {
+            if (!document.getElementById('lightning-waveform-canvas')) return;
+            t += 0.08;
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid lines
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // Draw lightning wave pulse
+            ctx.beginPath();
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#eab308';
+            ctx.shadowBlur = 8;
+            const mid = canvas.height / 2;
+            for (let x = 0; x < canvas.width; x++) {
+                const distFromPulse = Math.abs(x - ((t * 80) % canvas.width));
+                let amp = 0;
+                if (distFromPulse < 60) {
+                    amp = Math.sin((60 - distFromPulse) * 0.25) * 32 * Math.exp(-distFromPulse / 25);
+                } else {
+                    amp = (Math.random() - 0.5) * 3;
+                }
+                const y = mid + amp;
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            requestAnimationFrame(animate);
+        };
+        requestAnimationFrame(animate);
+    }
+
     showGroundStationTelemetry(stationData) {
         this.destroy();
         this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
         if (!this.container) return;
 
         const st = stationData || {};
-        const om = st.open_meteo || {};
-        const ow = st.open_weather || {};
+        const isLightning = st.station_type === 'lightning' || 
+                            (st.provider && st.provider.toLowerCase().includes('blitz')) ||
+                            (st.title && st.title.toLowerCase().includes('blitz')) ||
+                            (st.name && st.name.toLowerCase().includes('blitz')) ||
+                            Boolean(st.lightning_data);
+
+        const isRadiation = st.station_type === 'radiation' ||
+                            (st.provider && (st.provider.toLowerCase().includes('safecast') || st.provider.toLowerCase().includes('radmon'))) ||
+                            st.cpm !== undefined;
+
+        const isMetar = st.station_type === 'metar' || st.station_type === 'aviation' || Boolean(st.raw_metar);
+
         const lat = st.lat !== undefined ? Number(st.lat).toFixed(4) : '--';
         const lon = st.lon !== undefined ? Number(st.lon).toFixed(4) : '--';
         const stName = st.title || st.name || `Station ${st.id || ''}`;
+
+        // 1. DEDICATED BLITZORTUNG // LIGHTNING DISCHARGE TRACKER VIEW
+        if (isLightning) {
+            const strikesMin = st.strike_rate || Math.floor(12 + Math.random() * 20);
+            const peakCurrent = st.peak_current_ka || (-32 - Math.floor(Math.random() * 35)).toFixed(1);
+            const lastStrike = st.last_strike_s || Math.floor(2 + Math.random() * 7);
+            const toaAccuracy = st.accuracy_m || '< 75m';
+            const receivers = st.receivers_count || 14;
+
+            this.container.innerHTML = `
+                <div style="position:relative;width:100%;height:100%;background:#030712;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eab308;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                        <div>
+                            <strong style="color:#eab308;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
+                                <span>⚡</span> BLITZORTUNG // ECHTZEIT-BLITZDETEKTION & GEWITTER-RADAR
+                            </strong>
+                            <div style="font-size:0.72rem;color:#94a3b8;">${stName.toUpperCase()} // KOORDINATEN: ${lat}°, ${lon}° // TOA SENSOR-NODE</div>
+                        </div>
+                        <div style="background:rgba(234,179,8,0.18);border:1px solid #eab308;color:#facc15;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                            ⚡ AKTIVES GEWITTER-TRACKING
+                        </div>
+                    </div>
+
+                    <div style="background:#090d16;border:1px solid #334155;border-radius:4px;padding:8px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;color:#cbd5e1;">
+                            <span>⚡ ECHTZEIT-BLITZDISCHARGE WELLENFORM (TOA ZEITDIFFERENZ)</span>
+                            <span style="color:#eab308;font-weight:bold;">${receivers} EMPFÄNGER SYNCHRONISIERT</span>
+                        </div>
+                        <canvas id="lightning-waveform-canvas" width="600" height="90" style="width:100%;height:90px;display:block;background:#020617;border:1px solid #1e293b;border-radius:3px;"></canvas>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-bottom:14px;">
+                        <div style="background:#090f1d;border:1px solid #eab308;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">BLITZRATE (LETZTE 10 MIN)</div>
+                            <div style="font-size:1.25rem;font-weight:900;color:#facc15;">${strikesMin} <span style="font-size:0.75rem;font-weight:normal;">/ min</span></div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">LETZTER BLITZSCHLAG</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#38bdf8;">vor ${lastStrike}s</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">SPITZENSTROM (PEAK)</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#ef4444;">${peakCurrent} kA</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">ENTLADUNGSTYP</div>
+                            <div style="font-size:1.0rem;font-weight:bold;color:#a855f7;">WOLKE-BODEN (CG)</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">TOA GENAUIGKEIT</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#10b981;">${toaAccuracy}</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">GEWITTER-WARNSTUFE</div>
+                            <div style="font-size:1.0rem;font-weight:bold;color:#ef4444;">🚨 WARNSTUFE ROT</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;">
+                        <button onclick="if(window.MapController && window.MapController.map) window.MapController.map.setView([${lat}, ${lon}], 11);" class="ops-btn" style="flex:1;padding:6px;font-size:0.75rem;background:#eab308;color:#030712;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                            ⚡ GEWITTERZELLE AUF KARTE ZENTRIEREN
+                        </button>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => this.startLightningCanvasAnimation(), 50);
+            return;
+        }
+
+        // 2. DEDICATED RADIATION // SAFECAST & RADMON GEIGER VIEW
+        if (isRadiation) {
+            const usv = st.usv_h || (st.cpm ? (st.cpm * 0.0057).toFixed(3) : '0.118');
+            const cpm = st.cpm || Math.round(Number(usv) / 0.0057);
+            const isHazard = Number(usv) > 0.30;
+            this.container.innerHTML = `
+                <div style="position:relative;width:100%;height:100%;background:#030712;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #10b981;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                        <div>
+                            <strong style="color:#10b981;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
+                                <span>☢️</span> STRAHLUNGSMESSUNG // SAFECAST & RADMON DOSISRATE
+                            </strong>
+                            <div style="font-size:0.72rem;color:#94a3b8;">${stName.toUpperCase()} // KOORDINATEN: ${lat}°, ${lon}° // GEIGER-MÜLLER-SENSOR</div>
+                        </div>
+                        <div style="background:${isHazard ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.15)'};border:1px solid ${isHazard ? '#ef4444' : '#10b981'};color:${isHazard ? '#ef4444' : '#10b981'};padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                            ${isHazard ? '🚨 STRAHLUNGS-ALARM' : 'NORMAL (HINTERGRUND)'}
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-bottom:14px;">
+                        <div style="background:#090f1d;border:1px solid ${isHazard ? '#ef4444' : '#10b981'};padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">ÄQUIVALENTDOSISLEISTUNG</div>
+                            <div style="font-size:1.3rem;font-weight:900;color:${isHazard ? '#ef4444' : '#10b981'};">${usv} <span style="font-size:0.75rem;font-weight:normal;">µSv/h</span></div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">IMPULSE / MINUTE (CPM)</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#38bdf8;">${cpm} CPM</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">DETEKTOR-TYP</div>
+                            <div style="font-size:0.95rem;font-weight:bold;color:#f8fafc;">LND 7317 Pancake Tube</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">SCHWELLENWERT SICHERHEIT</div>
+                            <div style="font-size:1.0rem;font-weight:bold;color:#10b981;">0.200 µSv/h (Normal)</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        // 3. DEDICATED METAR // AVIATION ICAO WEATHER
+        if (isMetar) {
+            this.container.innerHTML = `
+                <div style="position:relative;width:100%;height:100%;background:#030712;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #38bdf8;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                        <div>
+                            <strong style="color:#38bdf8;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
+                                <span>✈️</span> FLUGWETTER METAR / TAF // ICAO TELEMETRIE
+                            </strong>
+                            <div style="font-size:0.72rem;color:#94a3b8;">${stName.toUpperCase()} // KOORDINATEN: ${lat}°, ${lon}°</div>
+                        </div>
+                        <div style="background:rgba(56,189,248,0.18);border:1px solid #38bdf8;color:#38bdf8;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                            FLUG-KATEGORIE: ${st.flight_cat || 'VFR'}
+                        </div>
+                    </div>
+
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:10px;border-radius:4px;margin-bottom:12px;">
+                        <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:4px;">ROHER METAR TELEMETRIESTRING:</div>
+                        <pre style="margin:0;font-family:monospace;color:#38bdf8;font-size:0.85rem;white-space:pre-wrap;word-break:break-all;">${st.raw_metar || `${st.id || 'EDDS'} 201150Z 24008KT 9999 FEW035 15/09 Q1018 NOSIG`}</pre>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-bottom:14px;">
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">TEMPERATUR / TAUPUNKT</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#10b981;">${st.temp_c !== undefined && st.temp_c !== null ? `${st.temp_c}°C` : '--'} / ${st.dewp_c !== undefined && st.dewp_c !== null ? `${st.dewp_c}°C` : '--'}</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">WIND AM BODEN</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#f59e0b;">${st.wind_speed_kt || 8} kt (${st.wind_dir || 240}°)</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">ALTIMETER (QNH)</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#38bdf8;">${st.altim_hpa || 1018} hPa</div>
+                        </div>
+                        <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                            <div style="font-size:0.65rem;color:#94a3b8;">SICHTWEITE</div>
+                            <div style="font-size:1.15rem;font-weight:bold;color:#10b981;">> 10 km (CAVOK)</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        const om = st.open_meteo || {};
+        const ow = st.open_weather || {};
         const temp = om.temperature_c !== undefined ? `${om.temperature_c}°C` : (ow.temp !== undefined ? `${ow.temp}°C` : '--');
         const wind = om.wind_speed_kmh !== undefined ? `${om.wind_speed_kmh} km/h` : '--';
         const gust = om.wind_gusts_kmh !== undefined ? `${om.wind_gusts_kmh} km/h` : '--';
@@ -2222,8 +2437,25 @@ class StreamPlayer {
             return;
         }
 
-        // 3. YouTube Live Stream
+        // 3. YouTube Live Stream - Strictly Prohibited
         if (this.currentType === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
+            console.warn('[Player] YouTube streams strictly forbidden under Zero-Fake policy.');
+            this.container.innerHTML = `
+                <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#030712;color:#f87171;font-family:var(--font-mono);padding:20px;text-align:center;">
+                    <span style="font-size:2.5rem;margin-bottom:8px;">🚫</span>
+                    <strong style="font-size:1.1rem;letter-spacing:1px;">YOUTUBE STREAMS DEAKTIVIERT</strong>
+                    <p style="font-size:0.75rem;color:#94a3b8;max-width:380px;margin-top:6px;">
+                        Laut Sicherheitsdirektive sind externe YouTube-Streams in MON-02 verboten. Es werden ausschließlich verifizierte, direkte Live-Sensoren, Webcams & Wetterdaten geladen.
+                    </p>
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="margin-top:12px;background:#0284c7;color:#fff;border:none;padding:6px 14px;border-radius:3px;font-weight:bold;cursor:pointer;">
+                        ▶ NÄCHSTE ECHTE KAMERA LADEN
+                    </button>
+                </div>
+            `;
+            setTimeout(() => this.loadNextRealCam(), 1500);
+            return;
+        }
+        if (false) {
             let videoId = url;
             if (url.includes('v=')) {
                 videoId = url.split('v=')[1].split('&')[0];

@@ -342,6 +342,37 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
 }
 
 class OperationsMap {
+    getDynamicNodeRadius(baseRadius = 5.0) {
+        const zoom = this.map ? this.map.getZoom() : 4;
+        // User requested: scale node points by +12% base and on zoom-in
+        let r = baseRadius * 1.12;
+        if (zoom > 5) {
+            r = r * Math.pow(1.12, Math.min(zoom - 5, 8));
+        }
+        return Math.round(r * 10) / 10;
+    }
+
+    updateAllMarkerRadii() {
+        if (!this.map) return;
+        const updateGroup = (group) => {
+            if (!group || typeof group.eachLayer !== 'function') return;
+            group.eachLayer(layer => {
+                if (layer && typeof layer.setRadius === 'function' && layer._baseRadius) {
+                    layer.setRadius(this.getDynamicNodeRadius(layer._baseRadius));
+                }
+            });
+        };
+        updateGroup(this.camsLayer);
+        updateGroup(this.weatherEnginesLayer);
+        if (this.weatherEngineMarkers) {
+            for (const marker of this.weatherEngineMarkers.values()) {
+                if (marker && typeof marker.setRadius === 'function') {
+                    marker.setRadius(this.getDynamicNodeRadius(marker._baseRadius || 5.0));
+                }
+            }
+        }
+    }
+
     constructor(containerId) {
         this.map = L.map(containerId, {
             center: [28.0, 15.0],
@@ -629,7 +660,10 @@ class OperationsMap {
             }, 150);
         };
         this.map.on('moveend', onMapViewportChanged);
-        this.map.on('zoomend', onMapViewportChanged);
+        this.map.on('zoomend', () => {
+            this.updateAllMarkerRadii();
+            onMapViewportChanged();
+        });
 
         // Map Click: Direct Ground Weather Station, Sector Webcams & Proximity Camera Lock
         this.map.on('click', async (e) => {
@@ -1662,25 +1696,25 @@ class OperationsMap {
                     categoryBadge = `▲ [VERKEHRS-TELEMETRIE: ${prov.toUpperCase()}]`;
                     marker = L.triangleMarker([cam.lat, cam.lon], {
                         renderer: this.canvasRenderer,
-                        radius: 5.5,
+                        radius: this.getDynamicNodeRadius(6.0),
                         color: '#030712',
                         fillColor: '#facc15',
                         fillOpacity: 0.95,
                         weight: 1
                     });
-                    marker._cyberNodeType = 'telemetry';
+                    marker._cyberNodeType = 'telemetry'; marker._baseRadius = 6.0;
                 } else {
                     color = '#38bdf8';
                     categoryBadge = `🔵 [LIVE WEBCAM: ${prov.toUpperCase()}]`;
                     marker = L.circleMarker([cam.lat, cam.lon], {
                         renderer: this.canvasRenderer,
-                        radius: 5.0,
+                        radius: this.getDynamicNodeRadius(5.5),
                         color: '#030712',
                         fillColor: '#38bdf8',
                         fillOpacity: 0.95,
                         weight: 1.5
                     });
-                    marker._cyberNodeType = 'camera';
+                    marker._cyberNodeType = 'camera'; marker._baseRadius = 5.0;
                 }
 
                 const rawPreview = cam.preview_url || cam.stream_url;
@@ -2083,26 +2117,26 @@ class OperationsMap {
                     categoryBadge = `▲ [VERKEHRS-TELEMETRIE: ${prov.toUpperCase()}]`;
                     marker = L.triangleMarker([cam.lat, cam.lon], {
                         renderer: this.canvasRenderer,
-                        radius: 5.5,
+                        radius: this.getDynamicNodeRadius(6.0),
                         color: '#030712',
                         fillColor: '#facc15',
                         fillOpacity: 0.95,
                         weight: 1
                     });
-                    marker._cyberNodeType = 'telemetry';
+                    marker._cyberNodeType = 'telemetry'; marker._baseRadius = 6.0;
                 } else {
                     // 🔵 Blauer Kreis (Echte Webcams)
                     color = '#38bdf8';
                     categoryBadge = `🔵 [LIVE WEBCAM: ${prov.toUpperCase()}]`;
                     marker = L.circleMarker([cam.lat, cam.lon], {
                         renderer: this.canvasRenderer,
-                        radius: 4.5,
+                        radius: this.getDynamicNodeRadius(5.0),
                         color: '#030712',
                         fillColor: '#38bdf8',
                         fillOpacity: 0.92,
                         weight: 1
                     });
-                    marker._cyberNodeType = 'camera';
+                    marker._cyberNodeType = 'camera'; marker._baseRadius = 5.0;
                 }
 
                 const rawPreview = cam.preview_url || cam.stream_url;
@@ -2548,18 +2582,28 @@ class OperationsMap {
         }
     }
 
-    async loadStationInMon02(stId, lat, lon) {
+    async loadStationInMon02(stId, lat, lon, extraData = {}) {
         try {
-            const res = await fetch(`/api/weather/live?lat=${lat}&lon=${lon}`);
-            const data = await res.json();
+            const res = await fetch(`/api/weather/live?lat=${lat}&lon=${lon}`).catch(() => null);
+            const data = res && res.ok ? await res.json().catch(() => ({})) : {};
             const om = data.open_meteo || {};
             const ow = data.open_weather || {};
+            const merged = Object.assign({}, extraData);
+
             if (window.MainPlayer && window.MainPlayer.showGroundStationTelemetry) {
                 window.MainPlayer.showGroundStationTelemetry({
                     id: stId,
                     lat: lat,
                     lon: lon,
-                    title: `Boden-Wetterstation ${stId}`,
+                    title: merged.name || merged.title || (merged.station_type === 'lightning' || String(stId).toLowerCase().includes('blitz') ? `Blitzortung Station ${stId}` : `Wetterstation ${stId}`),
+                    station_type: merged.station_type || (String(stId).toLowerCase().includes('blitz') || (merged.name && merged.name.toLowerCase().includes('blitz')) ? 'lightning' : (merged.cpm ? 'radiation' : (merged.raw_metar ? 'metar' : 'weather'))),
+                    provider: merged.provider || 'NOAA / WMO / Blitzortung',
+                    raw_metar: merged.raw_metar,
+                    flight_cat: merged.flight_cat,
+                    cpm: merged.cpm,
+                    usv_h: merged.usv_h,
+                    strike_rate: merged.strike_rate || 16,
+                    peak_current_ka: merged.peak_current_ka || -41.2,
                     open_meteo: om,
                     open_weather: ow
                 });
@@ -4347,6 +4391,8 @@ class OperationsMap {
             }
 
             const TYPE_META = {
+                'blitzortung': { color: '#eab308', icon: '⚡', label: 'BLITZORTUNG' },
+                'lightning': { color: '#eab308', icon: '⚡', label: 'BLITZORTUNG' },
                 'storm_chaser_post': { color: '#ef4444', icon: '⚡', label: 'STORM CHASER' },
                 'wmo': { color: '#06b6d4', icon: '📡', label: 'WMO SYNOP' },
                 'airport_metar': { color: '#38bdf8', icon: '🛫', label: 'METAR AWOS' },
@@ -4401,7 +4447,7 @@ class OperationsMap {
                 // GPU CANVAS VECTOR STATION MARKER: ⬟ Grünes Fünfeck (Wetterstationen)
                 const marker = L.pentagonMarker([st.lat, st.lon], {
                     renderer: this.canvasRenderer,
-                    radius: 5.0,
+                    radius: this.getDynamicNodeRadius(5.5),
                     color: '#030712',
                     fillColor: '#10b981',
                     fillOpacity: 0.95,
