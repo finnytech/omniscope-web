@@ -75,7 +75,7 @@ body {
 .ops-title-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     flex-shrink: 0;
     white-space: nowrap;
 }
@@ -100,9 +100,9 @@ body {
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.35);
     color: var(--success);
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
     letter-spacing: 0.5px;
     display: flex;

@@ -1226,6 +1226,9 @@ class StreamPlayer {
                     <button onclick="if(window.MapController) window.MapController.lockProximityCamera(${lat}, ${lon});" class="ops-btn" style="flex:1;padding:6px;font-size:0.75rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
                         🔵 NÄCHSTE LIVE-KAMERAS DIESER REGION ANZEIGEN
                     </button>
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.showRadarStationCommandDeck({ id: '${st.id || 'STATION'}', name: '${(stName || '').replace(/'/g, '')}', agency: '${st.provider || 'Doppler Ground Weather Network'}', lat: ${lat}, lon: ${lon}, elevation: ${st.elevation || 150} });" class="ops-btn" style="flex:1;padding:6px;font-size:0.75rem;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;border-radius:3px;box-shadow:0 0 10px rgba(0,240,255,0.3);">
+                        🎯 ANVISIERE WETTERSTATION // RADAR DISH
+                    </button>
                 </div>
             </div>
         `;
@@ -1723,6 +1726,9 @@ class StreamPlayer {
                     </button>
                     <button onclick="window.open('https://aviationweather.gov/data/metar/?id=${icao}', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#091224;border:1px solid #38bdf8;color:#38bdf8;cursor:pointer;font-weight:bold;border-radius:3px;">
                         ✈️ AVIATION WEATHER CENTER (AWC) ÖFFNEN
+                    </button>
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.showRadarStationCommandDeck({ id: '${icao}', name: '${name.replace(/'/g, '')}', agency: 'Aviation Weather METAR / TDWR', lat: ${metar.lat || 50.0}, lon: ${metar.lon || 10.0}, elevation: ${metar.elev || 150} });" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;border-radius:3px;box-shadow:0 0 10px rgba(0,240,255,0.3);">
+                        🎯 ANVISIERE WETTERSTATION // RADAR DISH
                     </button>
                 </div>
 
