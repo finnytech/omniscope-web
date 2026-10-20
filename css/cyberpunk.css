@@ -59,15 +59,16 @@ body {
 .ops-header {
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-strong);
-    padding: 6px 14px;
+    padding: 4px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 1000;
-    flex-wrap: nowrap;
-    min-height: 44px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    min-height: 40px;
     box-sizing: border-box;
-    overflow-x: auto;
+    overflow-x: hidden !important;
     overflow-y: hidden;
 }
 
@@ -135,7 +136,8 @@ body {
 .ops-toolbar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
+    flex-wrap: wrap;
 }
 
 .ops-btn {
@@ -185,17 +187,21 @@ body {
 .ops-subbar {
     background: #0b111e;
     border-bottom: 1px solid var(--border-subtle);
-    padding: 6px 16px;
+    padding: 4px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    overflow-x: hidden !important;
 }
 
 .layer-toggles {
     display: flex;
-    gap: 14px;
+    gap: 8px 12px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .layer-toggles label {
@@ -3541,3 +3547,29 @@ path.alert-zone-pass-through {
 
 
 
+
+/* Compact Header Enhancements */
+.ops-btn {
+    padding: 3px 8px !important;
+    font-size: 0.74rem !important;
+    height: 24px !important;
+}
+.ops-select {
+    padding: 2px 6px !important;
+    font-size: 0.74rem !important;
+    height: 24px !important;
+}
+.ram-cleaner-group {
+    padding: 2px 6px !important;
+    gap: 5px !important;
+    font-size: 0.72rem !important;
+}
+.polling-ctrl-group {
+    padding: 2px 6px !important;
+    gap: 5px !important;
+}
+@media (max-width: 1400px) {
+    #ops-network-badge {
+        display: none !important;
+    }
+}

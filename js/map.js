@@ -660,6 +660,7 @@ class OperationsMap {
             }, 150);
         };
         this.map.on('moveend', onMapViewportChanged);
+        this.map.on('zoom', () => this.updateAllMarkerRadii());
         this.map.on('zoomend', () => {
             this.updateAllMarkerRadii();
             onMapViewportChanged();
@@ -1758,7 +1759,7 @@ class OperationsMap {
 
                     const marker = L.pentagonMarker([st.lat, st.lon], {
                         renderer: this.canvasRenderer,
-                        radius: 5.5,
+                        radius: this.getDynamicNodeRadius(5.5),
                         color: '#022c22',
                         fillColor: '#10b981',
                         fillOpacity: 0.95,

@@ -166,7 +166,7 @@
             </div>
             <div class="ops-badge">
                 <span class="status-dot"></span>
-                <span id="system-status-text">LIVE SENSORS CONNECTED</span>
+                <span id="system-status-text" data-i18n="status_connected">LIVE SENSORS CONNECTED</span>
             </div>
             <div class="ops-badge" id="ops-network-badge" title="508,474 REAL WEBCAMS & TRAFFIC CAMS // 505,000 VERIFIED WEATHER STATIONS // 1,013,474 REAL NODES // ZERO SIMULATION" style="background:rgba(56,189,248,0.1);border-color:rgba(56,189,248,0.3);color:var(--accent);letter-spacing:0.5px;font-weight:600;white-space:nowrap;flex-shrink:0;">
                 508k REAL CAMS // 505k WEATHER // 1.01M NODES // ZERO SIMULATION
@@ -184,7 +184,7 @@
 
         <div class="ops-toolbar">
             <!-- LIVE POLLING FREQUENCY SELECTOR & COUNTDOWN TICKER -->
-            <div class="polling-ctrl-group" title="Live-Abfrageintervall für Unwetter-Alarme, Radar & Sensoren (1m - 20m)">
+            <div class="polling-ctrl-group" title="Live polling interval for weather alerts, radar & sensors (1m - 20m)">
                 <span style="font-size:0.68rem;color:#94a3b8;font-weight:700;">POLL:</span>
                 <select id="select-polling-interval" class="ops-select" style="padding:1px 4px;font-size:0.7rem;height:22px;background:#030712;border:1px solid #334155;">
                     <option value="60">1 Min</option>
@@ -194,35 +194,30 @@
                     <option value="1200">20 Min</option>
                 </select>
                 <span id="polling-countdown" class="polling-countdown-ticker">05:00</span>
-                <button id="btn-poll-now" class="ops-btn" style="padding:1px 6px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="Sofortige Live-Aktualisierung">⚡ SCAN</button>
+                <button id="btn-poll-now" class="ops-btn" style="padding:1px 6px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="Immediate live scan">⚡ SCAN</button>
             </div>
 
             <!-- SEVERE WEATHER ALARM CONFIGURATION BUTTON -->
-            <button id="btn-weather-alarm-cfg" class="ops-btn" style="background:rgba(239,68,68,0.22);color:#ef4444;border:1px solid #ef4444;font-weight:700;display:flex;align-items:center;gap:4px;" title="Taktische Unwetter-, Tornado- & Touchdown-Alarme konfigurieren">
-                <span>🚨</span>
-                <span>UNWETTER-ALARM</span>
-            </button>
+            <button id="btn-weather-alarm-cfg" class="ops-btn" style="background:rgba(239,68,68,0.22);color:#ef4444;border:1px solid #ef4444;font-weight:700;display:flex;align-items:center;gap:4px;" title="Configure severe storm & tornado alert threshold"><span>🚨</span><span data-i18n="btn_weather_alarm">SEVERE ALERTS</span></button>
 
             <select id="map-style-select" class="ops-select" title="Map Tile Style">
-                <option value="esri-hybrid" selected>ESRI Satellit Hybrid (HD + Labels) [FREE]</option>
-                <option value="esri-sat">ESRI World Imagery (High-Res Sat) [FREE]</option>
-                <option value="carto-dark">CartoDB Dark Matter (Tactical HUD) [FREE]</option>
-                <option value="nasa-night">NASA Earth at Night (Orbit Night) [FREE]</option>
-                <option value="esri-topo">ESRI Topo & Relief (Gelände) [FREE]</option>
-                <option value="opentopomap">OpenTopoMap (Höhenlinien) [FREE]</option>
-                <option value="osm-hot">OpenStreetMap Humanitarian [FREE]</option>
+                <option value="esri-hybrid" selected>🛰️ ESRI Hybrid</option>
+                <option value="esri-sat">🛰️ ESRI Satellite</option>
+                <option value="carto-dark">🗺️ CartoDB Dark</option>
+                <option value="nasa-night">🌙 NASA Night</option>
+                <option value="esri-topo">⛰️ ESRI Topo</option>
+                <option value="opentopomap">🧭 OpenTopoMap</option>
+                <option value="osm-hot">🌍 OSM Humanitarian</option>
             </select>
             <!-- EXTREME RAM & YOUTUBE STREAM GARBAGE CLEANER WIDGET -->
-            <div class="ram-cleaner-group" title="Extreme RAM Cleaner & Stream Concurrency Governor">
+            <div class="ram-cleaner-group" title="Memory Cleaner & Stream Governor">
                 <span id="ram-indicator-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;"></span>
-                <span id="ram-telemetry-badge">RAM: -- MB | 1/7 ACTIVE (ECO)</span>
-                <button id="btn-flush-ram-extreme" title="Alle inaktiven YouTube-Streams beenden, Decoder killen & RAM sofort leeren">
-                    🧹 FLUSH RAM
-                </button>
-                <select id="ram-governor-mode" title="RAM Governor Modus für Video-Streams">
-                    <option value="eco" selected>⚡ ECO (Max 2 Streams)</option>
-                    <option value="strict">🛡️ STRICT (Max 1 Stream)</option>
-                    <option value="unlimited">🔥 UNLIMITED (Alle Streams)</option>
+                <span id="ram-telemetry-badge">RAM: -- MB</span>
+                <button id="btn-flush-ram-extreme" title="Flush inactive decoders & free RAM" data-i18n="btn_flush_ram">🧹 FLUSH</button>
+                <select id="ram-governor-mode" title="Memory Governor mode for video streams">
+                    <option value="eco" selected>⚡ ECO (2)</option>
+                    <option value="strict">🛡️ STRICT (1)</option>
+                    <option value="unlimited">🔥 MAX</option>
                 </select>
             </div>
                         <button id="btn-open-settings-modal" class="ops-btn" style="background:rgba(168,85,247,0.18);color:#c084fc;border:1px solid #a855f7;font-weight:700;display:flex;align-items:center;gap:5px;" title="Settings & 115 Languages / Einstellungen & 115 Sprachen">
@@ -230,10 +225,10 @@
                 <span data-i18n="btn_settings">SETTINGS</span>
             </button>
             <button id="btn-popout" class="ops-btn" title="Open multi-window layout on second monitor">
-                <span>[+] DETACH WINDOW</span>
+                <span>⧉ DETACH</span>
             </button>
-            <button id="btn-reset-panels-layout" class="ops-btn" style="background:rgba(56,189,248,0.22);color:#38bdf8;border:1px solid #0284c7;font-weight:700;" title="Panels & Monitore auf Standard-Layout zurücksetzen (Doppelklick auf Trennbalken funktioniert ebenfalls)">
-                <span>📐 RESET LAYOUT</span>
+            <button id="btn-reset-panels-layout" class="ops-btn" style="background:rgba(56,189,248,0.22);color:#38bdf8;border:1px solid #0284c7;font-weight:700;" title="Reset panels & monitors to default layout (double-click divider also works)">
+                <span>📐 RESET</span>
             </button>
         </div>
     </header>
@@ -242,43 +237,40 @@
     <div class="ops-subbar">
         <!-- IMMUTABLE FIXED RESET BUTTON OVER MON-01 -->
         <div class="fixed-monitors-reset-bar" style="display:inline-flex;align-items:center;margin-right:10px;padding-right:10px;border-right:1px solid #334155;flex-shrink:0;">
-            <button id="btn-reset-top-monitors-bar" class="ops-btn" onclick="window.resetMonitorsLayout && window.resetMonitorsLayout()" style="background:#0284c7;color:#ffffff;border:1px solid #38bdf8;box-shadow:0 0 10px rgba(56,189,248,0.5);font-weight:800;padding:3px 12px;font-size:0.75rem;cursor:pointer;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;border-radius:3px;" title="MON-01 & MON-02 Standard-Aufteilung (50/50) sofort wiederherstellen">
-                <span>📐</span>
-                <span>RESET MONITORS</span>
-            </button>
+            <button id="btn-reset-top-monitors-bar" class="ops-btn" onclick="window.resetMonitorsLayout && window.resetMonitorsLayout()" style="background:#0284c7;color:#ffffff;border:1px solid #38bdf8;box-shadow:0 0 10px rgba(56,189,248,0.5);font-weight:800;padding:3px 12px;font-size:0.75rem;cursor:pointer;letter-spacing:0.5px;display:flex;align-items:center;gap:6px;border-radius:3px;" title="Instantly restore MON-01 & MON-02 50/50 split"><span>📐</span><span data-i18n="btn_reset_monitors">RESET MONITORS</span></button>
         </div>
         <div class="layer-toggles">
-            <span style="font-weight:700;color:#fff;">MAP LAYERS:</span>
-            <label><input type="checkbox" id="layer-radar" checked /> Doppler Radar (RainViewer)</label>
-            <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-noaa-radar" checked /> 🇺🇸 NOAA NEXRAD USA Radar</label>
-            <label style="color:#0284c7;font-weight:700;"><input type="checkbox" id="layer-noaa-stations" checked /> 🇺🇸 NOAA Live USA Wetter</label>
-            <label style="color:#f87171;font-weight:700;"><input type="checkbox" id="layer-archive-events" checked /> 🏛️ Archiv Stürme & Tornados</label>
-            <label><input type="checkbox" id="layer-alerts" checked /> NOAA Warnings</label>
-            <label><input type="checkbox" id="layer-vessels" checked /> Schiffsverkehr (AIS Marine)</label>
-            <label><input type="checkbox" id="layer-seamarks" /> OpenSeaMap Seezeichen</label>
-            <label><input type="checkbox" id="layer-quakes" checked /> Earthquakes (USGS)</label>
-            <label><input type="checkbox" id="layer-iss" checked /> Space Station (ISS)</label>
-            <label><input type="checkbox" id="layer-cams" checked /> 🔵 Echte Webcams (Live)</label>
-            <label><input type="checkbox" id="layer-telemetry" checked /> ▲ Verkehrs-Telemetrie (Autobahn & DOT)</label>
-            <label><input type="checkbox" id="layer-weather-engines" checked /> ⬟ Wetter-Stationen (DWD / NOAA / WMO)</label>
-            <label><input type="checkbox" id="layer-transit-engines" checked /> 🚀 Globaler Transit (Flug / Schiff / Bahn)</label>
-            <label style="color:#00f0ff;font-weight:700;"><input type="checkbox" id="layer-cables" checked /> 🌐 Seekabel (550+ Subsea Fiber)</label>
-            <label style="color:#ef4444;font-weight:700;"><input type="checkbox" id="layer-gdacs" checked /> ⚠️ GDACS Katastrophen (UN/EU)</label>
-            <label style="color:#a3e635;font-weight:700;"><input type="checkbox" id="layer-radiation" checked /> ☢️ Strahlung (Safecast)</label>
-            <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-baltic-ais" checked /> 🚢 Ostsee AIS Schiffe (Digitraffic)</label>
-            <label style="color:#f59e0b;font-weight:700;"><input type="checkbox" id="layer-metar" checked /> ✈️ Flughafen METAR (AWC)</label>
-            <label style="color:#fbbf24;font-weight:700;"><input type="checkbox" id="layer-kiwisdr" checked /> 📻 WebSDR Funk (KiwiSDR)</label>
-            <label style="color:#10b981;font-weight:700;"><input type="checkbox" id="layer-borders" checked /> 🛂 Grenzwartezeiten (US CBP)</label>
-            <label style="color:#c084fc;font-weight:700;"><input type="checkbox" id="layer-tor" checked /> 🧅 Tor Relays (Onionoo)</label>
+            <span style="font-weight:700;color:#fff;" data-i18n="map_layers_header">MAP LAYERS:</span>
+            <label><input type="checkbox" id="layer-radar" checked />Doppler Radar (RainViewer)</label>
+            <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-noaa-radar" checked />🇺🇸 NOAA NEXRAD USA Radar</label>
+            <label style="color:#0284c7;font-weight:700;"><input type="checkbox" id="layer-noaa-stations" checked />🇺🇸 NOAA Live US Weather</label>
+            <label style="color:#f87171;font-weight:700;"><input type="checkbox" id="layer-archive-events" checked />🏛️ Storm & Tornado Archive</label>
+            <label><input type="checkbox" id="layer-alerts" checked />NOAA Warnings</label>
+            <label><input type="checkbox" id="layer-vessels" checked />Maritime Traffic (AIS Marine)</label>
+            <label><input type="checkbox" id="layer-seamarks" />OpenSeaMap Nav Aids</label>
+            <label><input type="checkbox" id="layer-quakes" checked />Earthquakes (USGS)</label>
+            <label><input type="checkbox" id="layer-iss" checked />Space Station (ISS)</label>
+            <label><input type="checkbox" id="layer-cams" checked />🔵 Genuine Webcams (Live)</label>
+            <label><input type="checkbox" id="layer-telemetry" checked />▲ Traffic Telemetry (Highway & DOT)</label>
+            <label><input type="checkbox" id="layer-weather-engines" checked />⬟ Weather Stations (DWD / NOAA / WMO)</label>
+            <label><input type="checkbox" id="layer-transit-engines" checked />🚀 Global Transit (Air / Marine / Rail)</label>
+            <label style="color:#00f0ff;font-weight:700;"><input type="checkbox" id="layer-cables" checked />🌐 Subsea Cables (550+ Fiber)</label>
+            <label style="color:#ef4444;font-weight:700;"><input type="checkbox" id="layer-gdacs" checked />⚠️ GDACS Disasters (UN/EU)</label>
+            <label style="color:#a3e635;font-weight:700;"><input type="checkbox" id="layer-radiation" checked />☢️ Radiation (Safecast)</label>
+            <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-baltic-ais" checked />🚢 Baltic AIS Ships (Digitraffic)</label>
+            <label style="color:#f59e0b;font-weight:700;"><input type="checkbox" id="layer-metar" checked />✈️ Airport METAR (AWC)</label>
+            <label style="color:#fbbf24;font-weight:700;"><input type="checkbox" id="layer-kiwisdr" checked />📻 WebSDR HF Radio (KiwiSDR)</label>
+            <label style="color:#10b981;font-weight:700;"><input type="checkbox" id="layer-borders" checked />🛂 Border Wait Times (US CBP)</label>
+            <label style="color:#c084fc;font-weight:700;"><input type="checkbox" id="layer-tor" checked />🧅 Tor Relays (Onionoo)</label>
         </div>
         <div class="weather-mode-ctrl" style="display:inline-flex;align-items:center;gap:4px;background:#090e1a;padding:2px 8px;border-radius:4px;border:1px solid #1e293b;">
-            <span style="font-size:0.7rem;color:#94a3b8;font-weight:700;">WETTER-ANZEIGE:</span>
+            <span style="font-size:0.7rem;color:#94a3b8;font-weight:700;" data-i18n="weather_mode_header">WEATHER MODE:</span>
             <button class="ops-btn active" id="btn-weather-mode-global" data-weather-mode="global" style="padding:2px 8px;font-size:0.68rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="Wetterstationen weltweit auf der Karte anzeigen">🌍 GLOBAL</button>
             <button class="ops-btn" id="btn-weather-mode-sector" data-weather-mode="sector" style="padding:2px 8px;font-size:0.68rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Wetterstationen nur im aktiven Sektor / lokalen Fokus anzeigen">📍 LOKAL (SEKTOR)</button>
             <button class="ops-btn" id="btn-weather-mode-off" data-weather-mode="off" style="padding:2px 8px;font-size:0.68rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Wetterstationen auf der Karte ausblenden">❌ AUS</button>
         </div>
         <div class="master-timeline-ctrl">
-            <span style="color:var(--text-dim);font-weight:700;">TEMPORAL SCRUBBER (7 TAGE):</span>
+            <span style="color:var(--text-dim);font-weight:700;">TEMPORAL SCRUBBER (7 DAYS):</span>
             <input type="range" id="master-timeline-slider" class="master-timeline-slider" min="0" max="168" value="168" title="Scrub through telemetry up to 7 days (168 hours)" />
             <div class="multiday-presets" style="display:inline-flex;gap:3px;">
                 <button class="ops-btn btn-preset-day active" data-hours="0" style="padding:1px 5px;font-size:0.65rem;">LIVE</button>
@@ -327,13 +319,13 @@
                 <div class="monitor-header-left">
                     <span class="monitor-id">MON-01</span>
                     <span>GLOBAL TACTICAL RADAR & SATELLITE MAP</span>
-                    <button id="btn-reset-monitors-header" class="ops-btn" onclick="window.resetMonitorsLayout && window.resetMonitorsLayout()" style="background:rgba(56,189,248,0.22);color:#38bdf8;border:1px solid #0284c7;font-weight:700;padding:2px 8px;font-size:0.7rem;cursor:pointer;margin-left:6px;" title="MON-01 & MON-02 Standard-Aufteilung wiederherstellen">📐 RESET LAYOUT</button>
+                    <button id="btn-reset-monitors-header" class="ops-btn" onclick="window.resetMonitorsLayout && window.resetMonitorsLayout()" style="background:rgba(56,189,248,0.22);color:#38bdf8;border:1px solid #0284c7;font-weight:700;padding:2px 8px;font-size:0.7rem;cursor:pointer;margin-left:6px;" title="Instantly restore MON-01 & MON-02 50/50 split">📐 RESET LAYOUT</button>
                 </div>
                 <!-- Jev AI System-1 Forecast Tool Bar & 30 Weather Engines Inspector -->
                 <div class="jev-toolbar" style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
                     <button id="btn-weather-archive-modal" class="ops-btn" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid #ef4444;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Historisches Wetter-, Tornado- & Extremwetter-Archiv (NOAA & Global)">
                         <span>🏛️</span>
-                        <span>WETTER- & TORNADO-ARCHIV</span>
+                        <span>WEATHER & TORNADO ARCHIVE</span>
                     </button>
                     <button id="btn-focus-noaa-usa" class="ops-btn" style="background:rgba(2,132,199,0.22);color:#38bdf8;border:1px solid #0284c7;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Direkt auf USA / CONUS zentrieren & NOAA NEXRAD Doppler Radar fokussieren">
                         <span>🇺🇸</span>
@@ -651,7 +643,7 @@
                                     </select>
                                 </div>
                                 <div class="sub-ctrl-row">
-                                    <span class="sub-lbl">TRANSPARENZ:</span>
+                                    <span class="sub-lbl">OPACITY:</span>
                                     <input type="range" id="side-radar-opacity" min="0.1" max="1" step="0.05" value="0.75" class="sub-slider" />
                                 </div>
                             </div>
@@ -663,17 +655,17 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-weather-engines" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#38bdf8;">🌦️ WETTER-STATIONEN</span>
+                                    <span class="layer-name" style="color:#38bdf8;">🌦️ WEATHER STATIONS</span>
                                 </label>
                             </div>
                             <div class="sidebar-sub-panel" style="display:flex;flex-direction:column;gap:5px;padding:5px 0;">
-                                <span class="sub-lbl" style="font-size:0.68rem;color:#94a3b8;font-weight:700;">WETTER ANZEIGE-MODUS:</span>
+                                <span class="sub-lbl" style="font-size:0.68rem;color:#94a3b8;font-weight:700;">WEATHER DISPLAY MODE:</span>
                                 <div style="display:flex;gap:4px;">
                                     <button class="ops-btn active side-weather-mode-btn" id="side-weather-mode-global" data-weather-mode="global" style="flex:1;padding:3px 2px;font-size:0.65rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;" title="Weltweit alle Wetterstationen anzeigen">🌍 GLOBAL</button>
                                     <button class="ops-btn side-weather-mode-btn" id="side-weather-mode-sector" data-weather-mode="sector" style="flex:1;padding:3px 2px;font-size:0.65rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Nur im aktiven Kartenausschnitt">📍 LOKAL</button>
                                     <button class="ops-btn side-weather-mode-btn" id="side-weather-mode-off" data-weather-mode="off" style="flex:1;padding:3px 2px;font-size:0.65rem;background:transparent;color:#94a3b8;border:1px solid #334155;" title="Wetterstationen ausblenden">❌ AUS</button>
                                 </div>
-                                <div class="sidebar-hint" style="color:#64748b;font-size:0.65rem;">505k+ Bodenstationen & Messnetzwerke</div>
+                                <div class="sidebar-hint" style="color:#64748b;font-size:0.65rem;">505k+ Ground Stations & Sensor Grids</div>
                             </div>
                         </div>
 
@@ -695,14 +687,14 @@
                                     </label>
                                 </div>
                                 <div class="sub-ctrl-row" style="margin-top:4px;">
-                                    <span class="sub-lbl">RADAR DECKKRAFT:</span>
+                                    <span class="sub-lbl">RADAR OPACITY:</span>
                                     <input type="range" id="side-noaa-radar-opacity" min="0.1" max="1" step="0.05" value="0.82" class="sub-slider" />
                                 </div>
                                 <button id="side-btn-focus-noaa-usa" class="ops-btn" style="width:100%;margin-top:6px;padding:3px 6px;font-size:0.68rem;background:rgba(2,132,199,0.25);border:1px solid #0284c7;color:#38bdf8;font-weight:bold;">
-                                    🇺🇸 ZENTRIERE USA // CONUS RADAR
+                                    🇺🇸 FOCUS USA // CONUS RADAR
                                 </button>
                             </div>
-                            <div class="sidebar-hint" style="color:#38bdf8;">Echtzeit Doppler composite (dBZ) über USA</div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">Real-time Doppler composite (dBZ) over CONUS</div>
                         </div>
 
                         <!-- Group 1D: 🏛️ NOAA & Globales Wetter-Archiv -->
@@ -711,15 +703,15 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-archive-events" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#f87171;">🏛️ HISTORISCHE STÜRME & TORNADOS</span>
+                                    <span class="layer-name" style="color:#f87171;">🏛️ HISTORICAL STORMS & TORNADOES</span>
                                 </label>
                             </div>
                             <div class="sidebar-sub-panel">
                                 <button id="side-btn-open-archive" class="ops-btn" style="width:100%;padding:4px 6px;font-size:0.68rem;background:rgba(239,68,68,0.25);border:1px solid #ef4444;color:#f87171;font-weight:bold;">
-                                    🏛️ ARCHIV-EXPLORER ÖFFNEN
+                                    🏛️ OPEN ARCHIVE EXPLORER
                                 </button>
                             </div>
-                            <div class="sidebar-hint" style="color:#f87171;">NOAA Tornado-Touchdowns & historische Windspitzen</div>
+                            <div class="sidebar-hint" style="color:#f87171;">NOAA Tornado touchdowns & peak wind telemetry</div>
                         </div>
 
                         <!-- Group 2: Tornados & NOAA Warnings -->
@@ -728,10 +720,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-alerts" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#ef4444;">🌪️ TORNADOS & NOAA</span>
+                                    <span class="layer-name" style="color:#ef4444;">🌪️ TORNADOES & NOAA</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#ef4444;">Warn-Polygone & Sturmzentren</div>
+                            <div class="sidebar-hint" style="color:#ef4444;">Warning polygons & storm vertices</div>
                         </div>
 
                         <!-- Group 4: Marine Vessels (AIS) -->
@@ -740,10 +732,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-vessels" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#06b6d4;">🚢 SCHIFFE (AIS MARINE)</span>
+                                    <span class="layer-name" style="color:#06b6d4;">🚢 VESSELS (AIS MARINE)</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#06b6d4;">Taktische Vektor-Silhouetten</div>
+                            <div class="sidebar-hint" style="color:#06b6d4;">Tactical vector silhouettes</div>
                         </div>
 
                         <!-- Group 5: OpenSeaMap Seamarks -->
@@ -752,10 +744,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-seamarks" />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#0ea5e9;">🌊 SEEMARKEN (OPENSEAMAP)</span>
+                                    <span class="layer-name" style="color:#0ea5e9;">🌊 NAV AIDS (OPENSEAMAP)</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint">Bojen, Leuchttürme & Riffe</div>
+                            <div class="sidebar-hint">Buoys, lighthouses & shoals</div>
                         </div>
 
                         <!-- Group 7: USGS Earthquakes -->
@@ -764,10 +756,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-quakes" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#eab308;">🌋 ERDBEBEN (USGS)</span>
+                                    <span class="layer-name" style="color:#eab308;">🌋 EARTHQUAKES (USGS)</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#eab308;">Seismische Verwerfungen & Stärke</div>
+                            <div class="sidebar-hint" style="color:#eab308;">Seismic faults & magnitude</div>
                         </div>
 
                         <!-- Group 8: ISS Space Station -->
@@ -776,10 +768,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-iss" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#a855f7;">🛰️ RAUMSTATION (ISS)</span>
+                                    <span class="layer-name" style="color:#a855f7;">🛰️ SPACE STATION (ISS)</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#a855f7;">Orbitale Flugbahn in Echtzeit</div>
+                            <div class="sidebar-hint" style="color:#a855f7;">Real-time orbital tracking trajectory</div>
                         </div>
 
                         <!-- Group 9: Public Webcams & Telemetry Nodes -->
@@ -788,18 +780,18 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-cams" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#00f0ff;">🔵 ECHTE WEBCAMS</span>
+                                    <span class="layer-name" style="color:#00f0ff;">🔵 GENUINE WEBCAMS</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#38bdf8;">508k+ verifizierte Live-Streams</div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">508k+ verified live streams</div>
                             <div class="sidebar-group-header" style="margin-top:6px;">
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-telemetry" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#38bdf8;">📹 VERKEHRS- & HIGHWAY-CAMS</span>
+                                    <span class="layer-name" style="color:#38bdf8;">📹 TRAFFIC & HIGHWAY CAMS</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#38bdf8;">Autobahn & State DOT Kameras (Echte Streams)</div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">Highway & State DOT cams (Verified live)</div>
                         </div>
 
 
@@ -812,7 +804,7 @@
                                     <span class="layer-name" style="color:#a78bfa;">🚆 RAIL TRANSIT</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#a78bfa;">European ICE/TGV/SBB Live</div>
+                            <div class="sidebar-hint" style="color:#a78bfa;">European high-speed rail live</div>
                         </div>
 
                         <!-- Group 11: 140+ Global Weather Engines -->
@@ -821,7 +813,7 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-weather-engines" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#38bdf8;font-weight:bold;font-size:0.75rem;">🌦️ WETTER-STATIONEN & DIENSTE (140+ GLOBAL)</span>
+                                    <span class="layer-name" style="color:#38bdf8;font-weight:bold;font-size:0.75rem;">🌦️ WEATHER STATIONS & DIENSTE (140+ GLOBAL)</span>
                                 </label>
                                 <button id="btn-sidebar-weather-consensus" class="sidebar-mini-btn" style="color:#38bdf8;border-color:#38bdf8;cursor:pointer;" title="Multi-Model Consensus berechnen">CONSENSUS</button>
                             </div>
@@ -895,7 +887,7 @@
                                 </select>
                                 <button id="btn-sidebar-inspect-engine" class="sidebar-mini-btn" style="width:100%;margin-top:2px;cursor:pointer;">INSPECT LIVE FEED ↗</button>
                             </div>
-                            <div class="sidebar-hint" style="color:#38bdf8;">100% Keyless • 140+ weltweite Wetterdienste & Nationalagenturen</div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">100% Keyless • 140+ Global Weather Services & Agencies</div>
                         </div>
 
                         <!-- Group 12: 350+ Global Transit Feeds & Highway Authorities -->
@@ -909,10 +901,10 @@
                             </div>
                             <div class="sidebar-sub-panel">
                                 <div style="font-size:0.68rem;color:#cbd5e1;line-height:1.4;">
-                                    ✈️ 100 Flugsicherungen • 🚢 100 Häfen/AIS • 🚄 100 Bahnen • 🛣️ 56 Highway- & Verkehrsbehörden
+                                    ✈️ 100 Air Traffic Centers • 🚢 100 Ports/AIS • 🚄 100 Rail Networks • 🛣️ 56 Highway Authorities
                                 </div>
                             </div>
-                            <div class="sidebar-hint" style="color:#f59e0b;">100% Keyless • 356 weltweite Transit-Anbieter & Verkehrsbehörden</div>
+                            <div class="sidebar-hint" style="color:#f59e0b;">100% Keyless • 356 Global Transit & Highway Authorities</div>
                         </div>
 
                         <!-- Group 13: 🌐 Seekabel (550+ Subsea Fiber Cables) -->
@@ -926,10 +918,10 @@
                             </div>
                             <div class="sidebar-sub-panel">
                                 <button id="side-btn-focus-cables" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(0,240,255,0.15);border:1px solid #00f0ff;color:#00f0ff;font-weight:bold;cursor:pointer;">
-                                    🌐 FOKUS GLOBALE OZEANE (SEEKABEL)
+                                    🌐 FOCUS GLOBAL OCEANS (SUBSEA)
                                 </button>
                             </div>
-                            <div class="sidebar-hint" style="color:#00f0ff;">550+ globale Unterseekabel & Landestationen</div>
+                            <div class="sidebar-hint" style="color:#00f0ff;">550+ global subsea cables & landing stations</div>
                         </div>
 
                         <!-- Group 14: ⚠️ GDACS Katastrophen & Krisen -->
@@ -938,10 +930,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-gdacs" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#ef4444;font-weight:bold;">⚠️ GDACS KATASTROPHEN & KRISEN</span>
+                                    <span class="layer-name" style="color:#ef4444;font-weight:bold;">⚠️ GDACS DISASTERS & CRISES</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#ef4444;">UN / EU Erdbeben, Zyklone, Fluten & Vulkane</div>
+                            <div class="sidebar-hint" style="color:#ef4444;">UN / EU earthquakes, cyclones, floods & volcanoes</div>
                         </div>
 
                         <!-- Group 15: ☢️ Strahlung (Radmon & Safecast) -->
@@ -950,15 +942,15 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-radiation" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#a3e635;font-weight:bold;">☢️ STRAHLUNG (GEIGER-RASTER)</span>
+                                    <span class="layer-name" style="color:#a3e635;font-weight:bold;">☢️ RADIATION (GEIGER GRID)</span>
                                 </label>
                             </div>
                             <div class="sidebar-sub-panel">
                                 <button id="side-btn-focus-radiation" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(163,230,53,0.15);border:1px solid #a3e635;color:#a3e635;font-weight:bold;cursor:pointer;">
-                                    ☢️ FOKUS STRAHLUNGS-GRID (EUROPA)
+                                    ☢️ FOCUS RADIATION GRID (EUROPE)
                                 </button>
                             </div>
-                            <div class="sidebar-hint" style="color:#a3e635;">320+ Live-Geigerzähler weltweit (CPM & µSv/h)</div>
+                            <div class="sidebar-hint" style="color:#a3e635;">320+ live Geiger counters worldwide (CPM & µSv/h)</div>
                         </div>
 
                         <!-- Group 16: 🚢 Ostsee AIS Schiffe (Digitraffic) -->
@@ -967,15 +959,15 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-baltic-ais" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#38bdf8;font-weight:bold;">🚢 OSTSEE AIS (SCHIFFSVERKEHR)</span>
+                                    <span class="layer-name" style="color:#38bdf8;font-weight:bold;">🚢 BALTIC AIS (MARITIME TRAFFIC)</span>
                                 </label>
                             </div>
                             <div class="sidebar-sub-panel">
                                 <button id="side-btn-focus-baltic" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#38bdf8;font-weight:bold;cursor:pointer;">
-                                    🚢 FOKUS OSTSEE / BALTIC AIS
+                                    🚢 FOCUS BALTIC SEA / BALTIC AIS
                                 </button>
                             </div>
-                            <div class="sidebar-hint" style="color:#38bdf8;">Digitraffic Baltic Live Maritime AIS Vektoren</div>
+                            <div class="sidebar-hint" style="color:#38bdf8;">Digitraffic Baltic live maritime AIS vectors</div>
                         </div>
 
                         <!-- Group 17: ✈️ Flughafen METAR & TAF (AWC) -->
@@ -984,10 +976,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-metar" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#f59e0b;font-weight:bold;">✈️ FLUGHAFEN METAR & TAF</span>
+                                    <span class="layer-name" style="color:#f59e0b;font-weight:bold;">✈️ AIRPORT METAR & TAF</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#f59e0b;">NOAA AWC ICAO Flugplatzwetter & Teletype</div>
+                            <div class="sidebar-hint" style="color:#f59e0b;">NOAA AWC ICAO airfield weather & teletype</div>
                         </div>
 
                         <!-- Group 18: 📻 WebSDR Funk (KiwiSDR) -->
@@ -996,10 +988,10 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-kiwisdr" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#fbbf24;font-weight:bold;">📻 WEBSDR FUNK (KIWISDR)</span>
+                                    <span class="layer-name" style="color:#fbbf24;font-weight:bold;">📻 WEBSDR HF RADIO (KIWISDR)</span>
                                 </label>
                             </div>
-                            <div class="sidebar-hint" style="color:#fbbf24;">1.200+ weltweite HF-Empfänger (0–32 MHz)</div>
+                            <div class="sidebar-hint" style="color:#fbbf24;">1,200+ global HF receivers (0–32 MHz)</div>
                         </div>
 
                         <!-- Group 19: 🛂 Grenzwartezeiten (US CBP) -->
@@ -1008,15 +1000,15 @@
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-borders" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#10b981;font-weight:bold;">🛂 GRENZWARTEZEITEN (US CBP)</span>
+                                    <span class="layer-name" style="color:#10b981;font-weight:bold;">🛂 BORDER WAIT TIMES (US CBP)</span>
                                 </label>
                             </div>
                             <div class="sidebar-sub-panel">
                                 <button id="side-btn-focus-borders" class="ops-btn" style="width:100%;padding:3px 6px;font-size:0.68rem;background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;font-weight:bold;cursor:pointer;">
-                                    🛂 FOKUS US / MEXIKO GRENZEN
+                                    🛂 FOCUS US / MEXICO BORDERS
                                 </button>
                             </div>
-                            <div class="sidebar-hint" style="color:#10b981;">US Customs & Border Protection Live Delays</div>
+                            <div class="sidebar-hint" style="color:#10b981;">US Customs & Border Protection live delays</div>
                         </div>
 
                         <!-- Group 20: 🧅 Tor Relays & Exit Nodes -->
@@ -1138,7 +1130,7 @@
 
                 <!-- ACTIVE STORMS & TORNADOES FEED LIST -->
                 <div class="storm-list-section-header">
-                    <span>AKTIVE TORNADOS & SUPERZELLEN</span>
+                    <span>ACTIVE TORNADOES & SUPERCELLS</span>
                     <span id="storm-list-count" class="storm-count-tag">0 ERKANNT</span>
                 </div>
                 <div id="live-storms-list" class="live-storms-list">
@@ -1246,16 +1238,12 @@
                 <span id="iss-quick-stats" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--accent);">ALT: 421 km | 27,580 km/h</span>
             </div>
             <div class="stream-input-group">
-                <input type="text" id="iss-custom-stream" class="stream-url-input" placeholder="Paste custom 24/7 YouTube live stream URL..." value="https://youtu.be/fO9e9jnhYK8" />
+                <input type="text" id="iss-custom-stream" class="stream-url-input" placeholder="Paste custom live HLS stream URL (.m3u8)..." value="https://images.nasa.gov" />
                 <button id="btn-load-iss-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
             </div>
             <div class="monitor-body">
                 <div class="video-stream-container" id="iss-player-container">
-                    <iframe 
-                        id="nasa-iss-iframe"
-                        src="https://www.youtube-nocookie.com/embed/fO9e9jnhYK8?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen="true">
+                    <iframe id="nasa-iss-iframe" src="https://images.nasa.gov" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="true">
                     </iframe>
                 </div>
             </div>
@@ -1275,43 +1263,43 @@
                 <div id="nx-threat-badge" style="font-family:var(--font-mono);font-size:0.72rem;font-weight:bold;">…</div>
             </div>
             <div class="stream-input-group" style="padding:4px 8px;gap:6px;background:#050914;border-bottom:1px solid #164e63;display:flex;align-items:center;flex-wrap:wrap;">
-                <button class="ops-btn" id="nx-btn-measure" style="padding:2px 8px;font-size:0.72rem;">📏 MESSEN</button>
+                <button class="ops-btn" id="nx-btn-measure" style="padding:2px 8px;font-size:0.72rem;">📏 MEASURE</button>
                 <button class="ops-btn" id="nx-btn-sitrep" style="padding:2px 8px;font-size:0.72rem;background:rgba(239,68,68,0.22);color:#f87171;border:1px solid #ef4444;font-weight:bold;" title="Taktisches Lage-Dossier (SITREP) als druckbares Cyberpunk-Briefing exportieren">📑 SITREP</button>
                 <label style="display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;cursor:pointer;color:#38bdf8;font-family:var(--font-mono);margin-left:auto;">
-                    <input type="checkbox" id="nx-voice" /> 🗣 Sprachalarm
+                    <input type="checkbox" id="nx-voice" /> 🗣 Voice Alarm
                 </label>
                 <label style="display:inline-flex;align-items:center;gap:3px;font-size:0.7rem;cursor:pointer;color:#f43f5e;font-family:var(--font-mono);">
-                    <input type="checkbox" id="nx-eas" /> 🚨 EAS-Sirene
+                    <input type="checkbox" id="nx-eas" /> 🚨 EAS Siren
                 </label>
             </div>
             <div class="monitor-body" style="overflow-y:auto;padding:8px 10px;font-family:var(--font-mono);font-size:0.72rem;display:flex;flex-direction:column;gap:8px;background:rgba(5,9,20,0.95);flex:1;">
                 <div>
-                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">ECHTZEIT-LAYER</div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">REAL-TIME LAYERS</div>
                     <div id="nx-layers" style="display:flex;flex-direction:column;gap:3px;"></div>
                 </div>
 
                 <div>
-                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">BEDROHUNGSLAGE (THREAT MATRIX)</div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">THREAT MATRIX</div>
                     <div id="nx-threat" style="font-size:0.7rem;color:#cbd5e1;">Lade Bedrohungsdaten…</div>
                 </div>
 
                 <div>
-                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">DWD UNWETTER-RADAR (≥ STUFE 3)</div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">DWD SEVERE WEATHER RADAR (≥ LEVEL 3)</div>
                     <div id="nx-dwd" style="font-size:0.7rem;color:#f97316;">Prüfe DWD-Feeds…</div>
                 </div>
 
                 <div>
-                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">STROMNETZ DE (SMARD) & KP-INDEX</div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">POWER GRID DE (SMARD) & KP-INDEX</div>
                     <div id="nx-grid" style="font-size:0.7rem;color:#38bdf8;">Lade Netz- und Sonnenwinddaten…</div>
                 </div>
 
                 <div>
-                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">PROVIDER-GESUNDHEIT (HEALTH RADAR)</div>
+                    <div style="color:#64748b;font-size:0.65rem;font-weight:bold;letter-spacing:0.05em;border-bottom:1px solid #1e293b;padding-bottom:2px;margin-bottom:4px;">PROVIDER HEALTH (HEALTH RADAR)</div>
                     <div id="nx-health" style="font-size:0.7rem;color:#cbd5e1;">Prüfe 13 OSINT-Provider…</div>
                 </div>
             </div>
             <div class="cam-telemetry-banner" style="color:#22d3ee;font-size:0.68rem;display:flex;justify-content:space-between;padding:3px 8px;background:#030712;border-top:1px solid #164e63;">
-                <span>NEXUS OPS v2.5 // ECHTE OSINT-DATEN</span>
+                <span>NEXUS OPS v2.5 // REAL OSINT DATA</span>
                 <span id="nx-status-summary" style="color:#22c55e;">13/13 ONLINE</span>
             </div>
         </div>
@@ -1333,18 +1321,12 @@
                 </div>
             </div>
             <div class="stream-input-group">
-                <input type="text" id="quakes-custom-stream" class="stream-url-input" placeholder="YouTube Earthquake Stream..." value="https://youtu.be/TWy9JMPs5Gk" />
+                <input type="text" id="quakes-custom-stream" class="stream-url-input" placeholder="Live USGS Seismograph / Stream URL..." value="https://earthquake.usgs.gov/monitoring/seismograms/" />
                 <button id="btn-load-quakes-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
             </div>
             <div class="split-stream-box">
                 <div class="video-stream-container">
-                    <iframe 
-                        id="quakes-stream-iframe"
-                        src="about:blank"
-                        data-src="https://www.youtube-nocookie.com/embed/TWy9JMPs5Gk?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
-                        loading="lazy"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen="true">
+                    <iframe id="quakes-stream-iframe" src="about:blank" data-src="https://earthquake.usgs.gov/monitoring/seismograms/" loading="lazy" allow="accelerometer; autoplay; encrypted-media" allowfullscreen="true">
                     </iframe>
                 </div>
             </div>
@@ -1393,13 +1375,7 @@
             <div class="storm-body-container">
                 <div class="split-stream-box">
                     <div class="video-stream-container" id="storm-player-container">
-                        <iframe 
-                            id="storm-stream-iframe"
-                            src="about:blank"
-                            data-src="https://www.youtube-nocookie.com/embed/sgJ14rQRUgQ?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                            allowfullscreen="true">
+                        <iframe id="storm-stream-iframe" src="about:blank" data-src="https://mesonet.agron.iastate.edu/data/gis/images/4326/ridge/CONUS/N0Q_0.png" loading="lazy" allow="accelerometer; autoplay; encrypted-media" allowfullscreen="true">
                         </iframe>
                     </div>
                     <div class="cam-telemetry-banner" id="storm-telemetry-banner">
@@ -1435,18 +1411,12 @@
                 <span id="volcano-status-badge" class="tag-accent" style="font-size:0.72rem;">MODIS / VIIRS FEED</span>
             </div>
             <div class="stream-input-group">
-                <input type="text" id="volcano-custom-stream" class="stream-url-input" placeholder="YouTube Volcano Stream URL..." value="https://youtu.be/BgimbZHOICU" />
+                <input type="text" id="volcano-custom-stream" class="stream-url-input" placeholder="USGS Volcano Live Feed URL..." value="https://volcanoes.usgs.gov/cams/" />
                 <button id="btn-load-volcano-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
             </div>
             <div class="monitor-body">
                 <div class="video-stream-container" id="volcano-player-container">
-                    <iframe 
-                        id="volcano-stream-iframe"
-                        src="about:blank"
-                        data-src="https://www.youtube-nocookie.com/embed/BgimbZHOICU?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
-                        loading="lazy"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        allowfullscreen="true">
+                    <iframe id="volcano-stream-iframe" src="about:blank" data-src="https://volcanoes.usgs.gov/cams/" loading="lazy" allow="accelerometer; autoplay; encrypted-media" allowfullscreen="true">
                     </iframe>
                 </div>
             </div>
@@ -1526,24 +1496,18 @@
             </div>
             <div class="stream-input-group">
                 <select id="vessels-preset-select" class="ops-select" style="font-size:0.72rem;padding:2px 6px;max-width:180px;" title="Maritime Harbor Presets">
-                    <option value="https://www.youtube.com/watch?v=vukolcrIkzc" selected>Hamburg Harbor (Elbe Live)</option>
-                    <option value="https://www.youtube.com/watch?v=_pGIJmXxAHk">Port of Rotterdam (Waterweg)</option>
-                    <option value="https://www.youtube.com/watch?v=m1R-LmvVt30">Port of Miami (Cruise & Cargo)</option>
-                    <option value="https://www.youtube.com/watch?v=r8N6IsoIkTk">Venice Grand Canal (4K Live)</option>
+                    <option value="https://hamburg.panomax.com/" selected>Hamburg Harbor (Panomax 360° Live)</option>
+                    <option value="https://rotterdam.roundshot.com/">Port of Rotterdam (Roundshot Live)</option>
+                    <option value="https://miamibeach.roundshot.com/">Port of Miami (Roundshot Live)</option>
+                    <option value="https://venedig.roundshot.com/">Venice Grand Canal (Roundshot Live)</option>
                 </select>
-                <input type="text" id="vessels-custom-stream" class="stream-url-input" placeholder="YouTube Maritime / Harbor Stream..." value="https://www.youtube.com/watch?v=vukolcrIkzc" />
+                <input type="text" id="vessels-custom-stream" class="stream-url-input" placeholder="Live Maritime AIS / Harbor Cam URL..." value="https://hamburg.panomax.com/" />
                 <button id="btn-load-vessels-stream" class="ops-btn" style="padding:2px 8px;font-size:0.72rem;">LOAD</button>
             </div>
             <div class="vessels-body-container">
                 <div class="split-stream-box">
                     <div class="video-stream-container">
-                        <iframe 
-                            id="vessels-stream-iframe"
-                            src="about:blank"
-                            data-src="https://www.youtube-nocookie.com/embed/vukolcrIkzc?autoplay=1&mute=1&playsinline=1&enablejsapi=1" 
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                            allowfullscreen="true">
+                        <iframe id="vessels-stream-iframe" src="about:blank" data-src="https://hamburg.panomax.com/" loading="lazy" allow="accelerometer; autoplay; encrypted-media" allowfullscreen="true">
                         </iframe>
                     </div>
                     <div class="cam-telemetry-banner">
