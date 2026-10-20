@@ -666,6 +666,224 @@ async function handleProxyStream(url) {
 }
 
 // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Live Keyless Open Data Providers (v2.1.0 Zero-Fake Dynamic Feeds)
+// -----------------------------------------------------------------------------
+
+async function handleSubmarineCables(url) {
+  try {
+    if (url.pathname === "/api/cyber/landing-points") {
+      const res = await fetch("https://www.submarinecablemap.com/api/v3/landing-point/landing-point-geo.json", {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "Referer": "https://www.submarinecablemap.com/" },
+        cf: { cacheTtl: 86400, cacheEverything: true }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return jsonResponse(data, 200, { "Cache-Control": "public, max-age=86400" });
+    }
+
+    if (url.pathname === "/api/cyber/cable-detail") {
+      const id = (url.searchParams.get("id") || "").trim().toLowerCase();
+      if (!id) return jsonResponse({ status: "error", message: "Missing cable id" }, 400);
+      const res = await fetch(`https://www.submarinecablemap.com/api/v3/cable/${encodeURIComponent(id)}.json`, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "Referer": "https://www.submarinecablemap.com/" },
+        cf: { cacheTtl: 86400, cacheEverything: true }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return jsonResponse(data, 200, { "Cache-Control": "public, max-age=86400" });
+    }
+
+    const res = await fetch("https://www.submarinecablemap.com/api/v3/cable/cable-geo.json", {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "Referer": "https://www.submarinecablemap.com/" },
+      cf: { cacheTtl: 86400, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return jsonResponse(data, 200, { "Cache-Control": "public, max-age=86400" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `Submarine cable feed error: ${err.message}` }, 502);
+  }
+}
+
+async function handleTorRelays(url) {
+  try {
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10), 300);
+    const res = await fetch(`https://onionoo.torproject.org/details?type=relay&running=true&limit=${limit}`, {
+      headers: { "User-Agent": "OmniScope-OSINT/2.1 (contact@omniscope-web.pages.dev)" },
+      cf: { cacheTtl: 600, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return jsonResponse(data, 200, { "Cache-Control": "public, max-age=600" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `Tor Onionoo feed error: ${err.message}` }, 502);
+  }
+}
+
+async function handleGdacsDisasters(url) {
+  try {
+    const res = await fetch("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventtypes=EQ,TC,FL,VO,DR", {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      cf: { cacheTtl: 300, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return jsonResponse(data, 200, { "Cache-Control": "public, max-age=300" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `GDACS disaster feed error: ${err.message}` }, 502);
+  }
+}
+
+async function handleSafecast(url) {
+  try {
+    const res = await fetch("https://radmon.org/radmon.php?function=getcombinedlistjson", {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      cf: { cacheTtl: 120, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.json();
+    if (Array.isArray(raw) && raw.length >= 12) {
+      const names = raw[0] || [];
+      const cities = raw[1] || [];
+      const detectors = raw[2] || [];
+      const cpms = raw[7] || [];
+      const lats = raw[10] || [];
+      const lons = raw[11] || [];
+      const results = [];
+      for (let i = 0; i < names.length; i++) {
+        const lat = parseFloat(lats[i]);
+        const lon = parseFloat(lons[i]);
+        const cpm = parseFloat(cpms[i]);
+        if (!isNaN(lat) && !isNaN(lon) && (lat !== 0 || lon !== 0)) {
+          results.push({
+            id: `geiger-${names[i]}`,
+            station: names[i],
+            city: cities[i] || "Global Station",
+            device: detectors[i] || "Geiger-Müller Tube",
+            value: isNaN(cpm) ? 20 : cpm,
+            unit: "cpm",
+            latitude: lat,
+            longitude: lon,
+            captured_at: new Date().toISOString(),
+            source: "Radmon.org Global Geiger Network"
+          });
+        }
+      }
+      return jsonResponse(results, 200, { "Cache-Control": "public, max-age=120" });
+    }
+    throw new Error("Invalid Radmon feed format");
+  } catch (err) {
+    try {
+      const limit = Math.min(parseInt(url.searchParams.get("limit") || "100", 10), 200);
+      const res2 = await fetch(`https://api.safecast.org/measurements.json?limit=${limit}`, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+      });
+      if (res2.ok) {
+        const scData = await res2.json();
+        return jsonResponse(scData, 200, { "Cache-Control": "public, max-age=300" });
+      }
+    } catch (_) {}
+    return jsonResponse({ status: "error", message: `Radiation feed error: ${err.message}` }, 502);
+  }
+}
+
+async function handleBalticAis(url) {
+  try {
+    const res = await fetch("https://meri.digitraffic.fi/api/ais/v1/locations", {
+      headers: {
+        "User-Agent": "OmniScope-OSINT/2.1",
+        "Accept": "application/json",
+        "Accept-Encoding": "gzip"
+      },
+      cf: { cacheTtl: 60, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return jsonResponse(data, 200, { "Cache-Control": "public, max-age=60" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `Baltic AIS feed error: ${err.message}` }, 502);
+  }
+}
+
+async function handleAviation(url) {
+  try {
+    if (url.pathname === "/api/aviation/airports") {
+      const res = await fetch("https://nasstatus.faa.gov/api/airport-status-information", {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        cf: { cacheTtl: 300, cacheEverything: true }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      return textResponse(text, "application/xml; charset=utf-8", 200);
+    }
+    const ids = url.searchParams.get("ids") || "KJFK,KLAX,KORD,KATL,EGLL,LFPG,EDDF,EHAM,RJTT,OMDB,VHHH,WSSS,YSSY,SBGR,FACT";
+    const res = await fetch(`https://aviationweather.gov/api/data/metar?ids=${encodeURIComponent(ids)}&format=json`, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      cf: { cacheTtl: 300, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return jsonResponse(data, 200, { "Cache-Control": "public, max-age=300" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `Aviation feed error: ${err.message}` }, 502);
+  }
+}
+
+async function handleKiwiSdr(url) {
+  try {
+    const res = await fetch("http://rx.linkfanel.net/kiwisdr_com.js", {
+      headers: { "User-Agent": "OmniScope-OSINT/2.1" },
+      cf: { cacheTtl: 900, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const body = await res.text();
+    const s = body.indexOf("[");
+    const e = body.lastIndexOf("]");
+    if (s === -1 || e === -1) throw new Error("Invalid KiwiSDR payload format");
+    let raw = body.slice(s, e + 1).replace(/,\s*\]/g, "]");
+    const arr = JSON.parse(raw);
+    const activeReceivers = arr.filter(r => r.status === "active" && r.offline !== "yes" && r.gps);
+    return jsonResponse({
+      status: "ok",
+      total_active: activeReceivers.length,
+      receivers: activeReceivers
+    }, 200, { "Cache-Control": "public, max-age=900" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `KiwiSDR feed error: ${err.message}` }, 502);
+  }
+}
+
+async function handleBorderWaitTimes(url) {
+  try {
+    const res = await fetch("https://bwt.cbp.gov/api/bwtpublicmod", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      cf: { cacheTtl: 300, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return jsonResponse(data, 200, { "Cache-Control": "public, max-age=300" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `CBP Border Wait Times error: ${err.message}` }, 502);
+  }
+}
+
+async function handleAsteroids(url) {
+  try {
+    const distMax = url.searchParams.get("dist-max") || "0.05";
+    const limit = Math.min(parseInt(url.searchParams.get("limit") || "25", 10), 100);
+    const res = await fetch(`https://ssd-api.jpl.nasa.gov/cad.api?dist-max=${distMax}&limit=${limit}`, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      cf: { cacheTtl: 3600, cacheEverything: true }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return jsonResponse(data, 200, { "Cache-Control": "public, max-age=3600" });
+  } catch (err) {
+    return jsonResponse({ status: "error", message: `NASA JPL CAD error: ${err.message}` }, 502);
+  }
+}
+
 // Native Model Context Protocol (MCP) Router (JSON-RPC 2.0 & SSE)
 // -----------------------------------------------------------------------------
 
@@ -1331,6 +1549,51 @@ Available at: https://omniscope-web.pages.dev/openapi.json
       // 5.13 /api/proxy/stream
       if (url.pathname === "/api/proxy/stream") {
         return handleProxyStream(url);
+      }
+
+      // 5.14 /api/cyber/cables & /api/cyber/landing-points & /api/cyber/cable-detail
+      if (url.pathname.startsWith("/api/cyber/cable") || url.pathname === "/api/cyber/landing-points") {
+        return handleSubmarineCables(url);
+      }
+
+      // 5.15 /api/cyber/tor-relays
+      if (url.pathname === "/api/cyber/tor-relays") {
+        return handleTorRelays(url);
+      }
+
+      // 5.16 /api/disasters/gdacs
+      if (url.pathname === "/api/disasters/gdacs") {
+        return handleGdacsDisasters(url);
+      }
+
+      // 5.17 /api/radiation/safecast
+      if (url.pathname === "/api/radiation/safecast" || url.pathname === "/api/radiation/live") {
+        return handleSafecast(url);
+      }
+
+      // 5.18 /api/maritime/baltic-ais
+      if (url.pathname === "/api/maritime/baltic-ais" || url.pathname === "/api/maritime/ais") {
+        return handleBalticAis(url);
+      }
+
+      // 5.19 /api/aviation/airports & /api/aviation/metar
+      if (url.pathname.startsWith("/api/aviation/")) {
+        return handleAviation(url);
+      }
+
+      // 5.20 /api/rf/kiwisdr
+      if (url.pathname === "/api/rf/kiwisdr") {
+        return handleKiwiSdr(url);
+      }
+
+      // 5.21 /api/borders/wait-times
+      if (url.pathname === "/api/borders/wait-times" || url.pathname === "/api/borders/cbp") {
+        return handleBorderWaitTimes(url);
+      }
+
+      // 5.22 /api/space/asteroids
+      if (url.pathname === "/api/space/asteroids" || url.pathname === "/api/space/cad") {
+        return handleAsteroids(url);
       }
 
       // Unknown /api route

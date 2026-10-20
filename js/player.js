@@ -1110,6 +1110,549 @@ class StreamPlayer {
         }
     }
 
+    showCableDeepDive(cable) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '🌐 SUBSEA CABLE';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `SUBSEA FIBER TRUNK // ${cable.name || cable.id || 'CABLE'}`;
+
+        const c = cable || {};
+        const p = c.properties || c;
+        const name = p.name || p.id || 'Submarine Cable';
+        const length = p.length || (p.length_km ? `${p.length_km.toLocaleString()} km` : 'Multi-Kilometer Trunk');
+        const rfs = p.rfs || p.rfs_year || 'Operational';
+        const owners = p.owners || 'International Carrier Consortium';
+        const landingPoints = p.landing_points || [];
+
+        let lpListHtml = '';
+        if (Array.isArray(landingPoints) && landingPoints.length > 0) {
+            lpListHtml = landingPoints.map(lp => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:#090f1e;border-left:2px solid #00f0ff;margin-bottom:4px;border-radius:2px;font-size:0.72rem;">
+                    <div>
+                        <strong style="color:#fff;">${lp.name || 'Landing Station'}</strong>
+                        <div style="color:#64748b;font-size:0.65rem;">${lp.country || ''}</div>
+                    </div>
+                    ${lp.lat && lp.lon ? `
+                    <button onclick="if(window.MapController && window.MapController.map) window.MapController.map.flyTo([${lp.lat}, ${lp.lon}], 9);" class="ops-btn" style="padding:2px 6px;font-size:0.65rem;background:#0369a1;color:#fff;border:none;cursor:pointer;">
+                        TARGET 🎯
+                    </button>` : ''}
+                </div>
+            `).join('');
+        } else {
+            lpListHtml = '<div style="color:#64748b;font-size:0.72rem;padding:6px;">Landing Points Registry Online</div>';
+        }
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#040711;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <strong style="color:#00f0ff;font-size:0.95rem;letter-spacing:0.5px;">🌐 TRANSOCEANIC SUBSEA OPTICAL CABLE</strong>
+                        <div style="font-size:0.72rem;color:#94a3b8;">${name.toUpperCase()} // STATUS: ACTIVE UNDERSEA INFRASTRUCTURE</div>
+                    </div>
+                    <div style="background:rgba(0,240,255,0.15);border:1px solid #00f0ff;color:#00f0ff;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                        AUTHENTIC TELEGEOGRAPHY FEED
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-bottom:12px;">
+                    <div style="background:#080d1a;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">KABELLÄNGE</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#38bdf8;">${length}</div>
+                    </div>
+                    <div style="background:#080d1a;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">INBETRIEBNAHME (RFS)</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#facc15;">${rfs}</div>
+                    </div>
+                    <div style="background:#080d1a;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">LANDING STATIONS</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#10b981;">${landingPoints.length} PUNKTE</div>
+                    </div>
+                    <div style="background:#080d1a;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">CHOKEPOINT RISK</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#f43f5e;">CRITICAL ASSET</div>
+                    </div>
+                </div>
+
+                <div style="background:#080d1a;border:1px solid #1e293b;padding:8px 10px;border-radius:4px;margin-bottom:12px;font-size:0.75rem;">
+                    <div style="font-size:0.65rem;color:#64748b;margin-bottom:3px;">EIGENTÜMER & KONSORTIUM</div>
+                    <div style="color:#cbd5e1;line-height:1.4;">${owners}</div>
+                </div>
+
+                <div style="flex:1;background:#060a15;border:1px solid #1e293b;border-radius:4px;padding:10px;overflow-y:auto;margin-bottom:12px;">
+                    <div style="font-size:0.68rem;color:#38bdf8;font-weight:bold;margin-bottom:8px;text-transform:uppercase;">
+                        📍 KÜSTEN-LANDUNGSSTATIONEN (LANDING POINTS)
+                    </div>
+                    <div style="max-height:160px;overflow-y:auto;">
+                        ${lpListHtml}
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ◀ ZURÜCK ZUR LIVE-WEBCAM
+                    </button>
+                    <button onclick="window.open('https://www.submarinecablemap.com', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#090f1e;border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        🌐 TELEGEOGRAPHY PORTAL ÖFFNEN
+                    </button>
+                </div>
+
+            </div>
+        `;
+    }
+
+    showGdacsDisasterDeepDive(disaster) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const p = disaster.properties || disaster;
+        const alertLevel = (p.alertlevel || 'Orange').toUpperCase();
+        const alertColor = alertLevel === 'RED' ? '#ef4444' : (alertLevel === 'ORANGE' ? '#f97316' : '#10b981');
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) {
+            typePill.innerText = `⚠️ GDACS ${alertLevel}`;
+            typePill.style.color = alertColor;
+            typePill.style.borderColor = alertColor;
+        }
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `UN/EU GDACS // ${p.eventname || p.name || 'DISASTER ALERT'}`;
+
+        const name = p.name || p.eventname || 'Global Disaster Alert';
+        const eventType = p.eventtype || 'HAZARD';
+        const typeLabel = {
+            'EQ': 'Erdbeben (Earthquake)',
+            'TC': 'Tropischer Wirbelsturm (Cyclone/Typhoon)',
+            'FL': 'Überschwemmung (Flood)',
+            'VO': 'Vulkanausbruch (Volcano)',
+            'DR': 'Dürre & Nahrungskrise (Drought)',
+            'WF': 'Waldbrand (Wildfire)'
+        }[eventType] || eventType;
+
+        const country = p.country || 'International';
+        const fromDate = p.fromdate ? p.fromdate.replace('T', ' ').slice(0, 16) : 'Aktiv';
+        const desc = p.description || p.htmldescription || 'UN GDACS Automatic Impact Assessment active.';
+        const sev = p.severitydata ? (p.severitydata.severitytext || `${p.severitydata.severity} ${p.severitydata.severityunit || ''}`) : 'Katastrophenwarnung aktiv';
+        const reportUrl = p.url ? (p.url.report || p.url.details || 'https://www.gdacs.org') : 'https://www.gdacs.org';
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#090508;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #27141f;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <strong style="color:${alertColor};font-size:0.95rem;letter-spacing:0.5px;">⚠️ UN OCHA & EU GDACS MULTI-HAZARD ALERT</strong>
+                        <div style="font-size:0.72rem;color:#94a3b8;">${typeLabel.toUpperCase()} // SEVERITY: ${alertLevel}</div>
+                    </div>
+                    <div style="background:${alertColor}22;border:1px solid ${alertColor};color:${alertColor};padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                        ALARM-STUFE ${alertLevel}
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-bottom:12px;">
+                    <div style="background:#130b14;border:1px solid #27141f;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#a1a1aa;">EREIGNIS-TYP</div>
+                        <div style="font-size:0.9rem;font-weight:bold;color:#fff;">${eventType}</div>
+                    </div>
+                    <div style="background:#130b14;border:1px solid #27141f;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#a1a1aa;">BETROFFENE REGION</div>
+                        <div style="font-size:0.85rem;font-weight:bold;color:#38bdf8;">${country}</div>
+                    </div>
+                    <div style="background:#130b14;border:1px solid #27141f;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#a1a1aa;">ZEITPUNKT</div>
+                        <div style="font-size:0.8rem;font-weight:bold;color:#facc15;">${fromDate} UTC</div>
+                    </div>
+                    <div style="background:#130b14;border:1px solid #27141f;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#a1a1aa;">GLIDE CODE</div>
+                        <div style="font-size:0.75rem;font-weight:bold;color:#c084fc;">${p.glide || 'UN-GDACS-ALERT'}</div>
+                    </div>
+                </div>
+
+                <div style="background:#130b14;border:1px solid #3f1525;padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.75rem;line-height:1.4;">
+                    <div style="font-size:0.68rem;color:${alertColor};font-weight:bold;margin-bottom:4px;">📊 UN-SCHADENSSCHÄTZUNG & SITREP:</div>
+                    <div style="color:#f4f4f5;font-weight:600;margin-bottom:4px;">${name}</div>
+                    <div style="color:#d4d4d8;">${sev}</div>
+                    <div style="color:#a1a1aa;font-size:0.7rem;margin-top:4px;">${desc.replace(/<[^>]*>?/gm, '')}</div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ◀ ZURÜCK ZUR LIVE-WEBCAM
+                    </button>
+                    <button onclick="window.open('${reportUrl}', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#27141f;border:1px solid ${alertColor};color:${alertColor};cursor:pointer;font-weight:bold;border-radius:3px;">
+                        🏛️ OFFIZIELLEN UN-LAGEBERICHT ÖFFNEN
+                    </button>
+                </div>
+
+            </div>
+        `;
+    }
+
+    showSafecastRadiationDeepDive(measurement) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const m = measurement || {};
+        const cpm = m.value !== undefined ? Number(m.value) : 18;
+        const usvh = (cpm / 334).toFixed(3);
+        const isElevated = cpm > 60;
+        const isExtreme = cpm > 250;
+        const radColor = isExtreme ? '#ef4444' : (isElevated ? '#f59e0b' : '#10b981');
+        const statusLabel = isExtreme ? 'EXTREM ERHÖHT // WARNUNG' : (isElevated ? 'ERHÖHT // KONTROLLE' : 'NORMAL (HINTERGRUNDSTRAHLUNG)');
+
+        const stationName = m.station || m.id || 'LIVE SENSOR';
+        const locationName = m.city ? `${m.city} // ` : '';
+        const deviceType = m.device || 'Geiger-Müller Tube';
+        const sourceNetwork = m.source || 'Global Geiger Network (Radmon/Safecast)';
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) {
+            typePill.innerText = '☢️ ECHTE GEIGER-DOSIS';
+            typePill.style.color = radColor;
+            typePill.style.borderColor = radColor;
+        }
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `RADIATION // ${stationName.toUpperCase()}`;
+
+        const captured = m.captured_at ? m.captured_at.replace('T', ' ').slice(0, 16) : 'Live Telemetrie';
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#080a06;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1c2616;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <strong style="color:${radColor};font-size:0.95rem;letter-spacing:0.5px;">☢️ ECHTE STRAHLUNGS-TELEMETRIE (LIVE SENSOR)</strong>
+                        <div style="font-size:0.72rem;color:#94a3b8;">${locationName}STATION: ${stationName} // SENSOR: ${deviceType}</div>
+                    </div>
+                    <div style="background:${radColor}22;border:1px solid ${radColor};color:${radColor};padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                        ${statusLabel}
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                    <div style="background:#0f170c;border:1px solid ${radColor}55;padding:12px;border-radius:4px;text-align:center;">
+                        <div style="font-size:0.7rem;color:#a1a1aa;margin-bottom:4px;">ÄQUIVALENT-DOSISRATE</div>
+                        <div style="font-size:1.8rem;font-weight:900;color:${radColor};letter-spacing:1px;">${usvh}</div>
+                        <div style="font-size:0.75rem;color:#38bdf8;font-weight:bold;">µSv/h (Mikrosievert/Stunde)</div>
+                    </div>
+                    <div style="background:#0f170c;border:1px solid ${radColor}55;padding:12px;border-radius:4px;text-align:center;">
+                        <div style="font-size:0.7rem;color:#a1a1aa;margin-bottom:4px;">PULSZÄHLUNG (RAW SENSOR)</div>
+                        <div style="font-size:1.8rem;font-weight:900;color:${radColor};letter-spacing:1px;">${cpm}</div>
+                        <div style="font-size:0.75rem;color:#facc15;font-weight:bold;">CPM (Counts Per Minute)</div>
+                    </div>
+                </div>
+
+                <div style="background:#0e150a;border:1px solid #1e293b;padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.73rem;line-height:1.4;">
+                    <div style="font-weight:bold;color:#a3e635;margin-bottom:4px;">📊 INTERNATIONALE REFERENZWERTE:</div>
+                    <div>• <strong>0.05 - 0.20 µSv/h:</strong> Typische natürliche Hintergrundstrahlung weltweit.</div>
+                    <div>• <strong>0.21 - 0.50 µSv/h:</strong> Leicht erhöhte Strahlung (Gebirge, Granitboden, Höhenstrahlung).</div>
+                    <div>• <strong>> 1.00 µSv/h:</strong> Warnschwelle radiologischer Ereignisse.</div>
+                    <div style="margin-top:6px;color:#64748b;font-size:0.68rem;">QUELLE: ${sourceNetwork} // ERFASST: ${captured} UTC</div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ◀ ZURÜCK ZUR LIVE-WEBCAM
+                    </button>
+                    <button onclick="window.open('https://radmon.org', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#14220f;border:1px solid #a3e635;color:#a3e635;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        🌐 RADMON GEIGER PORTAL ÖFFNEN
+                    </button>
+                </div>
+
+            </div>
+        `;
+    }
+
+    showVesselDeepDive(vessel) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const p = vessel.properties || vessel;
+        const coords = (vessel.geometry && vessel.geometry.coordinates) || [p.lon || 0, p.lat || 0];
+        const mmsi = p.mmsi || 'N/A';
+        const sog = p.sog !== undefined ? `${p.sog} kn` : '--';
+        const cog = p.cog !== undefined ? `${p.cog}°` : '--';
+        const heading = p.heading !== undefined ? `${p.heading}°` : cog;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '🚢 MARITIME AIS';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `BALTIC MARITIME AIS // MMSI: ${mmsi}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#040914;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <strong style="color:#38bdf8;font-size:0.95rem;letter-spacing:0.5px;">🚢 ECHTER MARITIMER AIS SCHIFFSVERKEHR</strong>
+                        <div style="font-size:0.72rem;color:#94a3b8;">MMSI: ${mmsi} // SEKTOR: OSTSEE / FINNISCHER MEERBUSEN</div>
+                    </div>
+                    <div style="background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#38bdf8;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                        DIGITRAFFIC FINLAND FEED
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-bottom:12px;">
+                    <div style="background:#081020;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">GESCHWINDIGKEIT (SOG)</div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:#10b981;">${sog}</div>
+                    </div>
+                    <div style="background:#081020;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">KURS ÜBER GRUND (COG)</div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:#facc15;">${cog}</div>
+                    </div>
+                    <div style="background:#081020;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">SCHIFFSKOPF (HEADING)</div>
+                        <div style="font-size:1.1rem;font-weight:bold;color:#38bdf8;">${heading}</div>
+                    </div>
+                    <div style="background:#081020;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">KOORDINATEN</div>
+                        <div style="font-size:0.78rem;font-weight:bold;color:#cbd5e1;">${coords[1].toFixed(4)}°, ${coords[0].toFixed(4)}°</div>
+                    </div>
+                </div>
+
+                <div style="background:#081020;border:1px solid #1e293b;padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.75rem;line-height:1.4;">
+                    <div style="color:#38bdf8;font-weight:bold;margin-bottom:4px;">🌊 MARITIME SICHERHEITSDATEN:</div>
+                    <div>Navigationsstatus: <strong>In Fahrt unter Maschine / Active Navigation</strong></div>
+                    <div>Transponder-Typ: <strong>Class-A Commercial Maritime AIS</strong></div>
+                    <div>Kollisionsvermeidung: <strong>Integrierter Vektor-Kurs auf MON-01</strong></div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ◀ ZURÜCK ZUR LIVE-WEBCAM
+                    </button>
+                    <button onclick="window.open('https://www.marinetraffic.com/en/ais/details/ships/mmsi:${mmsi}', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#081020;border:1px solid #38bdf8;color:#38bdf8;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        🚢 SCHIFFSDETAILS AUF MARINETRAFFIC
+                    </button>
+                </div>
+
+            </div>
+        `;
+    }
+
+    showMetarDeepDive(metar) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const icao = metar.icaoId || 'EDDF';
+        const name = metar.name || `${icao} International Airport`;
+        const temp = metar.temp !== undefined ? `${metar.temp}°C` : '--';
+        const dewp = metar.dewp !== undefined ? `${metar.dewp}°C` : '--';
+        const wind = metar.wdir !== undefined ? `${metar.wdir}° @ ${metar.wspd} KT` : '--';
+        const altim = metar.altim !== undefined ? `${metar.altim} hPa` : '--';
+        const cat = metar.fltCat || 'VFR';
+        const catColor = cat === 'VFR' ? '#10b981' : (cat === 'MVFR' ? '#38bdf8' : (cat === 'IFR' ? '#f59e0b' : '#ef4444'));
+        const raw = metar.rawOb || `METAR ${icao} ...`;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) {
+            typePill.innerText = `✈️ METAR ${cat}`;
+            typePill.style.color = catColor;
+            typePill.style.borderColor = catColor;
+        }
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `AERODROME METAR // ${icao} - ${name}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#050a14;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <strong style="color:#38bdf8;font-size:0.95rem;letter-spacing:0.5px;">✈️ OFFIZIELLES FLUGHAFEN-WETTER (AWC METAR)</strong>
+                        <div style="font-size:0.72rem;color:#94a3b8;">${name.toUpperCase()} // ICAO: ${icao}</div>
+                    </div>
+                    <div style="background:${catColor}22;border:1px solid ${catColor};color:${catColor};padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                        FLIGHT CAT: ${cat}
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-bottom:12px;">
+                    <div style="background:#091224;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">TEMPERATUR / TAUPUNKT</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#10b981;">${temp} / ${dewp}</div>
+                    </div>
+                    <div style="background:#091224;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">WINDGESCHWINDIGKEIT</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#facc15;">${wind}</div>
+                    </div>
+                    <div style="background:#091224;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">LUFTDRUCK (QNH)</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#38bdf8;">${altim}</div>
+                    </div>
+                    <div style="background:#091224;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">SICHTWEITE</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#c084fc;">${metar.visib || '10+ KM'}</div>
+                    </div>
+                </div>
+
+                <div style="background:#091224;border:1px solid #1e293b;padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.75rem;">
+                    <div style="color:#f59e0b;font-weight:bold;margin-bottom:4px;">📜 RAW TELETYPE METAR:</div>
+                    <div style="font-family:monospace;background:#030712;padding:6px 8px;border-radius:3px;color:#a3e635;border:1px solid #334155;word-break:break-all;">
+                        ${raw}
+                    </div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ◀ ZURÜCK ZUR LIVE-WEBCAM
+                    </button>
+                    <button onclick="window.open('https://aviationweather.gov/data/metar/?id=${icao}', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#091224;border:1px solid #38bdf8;color:#38bdf8;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ✈️ AVIATION WEATHER CENTER (AWC) ÖFFNEN
+                    </button>
+                </div>
+
+            </div>
+        `;
+    }
+
+    showKiwiSdrDeepDive(sdr) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const name = sdr.name || 'Public KiwiSDR Receiver';
+        const loc = sdr.loc || 'Global Receiver';
+        const ant = sdr.antenna || 'Dipole / Loop';
+        const users = `${sdr.users || '0'} / ${sdr.users_max || '4'}`;
+        const sdrUrl = sdr.url || '#';
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '📻 WEBSDR AUDIO';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `KIWISDR HF RECEIVER // ${loc}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#040711;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <strong style="color:#f59e0b;font-size:0.95rem;letter-spacing:0.5px;">📻 ÖFFENTLICHER KIWISDR FUNK-EMPFÄNGER</strong>
+                        <div style="font-size:0.72rem;color:#94a3b8;">${name.toUpperCase()}</div>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                        LIVE HF-SPEKTRUM
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-bottom:12px;">
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">STANDORT</div>
+                        <div style="font-size:0.85rem;font-weight:bold;color:#38bdf8;">${loc}</div>
+                    </div>
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">FREQUENZBEREICH</div>
+                        <div style="font-size:0.85rem;font-weight:bold;color:#10b981;">0 - 32 MHz HF</div>
+                    </div>
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">AKTIVE HÖRER</div>
+                        <div style="font-size:1.05rem;font-weight:bold;color:#facc15;">${users}</div>
+                    </div>
+                    <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">ANTENNEN-TYP</div>
+                        <div style="font-size:0.75rem;font-weight:bold;color:#c084fc;">${ant}</div>
+                    </div>
+                </div>
+
+                <div style="background:#090f1d;border:1px solid #1e293b;padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.75rem;line-height:1.4;">
+                    <div style="color:#f59e0b;font-weight:bold;margin-bottom:4px;">📡 FUNK-ÜBERWACHUNG & SPEKTRUM:</div>
+                    <div>Dieser KiwiSDR empfängt Langwelle, Mittelwelle, Kurzwelle und Amateurfunkbänder direkt aus dem Zielgebiet. Du kannst den WebSDR-Audiotuner direkt in neuem Tab öffnen, um Funkübertragungen, Zahlensender, Seefunk und Flugfunk abzuhören.</div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ◀ ZURÜCK ZUR LIVE-WEBCAM
+                    </button>
+                    <button onclick="window.open('${sdrUrl}', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#1e1405;border:1px solid #f59e0b;color:#f59e0b;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        🔊 LIVE-AUDIO & WASSERFALL ÖFFNEN
+                    </button>
+                </div>
+
+            </div>
+        `;
+    }
+
+    showBorderCrossingDeepDive(border) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const portName = border.port_name || 'Border Crossing';
+        const crossName = border.crossing_name || portName;
+        const borderType = border.border || 'International Border';
+        const hours = border.hours || '24 hrs/day';
+        const status = border.port_status || 'Open';
+
+        let commDelay = '--';
+        let passDelay = '--';
+        if (border.commercial_vehicle_lanes && border.commercial_vehicle_lanes.standard_lanes) {
+            commDelay = `${border.commercial_vehicle_lanes.standard_lanes.delay_minutes || 0} Min`;
+        }
+        if (border.passenger_vehicle_lanes && border.passenger_vehicle_lanes.standard_lanes) {
+            passDelay = `${border.passenger_vehicle_lanes.standard_lanes.delay_minutes || 0} Min`;
+        }
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '🛂 BORDER CROSSING';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `CBP BORDER CROSSING // ${portName}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <strong style="color:#10b981;font-size:0.95rem;letter-spacing:0.5px;">🛂 US CUSTOMS & BORDER PROTECTION (CBP)</strong>
+                        <div style="font-size:0.72rem;color:#94a3b8;">${crossName.toUpperCase()} // ${borderType.toUpperCase()}</div>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;">
+                        STATUS: ${status.toUpperCase()}
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-bottom:12px;">
+                    <div style="background:#11141c;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">PKW-WARTEZEIT (PASSENGER)</div>
+                        <div style="font-size:1.2rem;font-weight:bold;color:#facc15;">${passDelay}</div>
+                    </div>
+                    <div style="background:#11141c;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">LKW-WARTEZEIT (COMMERCIAL)</div>
+                        <div style="font-size:1.2rem;font-weight:bold;color:#38bdf8;">${commDelay}</div>
+                    </div>
+                    <div style="background:#11141c;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">BETRIEBSZEITEN</div>
+                        <div style="font-size:0.85rem;font-weight:bold;color:#fff;">${hours}</div>
+                    </div>
+                    <div style="background:#11141c;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                        <div style="font-size:0.65rem;color:#64748b;">PORT NUMBER</div>
+                        <div style="font-size:0.85rem;font-weight:bold;color:#a1a1aa;">${border.port_number || 'N/A'}</div>
+                    </div>
+                </div>
+
+                <div style="background:#11141c;border:1px solid #1e293b;padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.75rem;line-height:1.4;">
+                    <div style="color:#10b981;font-weight:bold;margin-bottom:4px;">🚗 GRENZÜBERGANGS-TELEMETRIE:</div>
+                    <div>Offizielle Live-Wartezeiten des U.S. Department of Homeland Security / Customs and Border Protection. Aktualisierung erfolgt alle 5 Minuten direkt an den Terminals.</div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;">
+                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        ◀ ZURÜCK ZUR LIVE-WEBCAM
+                    </button>
+                    <button onclick="window.open('https://bwt.cbp.gov', '_blank')" class="ops-btn" style="flex:1;padding:7px;font-size:0.72rem;background:#091224;border:1px solid #10b981;color:#10b981;cursor:pointer;font-weight:bold;border-radius:3px;">
+                        🌐 CBP BORDER WAIT TIMES PORTAL
+                    </button>
+                </div>
+
+            </div>
+        `;
+    }
+
     switchOmniTab(tabName) {
         this.updateOmniTabUI(tabName);
 

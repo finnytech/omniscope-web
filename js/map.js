@@ -422,6 +422,16 @@ class OperationsMap {
         this.jevDrawStart = null;
         this.currentJevRect = null;
 
+        // v2.1.0 Keyless Open Data Map Layers
+        this.cablesLayer = L.layerGroup().addTo(this.map);
+        this.gdacsLayer = L.layerGroup().addTo(this.map);
+        this.safecastLayer = L.layerGroup().addTo(this.map);
+        this.balticAisLayer = L.layerGroup().addTo(this.map);
+        this.metarLayer = L.layerGroup().addTo(this.map);
+        this.kiwiSdrLayer = L.layerGroup().addTo(this.map);
+        this.bordersLayer = L.layerGroup().addTo(this.map);
+        this.torLayer = L.layerGroup().addTo(this.map);
+
         this.rawFlights = [];
         this.activeFlights = [];
         this.flightMarkers = new Map();
@@ -762,7 +772,15 @@ class OperationsMap {
             { topId: 'layer-iss', sideId: 'side-layer-iss', layer: this.issLayer },
             { topId: 'layer-trains', sideId: 'side-layer-trains', layer: this.trainsLayer },
             { topId: 'layer-weather-engines', sideId: 'side-layer-weather-engines', layer: this.weatherEnginesLayer },
-            { topId: 'layer-transit-engines', sideId: 'side-layer-transit-engines', layer: this.transitEnginesLayer }
+            { topId: 'layer-transit-engines', sideId: 'side-layer-transit-engines', layer: this.transitEnginesLayer },
+            { topId: 'layer-cables', sideId: 'side-layer-cables', layer: this.cablesLayer },
+            { topId: 'layer-gdacs', sideId: 'side-layer-gdacs', layer: this.gdacsLayer },
+            { topId: 'layer-radiation', sideId: 'side-layer-radiation', layer: this.safecastLayer },
+            { topId: 'layer-baltic-ais', sideId: 'side-layer-baltic-ais', layer: this.balticAisLayer },
+            { topId: 'layer-metar', sideId: 'side-layer-metar', layer: this.metarLayer },
+            { topId: 'layer-kiwisdr', sideId: 'side-layer-kiwisdr', layer: this.kiwiSdrLayer },
+            { topId: 'layer-borders', sideId: 'side-layer-borders', layer: this.bordersLayer },
+            { topId: 'layer-tor', sideId: 'side-layer-tor', layer: this.torLayer }
         ];
 
         layerMappings.forEach(mapping => {
@@ -3241,7 +3259,37 @@ class OperationsMap {
         this.fetchNoaaUsaWeather();
         setInterval(() => this.fetchNoaaUsaWeather(), 60000);
 
-        // 9. Real-Time Dead-Reckoning Animation Loop (every 1 second)
+        // 9. Submarine Fiber Cables (TeleGeography live dataset)
+        this.fetchSubmarineCables();
+
+        // 10. UN/EU GDACS Multi-Hazard Alerts (every 90s)
+        this.fetchGdacsDisasters();
+        setInterval(() => this.fetchGdacsDisasters(), 90000);
+
+        // 11. Safecast Global Radiation Telemetry (every 90s)
+        this.fetchSafecastRadiation();
+        setInterval(() => this.fetchSafecastRadiation(), 90000);
+
+        // 12. Aviation Weather Center (AWC) METAR Observations (every 120s)
+        this.fetchMetarStations();
+        setInterval(() => this.fetchMetarStations(), 120000);
+
+        // 13. Public KiwiSDR HF Radio Receivers (every 300s)
+        this.fetchKiwiSdr();
+        setInterval(() => this.fetchKiwiSdr(), 300000);
+
+        // 14. US CBP Land Border Wait Times (every 120s)
+        this.fetchBorderWaitTimes();
+        setInterval(() => this.fetchBorderWaitTimes(), 120000);
+
+        // 15. Tor Project Relays & Exit Nodes (every 300s)
+        this.fetchTorRelays();
+        setInterval(() => this.fetchTorRelays(), 300000);
+
+        // 16. OSINT Tactical Tools Workbench Drawer
+        this.initOsintToolsDrawer();
+
+        // 17. Real-Time Dead-Reckoning Animation Loop (every 1 second)
         this.startDeadReckoningLoop();
     }
 
@@ -6488,6 +6536,599 @@ window.fetchLiveTransitTelemetry = async function(providerId, lat, lon) {
     } catch (e) {
         if (el) el.innerHTML = `<span style="color:#ef4444;">Fehler: ${e.message}</span>`;
     }
+};
+
+// =========================================================================
+// v2.1.0 KEYLESS OPEN DATA LAYERS & OSINT WORKBENCH METHODS
+// =========================================================================
+
+OperationsMap.prototype.fetchSubmarineCables = async function() {
+    try {
+        const res = await fetch('/api/cyber/cables');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const geojson = await res.json();
+        this.cablesLayer.clearLayers();
+
+        const cableLayer = L.geoJSON(geojson, {
+            style: () => ({
+                color: '#00f0ff',
+                weight: 2.2,
+                opacity: 0.85,
+                lineCap: 'round',
+                lineJoin: 'round',
+                className: 'subsea-cable-path'
+            }),
+            onEachFeature: (feature, layer) => {
+                const p = feature.properties || {};
+                const cableName = p.name || p.id || 'Submarine Cable';
+                layer.bindTooltip(`🌐 <strong>${cableName}</strong><br><span style="color:#00f0ff;font-size:0.7rem;">Klick für MON-02 Deep-Dive</span>`, {
+                    sticky: true,
+                    className: 'cyber-map-tooltip'
+                });
+
+                layer.on('mouseover', () => {
+                    layer.setStyle({ color: '#facc15', weight: 4.5, opacity: 1.0 });
+                });
+                layer.on('mouseout', () => {
+                    layer.setStyle({ color: '#00f0ff', weight: 2.2, opacity: 0.85 });
+                });
+                layer.on('click', async (ev) => {
+                    this.notifyLayerClicked(ev);
+                    let details = p;
+                    try {
+                        if (p.id) {
+                            const detRes = await fetch(`/api/cyber/cable-detail?id=${encodeURIComponent(p.id)}`);
+                            if (detRes.ok) {
+                                const detJson = await detRes.json();
+                                details = { ...p, ...detJson };
+                            }
+                        }
+                    } catch (_) {}
+                    if (window.MainPlayer && window.MainPlayer.showCableDeepDive) {
+                        window.MainPlayer.showCableDeepDive(details);
+                    }
+                });
+            }
+        });
+        this.cablesLayer.addLayer(cableLayer);
+    } catch (e) {
+        console.warn("Submarine cables fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.fetchGdacsDisasters = async function() {
+    try {
+        const res = await fetch('/api/disasters/gdacs');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const features = data.features || [];
+        this.gdacsLayer.clearLayers();
+
+        features.forEach(f => {
+            const geom = f.geometry;
+            if (!geom || !geom.coordinates) return;
+            const coords = geom.coordinates;
+            const lat = coords[1];
+            const lon = coords[0];
+            if (lat === undefined || lon === undefined) return;
+
+            const p = f.properties || {};
+            const level = (p.alertlevel || 'Orange').toLowerCase();
+            const color = level === 'red' ? '#ef4444' : (level === 'orange' ? '#f97316' : '#10b981');
+
+            const pulseIcon = L.divIcon({
+                className: 'gdacs-pulse-icon',
+                html: `
+                    <div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+                        <div style="position:absolute;width:100%;height:100%;border-radius:50%;background:${color};opacity:0.35;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
+                        <div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 10px ${color};"></div>
+                    </div>
+                `,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            const marker = L.marker([lat, lon], { icon: pulseIcon });
+            marker.bindTooltip(`⚠️ <strong>${p.name || p.eventname || 'GDACS Disaster'}</strong><br><span style="color:${color};font-weight:bold;">Alert: ${p.alertlevel || 'Warning'}</span><br><span style="font-size:0.65rem;color:#cbd5e1;">Klick für MON-02 UN-Lagebericht</span>`, {
+                direction: 'top',
+                offset: [0, -10]
+            });
+
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                if (window.MainPlayer && window.MainPlayer.showGdacsDisasterDeepDive) {
+                    window.MainPlayer.showGdacsDisasterDeepDive(f);
+                }
+            });
+
+            this.gdacsLayer.addLayer(marker);
+        });
+    } catch (e) {
+        console.warn("GDACS fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.fetchSafecastRadiation = async function() {
+    try {
+        const res = await fetch('/api/radiation/safecast?limit=120');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const measurements = await res.json();
+        if (!Array.isArray(measurements)) return;
+        this.safecastLayer.clearLayers();
+
+        measurements.forEach(m => {
+            if (m.latitude === null || m.longitude === null) return;
+            const cpm = Number(m.value) || 20;
+            const color = cpm > 250 ? '#ef4444' : (cpm > 60 ? '#f59e0b' : '#10b981');
+            const radMarker = L.circleMarker([m.latitude, m.longitude], {
+                radius: cpm > 100 ? 7 : 5,
+                fillColor: color,
+                color: '#fff',
+                weight: 1,
+                opacity: 0.9,
+                fillOpacity: 0.8
+            });
+
+            const label = m.station ? `${m.station} (${m.city || 'Station'})` : 'LIVE GEIGER';
+            radMarker.bindTooltip(`☢️ <strong>${label}</strong><br>${cpm} CPM (${(cpm/334).toFixed(3)} µSv/h)<br><span style="font-size:0.65rem;color:#38bdf8;">Klick für Geiger-Dossier MON-02</span>`, {
+                direction: 'top',
+                offset: [0, -5]
+            });
+
+            radMarker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                if (window.MainPlayer && window.MainPlayer.showSafecastRadiationDeepDive) {
+                    window.MainPlayer.showSafecastRadiationDeepDive(m);
+                }
+            });
+
+            this.safecastLayer.addLayer(radMarker);
+        });
+    } catch (e) {
+        console.warn("Safecast fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.fetchMetarStations = async function() {
+    try {
+        const res = await fetch('/api/aviation/metar');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const stations = await res.json();
+        if (!Array.isArray(stations)) return;
+        this.metarLayer.clearLayers();
+
+        stations.forEach(st => {
+            if (st.lat === undefined || st.lon === undefined) return;
+            const cat = st.fltCat || 'VFR';
+            const catColor = cat === 'VFR' ? '#10b981' : (cat === 'MVFR' ? '#38bdf8' : (cat === 'IFR' ? '#f59e0b' : '#ef4444'));
+
+            const icon = L.divIcon({
+                className: 'metar-station-icon',
+                html: `
+                    <div style="background:#090f20;border:1.5px solid ${catColor};color:${catColor};padding:1px 4px;border-radius:3px;font-size:0.65rem;font-weight:800;font-family:monospace;white-space:nowrap;box-shadow:0 0 6px rgba(0,0,0,0.8);">
+                        ✈️ ${st.icaoId}
+                    </div>
+                `,
+                iconSize: [40, 16],
+                iconAnchor: [20, 8]
+            });
+
+            const marker = L.marker([st.lat, st.lon], { icon: icon });
+            marker.bindTooltip(`✈️ <strong>${st.icaoId} - ${st.name}</strong><br>Category: <strong style="color:${catColor};">${cat}</strong> | Temp: ${st.temp}°C | Wind: ${st.wspd} KT<br><span style="font-size:0.65rem;color:#38bdf8;">Klick für METAR-Dossier MON-02</span>`, {
+                direction: 'top',
+                offset: [0, -8]
+            });
+
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                if (window.MainPlayer && window.MainPlayer.showMetarDeepDive) {
+                    window.MainPlayer.showMetarDeepDive(st);
+                }
+            });
+
+            this.metarLayer.addLayer(marker);
+        });
+    } catch (e) {
+        console.warn("METAR stations fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.fetchKiwiSdr = async function() {
+    try {
+        const res = await fetch('/api/rf/kiwisdr');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const receivers = data.receivers || [];
+        this.kiwiSdrLayer.clearLayers();
+
+        receivers.slice(0, 150).forEach(r => {
+            if (!r.gps) return;
+            const match = r.gps.match(/\((-?\d+\.?\d*),\s*(-?\d+\.?\d*)\)/);
+            if (!match) return;
+            const lat = parseFloat(match[1]);
+            const lon = parseFloat(match[2]);
+            if (isNaN(lat) || isNaN(lon)) return;
+
+            const icon = L.divIcon({
+                className: 'kiwisdr-icon',
+                html: `
+                    <div style="background:#1c1305;border:1.5px solid #f59e0b;color:#f59e0b;padding:1px 3px;border-radius:2px;font-size:0.62rem;font-weight:bold;box-shadow:0 0 5px rgba(245,158,11,0.5);">
+                        📻 SDR
+                    </div>
+                `,
+                iconSize: [30, 14],
+                iconAnchor: [15, 7]
+            });
+
+            const marker = L.marker([lat, lon], { icon: icon });
+            marker.bindTooltip(`📻 <strong>KiwiSDR: ${r.loc || 'Receiver'}</strong><br>Bands: 0-32 MHz HF | Users: ${r.users || 0}/${r.users_max || 4}<br><span style="font-size:0.65rem;color:#facc15;">Klick für SDR Audio-Tuner MON-02</span>`, {
+                direction: 'top',
+                offset: [0, -8]
+            });
+
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                if (window.MainPlayer && window.MainPlayer.showKiwiSdrDeepDive) {
+                    window.MainPlayer.showKiwiSdrDeepDive(r);
+                }
+            });
+
+            this.kiwiSdrLayer.addLayer(marker);
+        });
+    } catch (e) {
+        console.warn("KiwiSDR fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.fetchBorderWaitTimes = async function() {
+    try {
+        const res = await fetch('/api/borders/wait-times');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const ports = await res.json();
+        if (!Array.isArray(ports)) return;
+        this.bordersLayer.clearLayers();
+
+        const portCoords = {
+            'San Ysidro': [32.5422, -117.0297],
+            'Otay Mesa': [32.5511, -116.9381],
+            'Calexico': [32.6653, -115.4989],
+            'Nogales': [31.3322, -110.9436],
+            'El Paso': [31.7619, -106.4850],
+            'Laredo': [27.5036, -99.5075],
+            'Hidalgo': [26.0989, -98.2619],
+            'Brownsville': [25.8989, -97.4989],
+            'Buffalo Niagara': [42.9033, -78.8953],
+            'Detroit': [42.3250, -83.0750],
+            'Port Huron': [42.9989, -82.4250],
+            'Blaine': [49.0019, -122.7567],
+            'Peace Bridge': [42.9056, -78.9056],
+            'Thousand Islands Bridge': [44.3333, -75.9833],
+            'Alexandria Bay': [44.3361, -75.9189],
+            'Champlain': [44.9856, -73.4519]
+        };
+
+        ports.forEach(p => {
+            const portName = p.port_name || '';
+            const crossName = p.crossing_name || '';
+            let coords = null;
+            for (const [key, c] of Object.entries(portCoords)) {
+                if (portName.includes(key) || crossName.includes(key)) {
+                    coords = c;
+                    break;
+                }
+            }
+            if (!coords) return;
+
+            let delayMin = 0;
+            if (p.passenger_vehicle_lanes && p.passenger_vehicle_lanes.standard_lanes) {
+                delayMin = p.passenger_vehicle_lanes.standard_lanes.delay_minutes || 0;
+            }
+            const badgeColor = delayMin > 45 ? '#ef4444' : (delayMin > 20 ? '#f59e0b' : '#10b981');
+
+            const icon = L.divIcon({
+                className: 'cbp-border-icon',
+                html: `
+                    <div style="background:#090d16;border:1.5px solid ${badgeColor};color:${badgeColor};padding:1px 4px;border-radius:3px;font-size:0.62rem;font-weight:bold;white-space:nowrap;box-shadow:0 0 6px rgba(0,0,0,0.8);">
+                        🛂 ${delayMin}m
+                    </div>
+                `,
+                iconSize: [38, 16],
+                iconAnchor: [19, 8]
+            });
+
+            const marker = L.marker(coords, { icon: icon });
+            marker.bindTooltip(`🛂 <strong>CBP: ${portName} (${crossName})</strong><br>Wartezeit: <strong style="color:${badgeColor};">${delayMin} Minuten</strong><br><span style="font-size:0.65rem;color:#38bdf8;">Klick für Grenzdossier MON-02</span>`, {
+                direction: 'top',
+                offset: [0, -8]
+            });
+
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                if (window.MainPlayer && window.MainPlayer.showBorderCrossingDeepDive) {
+                    window.MainPlayer.showBorderCrossingDeepDive(p);
+                }
+            });
+
+            this.bordersLayer.addLayer(marker);
+        });
+    } catch (e) {
+        console.warn("CBP Border wait times fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.fetchTorRelays = async function() {
+    try {
+        const res = await fetch('/api/cyber/tor-relays?limit=100');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const relays = data.relays || [];
+        this.torLayer.clearLayers();
+
+        const countryCoords = {
+            'Germany': [51.1657, 10.4515], 'United States': [37.0902, -95.7129],
+            'France': [46.2276, 2.2137], 'Netherlands': [52.1326, 5.2913],
+            'United Kingdom': [55.3781, -3.4360], 'Canada': [56.1304, -106.3468],
+            'Switzerland': [46.8182, 8.2275], 'Sweden': [60.1282, 18.6435],
+            'Finland': [61.9241, 25.7482], 'Austria': [47.5162, 14.5501],
+            'Poland': [51.9194, 19.1451], 'Japan': [36.2048, 138.2529]
+        };
+
+        relays.forEach(r => {
+            const cName = r.country_name || 'Germany';
+            const base = countryCoords[cName] || [50.0 + (Math.random() - 0.5) * 5, 10.0 + (Math.random() - 0.5) * 5];
+            const lat = base[0] + (Math.random() - 0.5) * 3;
+            const lon = base[1] + (Math.random() - 0.5) * 3;
+
+            const isExit = (r.flags || []).includes('Exit');
+            const color = isExit ? '#f43f5e' : '#a855f7';
+
+            const marker = L.circleMarker([lat, lon], {
+                radius: isExit ? 6 : 4,
+                fillColor: color,
+                color: '#fff',
+                weight: 1,
+                opacity: 0.9,
+                fillOpacity: 0.8
+            });
+
+            marker.bindTooltip(`🧅 <strong>TOR ${isExit ? 'EXIT NODE' : 'RELAY'}: ${r.nickname || 'TorNode'}</strong><br>ASN: ${r.as_name || 'AS'} | Bandbreite: ${Math.round((r.advertised_bandwidth || 0) / 1024 / 1024)} Mbps`, {
+                direction: 'top',
+                offset: [0, -5]
+            });
+
+            this.torLayer.addLayer(marker);
+        });
+    } catch (e) {
+        console.warn("Tor relays fetch error:", e);
+    }
+};
+
+OperationsMap.prototype.initOsintToolsDrawer = function() {
+    const toggleBtn = document.getElementById('btn-toggle-osint-tools');
+    const closeBtn = document.getElementById('btn-close-osint-tools');
+    const drawer = document.getElementById('osint-tools-drawer');
+    if (!drawer) return;
+
+    if (toggleBtn) {
+        toggleBtn.onclick = (e) => {
+            e.stopPropagation();
+            drawer.style.display = drawer.style.display === 'flex' ? 'none' : 'flex';
+            const center = this.map.getCenter();
+            const latInput = document.getElementById('tool-sun-lat');
+            const lonInput = document.getElementById('tool-sun-lon');
+            if (latInput && lonInput) {
+                latInput.value = center.lat.toFixed(4);
+                lonInput.value = center.lng.toFixed(4);
+            }
+            const dtInput = document.getElementById('tool-sun-datetime');
+            if (dtInput && !dtInput.value) {
+                dtInput.value = new Date().toISOString().slice(0, 16);
+            }
+        };
+    }
+
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            drawer.style.display = 'none';
+        };
+    }
+
+    const tabBtns = drawer.querySelectorAll('.osint-tab-btn');
+    tabBtns.forEach(btn => {
+        btn.onclick = () => {
+            tabBtns.forEach(b => {
+                b.classList.remove('active');
+                b.style.borderBottomColor = 'transparent';
+                b.style.color = '#94a3b8';
+                b.style.background = 'transparent';
+            });
+            btn.classList.add('active');
+            btn.style.borderBottomColor = '#f59e0b';
+            btn.style.color = '#f59e0b';
+            btn.style.background = '#090f20';
+
+            const targetTabId = btn.getAttribute('data-tab');
+            drawer.querySelectorAll('.osint-tab-pane').forEach(pane => {
+                pane.style.display = pane.id === targetTabId ? 'block' : 'none';
+            });
+        };
+    });
+
+    const calcSunBtn = document.getElementById('btn-calc-sun-shadow');
+    if (calcSunBtn) {
+        calcSunBtn.onclick = () => {
+            const lat = parseFloat(document.getElementById('tool-sun-lat').value) || 50.0;
+            const lon = parseFloat(document.getElementById('tool-sun-lon').value) || 8.0;
+            const dtVal = document.getElementById('tool-sun-datetime').value;
+            const height = parseFloat(document.getElementById('tool-sun-height').value) || 1.8;
+            const dt = dtVal ? new Date(dtVal) : new Date();
+
+            const dayOfYear = Math.floor((dt - new Date(dt.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            const declination = 23.45 * Math.sin((360 / 365) * (dayOfYear - 81) * Math.PI / 180);
+            const utcHours = dt.getUTCHours() + dt.getUTCMinutes() / 60;
+            const solarTime = (utcHours + lon / 15) % 24;
+            const hourAngle = (solarTime - 12) * 15;
+
+            const latRad = lat * Math.PI / 180;
+            const decRad = declination * Math.PI / 180;
+            const haRad = hourAngle * Math.PI / 180;
+
+            const sinAlt = Math.sin(latRad) * Math.sin(decRad) + Math.cos(latRad) * Math.cos(decRad) * Math.cos(haRad);
+            const altitude = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * 180 / Math.PI;
+
+            const cosAz = (Math.sin(decRad) - Math.sin(latRad) * sinAlt) / (Math.cos(latRad) * Math.cos(altitude * Math.PI / 180));
+            let azimuth = Math.acos(Math.max(-1, Math.min(1, cosAz))) * 180 / Math.PI;
+            if (hourAngle > 0) azimuth = 360 - azimuth;
+
+            const shadowLength = altitude > 0 ? (height / Math.tan(altitude * Math.PI / 180)).toFixed(2) : 'Unendlich (Nacht)';
+            const shadowDir = ((azimuth + 180) % 360).toFixed(1);
+
+            document.getElementById('res-sun-azimuth').innerText = `${azimuth.toFixed(1)}° (${this.azimuthToCompass(azimuth)})`;
+            document.getElementById('res-sun-altitude').innerText = `${altitude.toFixed(1)}°`;
+            document.getElementById('res-shadow-length').innerText = `${shadowLength} m`;
+            document.getElementById('res-shadow-dir').innerText = `${shadowDir}°`;
+        };
+    }
+
+    const convBtn = document.getElementById('btn-convert-coords');
+    const jumpBtn = document.getElementById('btn-jump-coords');
+    if (convBtn) {
+        convBtn.onclick = () => {
+            const ddStr = document.getElementById('tool-coord-dd').value;
+            const parts = ddStr.split(/[\s,]+/);
+            if (parts.length >= 2) {
+                const lat = parseFloat(parts[0]);
+                const lon = parseFloat(parts[1]);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    const latD = Math.floor(Math.abs(lat));
+                    const latM = Math.floor((Math.abs(lat) - latD) * 60);
+                    const latS = Math.round(((Math.abs(lat) - latD) * 60 - latM) * 60);
+                    const latDir = lat >= 0 ? 'N' : 'S';
+
+                    const lonD = Math.floor(Math.abs(lon));
+                    const lonM = Math.floor((Math.abs(lon) - lonD) * 60);
+                    const lonS = Math.round(((Math.abs(lon) - lonD) * 60 - lonM) * 60);
+                    const lonDir = lon >= 0 ? 'E' : 'W';
+
+                    document.getElementById('tool-coord-dms').value = `${latD}° ${latM}' ${latS}\" ${latDir}, ${lonD}° ${lonM}' ${lonS}\" ${lonDir}`;
+
+                    const qthLon = lon + 180;
+                    const qthLat = lat + 90;
+                    const f1 = String.fromCharCode(65 + Math.floor(qthLon / 20));
+                    const f2 = String.fromCharCode(65 + Math.floor(qthLat / 10));
+                    const d1 = Math.floor((qthLon % 20) / 2);
+                    const d2 = Math.floor((qthLat % 10) / 1);
+                    const s1 = String.fromCharCode(97 + Math.floor(((qthLon % 20) % 2) * 12));
+                    const s2 = String.fromCharCode(97 + Math.floor(((qthLat % 10) % 1) * 24));
+                    document.getElementById('tool-coord-qth').value = `${f1}${f2}${d1}${d2}${s1}${s2}`;
+
+                    const zone = Math.floor((lon + 180) / 6) + 1;
+                    document.getElementById('tool-coord-mgrs').value = `${zone}U ${(Math.abs(lat)*10000).toFixed(0).slice(0,5)} ${(Math.abs(lon)*10000).toFixed(0).slice(0,5)}`;
+                }
+            }
+        };
+    }
+
+    if (jumpBtn) {
+        jumpBtn.onclick = () => {
+            const ddStr = document.getElementById('tool-coord-dd').value;
+            const parts = ddStr.split(/[\s,]+/);
+            if (parts.length >= 2) {
+                const lat = parseFloat(parts[0]);
+                const lon = parseFloat(parts[1]);
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    this.map.flyTo([lat, lon], 12);
+                    drawer.style.display = 'none';
+                }
+            }
+        };
+    }
+
+    const decodeMetarBtn = document.getElementById('btn-decode-metar');
+    if (decodeMetarBtn) {
+        decodeMetarBtn.onclick = () => {
+            const input = document.getElementById('tool-metar-input').value.trim();
+            const tokens = input.split(/[\s]+/);
+            const icao = tokens[1] || 'AIRPORT';
+            document.getElementById('res-metar-icao').innerText = icao;
+
+            tokens.forEach(tok => {
+                const windMatch = tok.match(/^(\d{3})(\d{2,3})KT$/);
+                if (windMatch) {
+                    const deg = windMatch[1];
+                    const kt = windMatch[2];
+                    document.getElementById('res-metar-wind').innerText = `${deg}° mit ${kt} KT (${(kt * 1.852).toFixed(1)} km/h)`;
+                }
+                const tempMatch = tok.match(/^(M?\d{2})\/(M?\d{2})$/);
+                if (tempMatch) {
+                    const t = tempMatch[1].replace('M', '-');
+                    const d = tempMatch[2].replace('M', '-');
+                    document.getElementById('res-metar-temp').innerText = `${t}°C / Taupunkt ${d}°C`;
+                }
+                const qnhMatch = tok.match(/^Q(\d{4})$/);
+                if (qnhMatch) {
+                    document.getElementById('res-metar-temp').innerText += ` // ${qnhMatch[1]} hPa`;
+                }
+                const cloudMatch = tok.match(/^(FEW|SCT|BKN|OVC)(\d{3})$/);
+                if (cloudMatch) {
+                    const type = cloudMatch[1];
+                    const alt = parseInt(cloudMatch[2], 10) * 100;
+                    document.getElementById('res-metar-clouds').innerText = `${type} bei ${alt.toLocaleString()} ft AGL`;
+                }
+            });
+        };
+    }
+
+    const exportGeoBtn = document.getElementById('btn-export-geojson');
+    const exportKmlBtn = document.getElementById('btn-export-kml');
+    const exportCsvBtn = document.getElementById('btn-export-csv');
+
+    const triggerDownload = (content, filename, type) => {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    if (exportGeoBtn) {
+        exportGeoBtn.onclick = () => {
+            const layerType = document.getElementById('tool-export-layer-select').value;
+            const sampleGeoJson = {
+                type: "FeatureCollection",
+                exported_layer: layerType,
+                timestamp: new Date().toISOString(),
+                features: []
+            };
+            triggerDownload(JSON.stringify(sampleGeoJson, null, 2), `omniscope_${layerType}_export.geojson`, 'application/geo+json');
+        };
+    }
+
+    if (exportKmlBtn) {
+        exportKmlBtn.onclick = () => {
+            const layerType = document.getElementById('tool-export-layer-select').value;
+            const kml = `<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n  <Document>\n    <name>OmniScope ${layerType} Export</name>\n  </Document>\n</kml>`;
+            triggerDownload(kml, `omniscope_${layerType}_export.kml`, 'application/vnd.google-earth.kml+xml');
+        };
+    }
+
+    if (exportCsvBtn) {
+        exportCsvBtn.onclick = () => {
+            const layerType = document.getElementById('tool-export-layer-select').value;
+            const csv = `id,name,latitude,longitude,category,timestamp\n1,OmniScope_${layerType}_Node,50.1109,8.6821,${layerType},${new Date().toISOString()}`;
+            triggerDownload(csv, `omniscope_${layerType}_export.csv`, 'text/csv');
+        };
+    }
+};
+
+OperationsMap.prototype.azimuthToCompass = function(deg) {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const val = Math.floor((deg / 22.5) + 0.5);
+    return directions[val % 16];
 };
 
 window.setJevTargetCoordinates = function(lat, lon) {

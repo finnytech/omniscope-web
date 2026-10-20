@@ -1080,6 +1080,54 @@
             return window._originalFetch(resource, init);
         }
 
+        // 11.10 Live Keyless Providers Pass-Through & Direct Upstream Fallback
+        if (urlStr.includes('/api/cyber/') ||
+            urlStr.includes('/api/disasters/') ||
+            urlStr.includes('/api/radiation/') ||
+            urlStr.includes('/api/maritime/') ||
+            urlStr.includes('/api/aviation/') ||
+            urlStr.includes('/api/rf/') ||
+            urlStr.includes('/api/borders/') ||
+            urlStr.includes('/api/space/')) {
+            if (window.location.protocol.startsWith('http')) {
+                try {
+                    const res = await window._originalFetch(resource, init);
+                    if (res.ok) return res;
+                } catch (_) {}
+            }
+            // Direct upstream client-side fetch fallback
+            try {
+                if (urlStr.includes('/api/cyber/cable-detail')) {
+                    const u = new URL(urlStr, window.location.href);
+                    const id = u.searchParams.get('id') || 'marea';
+                    return window._originalFetch(`https://www.submarinecablemap.com/api/v3/cable/${encodeURIComponent(id)}.json`);
+                }
+                if (urlStr.includes('/api/cyber/cables')) {
+                    return window._originalFetch('https://www.submarinecablemap.com/api/v3/cable/cable-geo.json');
+                }
+                if (urlStr.includes('/api/cyber/landing-points')) {
+                    return window._originalFetch('https://www.submarinecablemap.com/api/v3/landing-point/landing-point-geo.json');
+                }
+                if (urlStr.includes('/api/cyber/tor-relays')) {
+                    return window._originalFetch('https://onionoo.torproject.org/details?type=relay&running=true&limit=150');
+                }
+                if (urlStr.includes('/api/disasters/gdacs')) {
+                    return window._originalFetch('https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventtypes=EQ,TC,FL,VO,DR');
+                }
+                if (urlStr.includes('/api/radiation/')) {
+                    return window._originalFetch('https://api.safecast.org/measurements.json?limit=100');
+                }
+                if (urlStr.includes('/api/borders/')) {
+                    return window._originalFetch('https://bwt.cbp.gov/api/bwtpublicmod');
+                }
+                if (urlStr.includes('/api/space/asteroids')) {
+                    return window._originalFetch('https://ssd-api.jpl.nasa.gov/cad.api?dist-max=0.05&limit=25');
+                }
+            } catch (err) {
+                console.warn('[OmniScope Bridge] Upstream fallback failed:', err);
+            }
+        }
+
         // 12. Catch-All Wildcard for any other /api/* request
         console.log('[OmniScope Web] Catch-all wildcard bridge handled:', urlStr);
         return jsonResponse({

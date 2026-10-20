@@ -42,15 +42,15 @@ if (Test-Path "$projectDir\_worker.js") {
 
 # 3. Deploy to Pages (Production Main)
 Write-Host "[INFO] Starte Deployment zu Cloudflare Pages (Production: omniscope-web.pages.dev)..." -ForegroundColor Cyan
-npx wrangler pages deploy . --project-name=omniscope-web --branch=main --commit-dirty=true
+npx --yes wrangler pages deploy . --project-name=omniscope-web --branch=main --commit-dirty=true
 
 # 4. Deploy www Alias Preview Branch (auto-redirects to main)
 Write-Host "[INFO] Aktualisiere www-Alias Branch (www.omniscope-web.pages.dev -> 301 Redirect)..." -ForegroundColor Cyan
-npx wrangler pages deploy . --project-name=omniscope-web --branch=www --commit-dirty=true
+npx --yes wrangler pages deploy . --project-name=omniscope-web --branch=www --commit-dirty=true
 
 # 5. Deploy Standalone Worker (omniscope-web.fuchsdany1984.workers.dev)
 Write-Host "[INFO] Aktualisiere Standalone Cloudflare Worker (omniscope-web)..." -ForegroundColor Cyan
-npx wrangler deploy worker.js --name omniscope-web --compatibility-date 2026-10-14
+npx --yes wrangler deploy worker.js --name omniscope-web --compatibility-date 2026-10-14
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " [PAGES PROD]   Live unter: https://omniscope-web.pages.dev" -ForegroundColor Green

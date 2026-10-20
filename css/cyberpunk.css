@@ -3486,6 +3486,49 @@ path.alert-zone-pass-through {
     pointer-events: none;
 }
 
+/* v2.1.0 Keyless Open Data Map Layer Stylings */
+.subsea-cable-path {
+    filter: drop-shadow(0 0 4px #00f0ff);
+    cursor: pointer;
+    transition: stroke-width 0.2s, stroke 0.2s;
+}
+.subsea-cable-path:hover {
+    filter: drop-shadow(0 0 8px #facc15);
+}
+.gdacs-pulse-icon {
+    cursor: pointer;
+}
+.cbp-border-icon {
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+.cbp-border-icon:hover {
+    transform: scale(1.15);
+    z-index: 1000 !important;
+}
+.kiwisdr-icon {
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+.kiwisdr-icon:hover {
+    transform: scale(1.2);
+    z-index: 1000 !important;
+}
+.osint-tools-drawer {
+    backdrop-filter: blur(8px);
+}
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: rgba(14, 116, 144, 0.9);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 2px;
+    pointer-events: none;
+}
+
 
 
 

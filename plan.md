@@ -1,844 +1,292 @@
-# OmniScope OSINT & Web Master Roadmap: 750 Tactical Features Architecture
+# OmniScope OSINT & Web v2.1.0 Roadmap: 170 Neue Keyless Provider, Nodes, Panels & Tools
 
-> **Ecosystem:** OmniScope OSINT (Core Desktop/Backend) & OmniScope Web (Serverless Cloudflare Edge Edition)  
-> **Standard:** 100% Zero-Fake Policy, Verified Open Data, Sovereign Intelligence Grid  
-> **Scope:** 750 New Features, Mechanics, Providers, Safety Systems & Agentic Tools  
-> **Web Edition Targets:** 160+ designated `[WEB-EDITION]` features executable purely in client-side / edge runtime  
+> **Version:** v2.1.0 Next-Gen Tactical Expansion  
+> **Ecosystem:** OmniScope OSINT (Self-Hosted Python/FastAPI Localhost Core), OmniScope Web (Serverless Cloudflare Pages & Workers), Desktop EXE & Android APK  
+> **Strikte Qualitäts-Direktive:** 100% Zero-Fake Policy, ausschließlich verifizierte echte Keyless Open Data APIs, KEINE nutzlosen Backend-Algorithmen oder theoretischer Mathe-Füllstoff.  
+> **Fokus:** Echte nutzbringende Features — 10 neue taktische Domänen, 8 neue Haupt-Monitore (MON-13 bis MON-20), über 40 neue Keyless Provider & Datenquellen, interaktive Geo-Tools, Dekoder und Export-Funktionen.  
+> **Verteilung:** Über 120 Features speziell optimiert für die browserbasierte `[WEB-EDITION]`, alle 170 Features nativ im `[OSINT-CORE]` und in den kompilierten `[EXE/APK]` Builds.
 
 ---
 
-## Architecture Breakdown by Domain (10 Domains × 75 Features = 750 Total)
+## 🧭 Übersicht der 10 Neuen Taktischen Domänen (170 Features Total)
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                      OMNISCOPE OSINT CORE ECOSYSTEM                    │
+│             OMNISCOPE v2.1.0 MASTER ARCHITECTURE (170 NEUE FEATURES)   │
 │                                                                        │
-│  [D1] Atmospheric & NWP Models (F-001 - F-075)                         │
-│  [D2] Doppler NEXRAD & Radar Kinematics (F-076 - F-150)                │
-│  [D3] Optical Recon & Global Sensor Grid (F-151 - F-225)               │
-│  [D4] Maritime AIS & Oceanic Telemetry (F-226 - F-300)                 │
-│  [D5] ADS-B Flight & Transponder Intelligence (F-301 - F-375)          │
-│  [D6] Seismology, Volcanology & Geomagnetics (F-376 - F-450)           │
-│  [D7] Thermal Wildfires & NASA VIIRS Satellites (F-451 - F-525)        │
-│  [D8] Tactical HUD, WebGL Shaders & UX (F-526 - F-600)                 │
-│  [D9] MCP Server & Autonomous Agent Tools (F-601 - F-675)              │
-│  [D10] Edge Security, WAF & Zero-Trust Grid (F-676 - F-750)            │
+│  [D1]  Global Cyber & Internet Outages Grid (F-001 - F-017)            │
+│  [D2]  Disasters, Multi-Hazard & Humanitarian Crisis (F-018 - F-034)   │
+│  [D3]  Planetary Defense, Asteroids & Space Hazards (F-035 - F-051)    │
+│  [D4]  Environmental Radiation & Bio-Hazard Sensors (F-052 - F-068)    │
+│  [D5]  Aviation Infrastructure, Airports & NOTAMs (F-069 - F-085)      │
+│  [D6]  Maritime AIS Expansion & Ocean Buoy Grid (F-086 - F-102)        │
+│  [D7]  RF Spectrum, Shortwave WebSDR & SIGINT (F-103 - F-119)          │
+│  [D8]  International Borders, Energy & Critical Infra (F-120 - F-136)   │
+│  [D9]  Neue Taktische UI Panels MON-13 bis MON-20 (F-137 - F-153)      │
+│  [D10] OSINT Field Tools, Decoders & Calculators (F-154 - F-170)       │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Domain 1: Atmospheric Science & Deep Numerical Weather Prediction (F-001 - F-075)
+## Domain 1: Global Cyber & Internet Infrastructure Outage Grid (F-001 - F-017)
 
-- **F-001** `[WEB-EDITION]` `[OSINT]`: DWD ICON-EU High-Res Microphysics Integration (1-hour delta intervals).
-- **F-002** `[WEB-EDITION]` `[OSINT]`: ECMWF IFS 0.25° Global Ensemble Mean & Standard Deviation variance extractor.
-- **F-003** `[WEB-EDITION]` `[OSINT]`: NOAA GFS 0.25° Total Column Precipitable Water (PWAT) real-time vector analysis.
-- **F-004** `[WEB-EDITION]` `[OSINT]`: Météo-France ARPEGE 0.1° atmospheric boundary layer moisture divergence calculator.
-- **F-005** `[WEB-EDITION]` `[OSINT]`: UK Met Office Unified Model (Global 10km) surface pressure anomaly tracker.
-- **F-006** `[OSINT]`: JMA GSM (Japan Meteorological Agency) Pacific Super-Typhoon track cone predictor.
-- **F-007** `[OSINT]`: CMC GEM (Canadian Meteorological Centre) Arctic polar vortex displacement monitor.
-- **F-008** `[WEB-EDITION]` `[OSINT]`: NOAA HRRR (High-Resolution Rapid Refresh) 3km convective storm initiation index.
-- **F-009** `[WEB-EDITION]` `[OSINT]`: DWD ICON-D2 2.2km supercell helicity and updraft helicity (0-3km UH) calculator.
-- **F-010** `[WEB-EDITION]` `[OSINT]`: MeteoSwiss COSMO-1E Alpine topographic wind channeling and Föhn wind detector.
-- **F-011** `[OSINT]`: NCEP NAM 12km Convective Available Potential Energy (CAPE) vs Convective Inhibition (CIN) analyzer.
-- **F-012** `[WEB-EDITION]` `[OSINT]`: 147-Model Consensus Confidence Barometer with automated standard error weighting.
-- **F-013** `[OSINT]`: Skew-T Log-P Thermodynamic Diagram generator with Level of Free Convection (LFC) plotting.
-- **F-014** `[WEB-EDITION]` `[OSINT]`: Lifting Condensation Level (LCL) cloud base altitude telemetry.
-- **F-015** `[OSINT]`: Equilibrium Level (EL) storm top temperature radar cross-correlation.
-- **F-016** `[WEB-EDITION]` `[OSINT]`: Significant Tornado Parameter (STP) multi-model composite index calculator.
-- **F-017** `[WEB-EDITION]` `[OSINT]`: Supercell Composite Parameter (SCP) buoyancy and 0-6km bulk shear analyzer.
-- **F-018** `[OSINT]`: Derecho / Bow Echo forward propagation velocity predictor based on cold pool dynamics.
-- **F-019** `[WEB-EDITION]` `[OSINT]`: Atmospheric River (Integrated Vapor Transport / IVT) moisture flux tracker.
-- **F-020** `[OSINT]`: Flash Flood Guidance (FFG) 1h/3h/6h soil saturation index parser.
-- **F-021** `[WEB-EDITION]` `[OSINT]`: Thermal Inversion Layer detector with boundary layer smog entrapment warnings.
-- **F-022** `[OSINT]`: Meso-Gamma Scale Surface Frontal Boundary automatic edge-detection algorithm.
-- **F-023** `[WEB-EDITION]` `[OSINT]`: Wet Bulb Globe Temperature (WBGT) heat stress Index calculation for human safety.
-- **F-024** `[OSINT]`: Wind Chill Equivalent Temperature (WET) hypothermia risk monitor in high latitudes.
-- **F-025** `[WEB-EDITION]` `[OSINT]`: Global Barometric Anomaly real-time isobar contour mapper (WebGL vectorized).
-- **F-026** `[OSINT]`: Tropopause Fold and Stratospheric Air Intrusion ozone telemetry engine.
-- **F-027** `[WEB-EDITION]` `[OSINT]`: Jet Stream Core (250 hPa isotachs) tracking and flight path turbulence warning.
-- **F-028** `[OSINT]`: Rossby Wave Amplitude & Planetary Wave Breaking resonance index calculation.
-- **F-029** `[WEB-EDITION]` `[OSINT]`: Sea Breeze Convergence Zone (SBCZ) thunderstorm triggering tracker.
-- **F-030** `[OSINT]`: Katabatic & Anabatic Mountain Wind velocity estimator for Alpine valleys.
-- **F-031** `[WEB-EDITION]` `[OSINT]`: Microburst Downburst Risk Index (WINDEX / Wet Index) calculation.
-- **F-032** `[OSINT]`: Haboob & Dust Storm Wall (saltation threshold) wind speed correlation.
-- **F-033** `[WEB-EDITION]` `[OSINT]`: Relative Humidity 850 hPa vs 700 hPa dry slot punch detector.
-- **F-034** `[OSINT]`: Frost & Freeze Agricultural Warning alert dispatcher.
-- **F-035** `[WEB-EDITION]` `[OSINT]`: Total Cloud Cover multi-layer breakdown (Cirrus, Alto, Stratocumulus).
-- **F-036** `[OSINT]`: EUMETSAT Meteosat Third Generation (MTG) Lightning Imager (LI) data ingest.
-- **F-037** `[WEB-EDITION]` `[OSINT]`: GOES-16/18 Advanced Baseline Imager (ABI) clean infrared band 13 cloud top tracker.
-- **F-038** `[OSINT]`: Himawari-9 AHI True Color RGB and Rapid Scan meso-scale tracker.
-- **F-039** `[WEB-EDITION]` `[OSINT]`: Global Lightning Density Heatmap (Blitzortung / WWLLN open data).
-- **F-040** `[OSINT]`: Polar Low / Arctic Cyclone mesoscale vortex detection engine.
-- **F-041** `[WEB-EDITION]` `[OSINT]`: Dew Point Depression Comfort & Condensation fog formation monitor.
-- **F-042** `[OSINT]`: Coastal Upwelling Temperature Gradient marine fog boundary detector.
-- **F-043** `[WEB-EDITION]` `[OSINT]`: Solar Irradiance Direct Normal (DNI) and Global Horizontal (GHI) calculator.
-- **F-044** `[OSINT]`: UV Index (UVI) Erythemal Solar Exposure hazard alerts.
-- **F-045** `[WEB-EDITION]` `[OSINT]`: Open-Meteo V2 multi-model time-series caching & fallback aggregator.
-- **F-046** `[OSINT]`: METAR / TAF Aeronautical Weather Station parser (ICAO global airport feeds).
-- **F-047** `[WEB-EDITION]` `[OSINT]`: Visual Flight Rules (VFR) vs Instrument Flight Rules (IFR) airspace state engine.
-- **F-048** `[OSINT]`: NOAA SYNOP Surface Synoptic Observations decoder.
-- **F-049** `[WEB-EDITION]` `[OSINT]`: Pressure Tendency 3-hour delta barometric storm approach indicator.
-- **F-050** `[OSINT]`: DWD Mosmix statistical post-processing integration for 5,400+ weather stations.
-- **F-051** `[WEB-EDITION]` `[OSINT]`: Blizzard Warning Index combining snow precipitation rate and sustained 35kt wind.
-- **F-052** `[OSINT]`: Lake Effect Snow (LES) boundary band positioning via surface water temperature difference.
-- **F-053** `[WEB-EDITION]` `[OSINT]`: Hail Size Prediction Index (MUCAPE × 0-6km bulk shear formulation).
-- **F-054** `[OSINT]`: Convective Available Potential Energy (CAPE) density in hail growth zone (-10°C to -30°C).
-- **F-055** `[WEB-EDITION]` `[OSINT]`: 0-1km Storm Relative Helicity (SRH) low-level mesocyclone rotation risk index.
-- **F-056** `[OSINT]`: 0-3km Storm Relative Helicity (SRH) mid-level supercell sustenance monitor.
-- **F-057** `[WEB-EDITION]` `[OSINT]`: Cold Pool Strength and Density Current propagation velocity calculation.
-- **F-058** `[OSINT]`: Heat Index / Apparent Temperature Rothfusz regression equation.
-- **F-059** `[WEB-EDITION]` `[OSINT]`: Humidex Canadian Meteorological Index calculation.
-- **F-060** `[OSINT]`: Australian Bureau of Meteorology (BOM) ACCESS-G model integration.
-- **F-061** `[WEB-EDITION]` `[OSINT]`: Scandinavian Weather Forecasts (DMI / SMHI / Met Norway) AROME-Arctic feeds.
-- **F-062** `[OSINT]`: MeteoBlue Learning Multi-Model (MLM) consensus verification bridge.
-- **F-063** `[WEB-EDITION]` `[OSINT]`: Global Wind Gust Vector alerts exceeding Beaufort 8 (Gale) & 10 (Storm).
-- **F-064** `[OSINT]`: Kelvin-Helmholtz Cloud Billow instability shear-layer detection.
-- **F-065** `[WEB-EDITION]` `[OSINT]`: Lenticular Mountain Wave cloud formation zone tracker.
-- **F-066** `[OSINT]`: Saharan Air Layer (SAL) mineral dust plume trajectory tracker.
-- **F-067** `[WEB-EDITION]` `[OSINT]`: Wildfire Pyrocumulonimbus (PyroCb) convective plume height estimator.
-- **F-068** `[OSINT]`: Marine Boundary Layer Height (MBLH) radio ducting conditions monitor.
-- **F-069** `[WEB-EDITION]` `[OSINT]`: Geopotential Height (500 hPa) trough and ridge axis delineation.
-- **F-070** `[OSINT]`: Potential Vorticity (PVU = 2.0 dynamic tropopause) folding alerts.
-- **F-071** `[WEB-EDITION]` `[OSINT]`: Precipitable Water Anomaly percentage of climatological normal.
-- **F-072** `[OSINT]`: Low-Level Jet (LLJ 850 hPa) nocturnal moisture transport tracking.
-- **F-073** `[WEB-EDITION]` `[OSINT]`: Graupel and Ice Pellet atmospheric sounder sounding solver.
-- **F-074** `[OSINT]`: Freezing Rain and Glaze Ice accumulation rate model.
-- **F-075** `[WEB-EDITION]` `[OSINT]`: Real-Time Microclimate Comparison between urban heat islands and rural basins.
+*Echte weltweite Überwachung von Internet-Ausfällen, Unterseekabeln, BGP-Routen, DNS-Wurzelservern und Tor-Relays ohne API-Keys.*
+
+- **F-001** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **IODA Global Internet Outage Monitor** (`api.ioda.inetintel.cc.gatech.edu/v2/outages/summary`) - 100% keyless Echtzeit-Erkennung von weltweiten makroskopischen Netzausfällen, Telekom-Störungen und zensurbedingten Shutdowns auf Länderebene.
+- **F-002** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **IODA Country Disruption Inspector** (`/v2/signals/raw/country/{code}`) - Korreliert 3 unabhängige Messsignale: BGP-Routing-Rückzüge, aktive Edge-Ping-Erreichbarkeit und Darknet-Teleskop-Hintergrundstrahlung.
+- **F-003** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Interaktive Submarine Cable Network Layer** - Vollständige Vektorkarte von 550+ globalen Untersee-Glasfaserkabeln inklusive Trassenverlauf, Kabellänge in Kilometern, Landestationen und Betreiberkonsortien.
+- **F-004** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Subsea Cable Chokepoint & Vulnerability Analyzer** - Analysiert strategische Nadelöhre der Weltkommunikation (Rotes Meer / Bab-el-Mandeb, Straße von Malakka, Luzon-Straße, Ärmelkanal, Straße von Gibraltar) mit Single-Point-of-Failure-Warnstufe.
+- **F-005** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Tor Network Consensus Scanner via Onionoo API** (`onionoo.torproject.org/details`) - Keyless Mapping von 7.500+ weltweiten Tor-Relays (Guard-, Middle- und Exit-Nodes) mit IP-Adresse, Nickname, Bandbreite und Länderstandort.
+- **F-006** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Tor Exit Node Schnell-Prüfung** - Direktes Suchfeld zur Prüfung, ob eine verdächtige IP-Adresse ein aktiver Tor-Exit-Node ist, inklusive Bandbreiten-Verlauf und Uptime.
+- **F-007** `[OSINT]` `[WEB-EDITION]`: **RIPE Stat BGP Routing History & Hijack Alert** (`stat.ripe.net/data/routing-status/data.json`) - Keylose Abfrage des autonomen Systemstatus (AS), Sichtbarkeitsrate und automatischer Alarm bei unautorisierten BGP-Prefix-Hijack-Verdachtsfällen.
+- **F-008** `[OSINT]` `[WEB-EDITION]`: **BGPView ASN & IXP Interconnect Explorer** (`api.bgpview.io/asn/{asn}`) - Visualisiert Upstream-Transit-Carrier, Downstream-Kunden und Internet-Knotenpunkte (IXPs wie DE-CIX, AMS-IX, LINX).
+- **F-009** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Cloudflare Radar Public Outage Feed Integration** - Automatischer Live-Ticker für großflächige Stromausfälle, Kabelbrüche und behördliche Netzsperren weltweit.
+- **F-010** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Global DNS Root Server Latency Map** (`stat.ripe.net/data/dns-root-telemetry/data.json`) - Live-Antwortzeiten und Query-Health aller 13 weltweiten DNS-Wurzelserver-Cluster (A bis M).
+- **F-011** `[WEB-EDITION]` `[OSINT]`: **Autonomous System (ASN) Geo-Mapper** - Löst jede IP, Domain oder ASN sofort in physische Rechenzentren und geografische Serverstandorte auf.
+- **F-012** `[WEB-EDITION]` `[OSINT]`: **Fiber Cut Impact Simulator** - Interaktives Simulationstool: Klick auf ein beliebiges Seekabel zeigt sofort, welche Länder Datenverkehr umleiten müssen und wie stark Latenzen steigen.
+- **F-013** `[WEB-EDITION]` `[OSINT]`: **Satelliten-Internet Downlink Gateway Karte** - Geokodierte Bodenstationen für Starlink, OneWeb und O3b mPOWER mit Uplink-Frequenzbändern.
+- **F-014** `[OSINT]` `[EXE/APK]`: **Lokales Egress-Netzwerk Diagnose-Tool** - Prüft Hops, Traceroute-Latenz und ISP-Jitter des Nutzers gegen globale OSINT-Endpunkte.
+- **F-015** `[WEB-EDITION]` `[OSINT]`: **Taktischer Cyber-Ausfall Top-Banner** - Blinkende Alarmleiste im Header, sobald ein Staat mehr als 30% seiner makroskopischen Internet-Konnektivität verliert.
+- **F-016** `[WEB-EDITION]` `[OSINT]`: **BGP Prefix Announcement Live-Ticker** - Echtzeit-Strom neuer Routenankündigungen und Routenflatter-Ereignisse (BGP Flapping).
+- **F-017** `[WEB-EDITION]` `[OSINT]`: **Telekom-Krisenbericht Lagebericht-Generator** - Erzeugt mit einem Klick einen vollständigen technischen Lagebericht (Markdown/JSON) bei Netzausfällen für Analysten und Notdienste.
 
 ---
 
-## Domain 2: Doppler NEXRAD, Dual-Pol Radar & Storm Cell Kinematics (F-076 - F-150)
+## Domain 2: Global Disasters, Multi-Hazard Alerts & Humanitarian Crisis Grid (F-018 - F-034)
 
-- **F-076** `[WEB-EDITION]` `[OSINT]`: NEXRAD Level II Reflectivity (Z) 0.5° base scan tile cache with WebGL render.
-- **F-077** `[WEB-EDITION]` `[OSINT]`: Base Radial Velocity (V) inbound/outbound Doppler dipole signature detector.
-- **F-078** `[WEB-EDITION]` `[OSINT]`: Differential Reflectivity (ZDR) oblate raindrop vs spherical hail discriminator.
-- **F-079** `[WEB-EDITION]` `[OSINT]`: Correlation Coefficient (CC / RhoHV) Tornado Debris Signature (TDS) detector.
-- **F-080** `[WEB-EDITION]` `[OSINT]`: Specific Differential Phase (KDP) heavy rain core and liquid water content tracker.
-- **F-081** `[OSINT]`: DWD Radarverbund (Germany) Radolan high-resolution composite ingest.
-- **F-082** `[WEB-EDITION]` `[OSINT]`: RainViewer V2 Global Radar API client-side time-scrubber with smooth interpolation.
-- **F-083** `[OSINT]`: OPERA (Odyssey) European Radar Network composite mosaic handler.
-- **F-084** `[WEB-EDITION]` `[OSINT]`: Hook Echo and Bounded Weak Echo Region (BWER) automated polygon detector.
-- **F-085** `[OSINT]`: Mesocyclone Velocity Track (MVT) multi-elevation shear integration.
-- **F-086** `[WEB-EDITION]` `[OSINT]`: Vertical Integrated Liquid (VIL) and VIL Density severe hail size estimator.
-- **F-087** `[OSINT]`: Echo Tops (ET) 18 dBZ storm cloud ceiling height calculator.
-- **F-088** `[WEB-EDITION]` `[OSINT]`: Storm Cell Identification and Tracking (SCIT) vector forecast extrapolator.
-- **F-089** `[OSINT]`: Hail Detection Algorithm (HDA) probability of severe hail (POSH) evaluator.
-- **F-090** `[WEB-EDITION]` `[OSINT]`: Gust Front & Outflow Boundary fine-line radar reflectivity recognizer.
-- **F-091** `[OSINT]`: VWP (Velocity Azimuth Display Wind Profile) vertical wind shear extraction.
-- **F-092** `[WEB-EDITION]` `[OSINT]`: Ground Clutter & Anomalous Propagation (AP) automated noise filter.
-- **F-093** `[OSINT]`: Biological Scatterer (bird migration, bat roost rings) classification filter.
-- **F-094** `[WEB-EDITION]` `[OSINT]`: Three-Body Scatter Spike (TBSS / Hail Spike) algorithm.
-- **F-095** `[OSINT]`: Chaff & Military Radar Countermeasure decoy recognition.
-- **F-096** `[WEB-EDITION]` `[OSINT]`: Sun Spike / Solar Calibration artifact detector at sunrise/sunset.
-- **F-097** `[OSINT]`: Dual-Pol Hydrometeor Classification Algorithm (HCA) into 10 physical precipitation classes.
-- **F-098** `[WEB-EDITION]` `[OSINT]`: Digital Precipitation Rate (DPR) instantaneous mm/hour conversion.
-- **F-099** `[OSINT]`: Multi-Sensor Multi-Radar (MRMS) QPE (Quantitative Precipitation Estimation) grid.
-- **F-100** `[WEB-EDITION]` `[OSINT]`: Flash Flood Alert trigger when radar rainfall rate exceeds 50mm in 60min.
-- **F-101** `[OSINT]`: Radar Beam Blockage terrain shadow simulation based on SRTM elevation.
-- **F-102** `[WEB-EDITION]` `[OSINT]`: Elevation Scan Angle selector (0.5°, 1.5°, 2.4°, 3.4° tilts).
-- **F-103** `[OSINT]`: Melting Layer (Bright Band) zero-degree isotherm altitude identifier.
-- **F-104** `[WEB-EDITION]` `[OSINT]`: Bow Echo Rear Inflow Jet (RIJ) acceleration vector monitor.
-- **F-105** `[OSINT]`: Squall Line Line-Echo Wave Pattern (LEWP) meso-vortex generator.
-- **F-106** `[WEB-EDITION]` `[OSINT]`: Microburst Downburst divergence velocity signature trigger.
-- **F-107** `[OSINT]`: Tropical Cyclone Eyewall Replacement Cycle (ERC) double-ring detection.
-- **F-108** `[WEB-EDITION]` `[OSINT]`: Atmospheric Gravity Wave ripples on radar reflectivity bands.
-- **F-109** `[OSINT]`: Smoke Plume Doppler reflectivity tracking from major industrial explosions.
-- **F-110** `[WEB-EDITION]` `[OSINT]`: RainViewer Nowcast forward predictive motion vector rendering (30-min).
-- **F-111** `[OSINT]`: Canadian Radar Network (MSC) dual-polarization S-band feeds.
-- **F-112** `[WEB-EDITION]` `[OSINT]`: Australian Bureau of Meteorology (BOM) Doppler radar mosaic renderer.
-- **F-113** `[OSINT]`: Météo-France ARAMIS radar network polarimetric data parser.
-- **F-114** `[WEB-EDITION]` `[OSINT]`: CHMI (Czech Republic) & IMGW (Poland) Central European radar feed joiner.
-- **F-115** `[OSINT]`: Spanish AEMET radar network mosaic with coastal clutter suppression.
-- **F-116** `[WEB-EDITION]` `[OSINT]`: Japanese JMA high-resolution precipitation radar (XRAIN) viewer.
-- **F-117** `[OSINT]`: South Korean KMA radar composite with typhoon track integration.
-- **F-118** `[WEB-EDITION]` `[OSINT]`: Interactive Radar Cross-Section Virtual Range-Height Indicator (RHI).
-- **F-119** `[OSINT]`: Radar Attenuation Correction using KDP phase-shift integration.
-- **F-120** `[WEB-EDITION]` `[OSINT]`: Tactical Alert Polygon overlay for NWS Severe Thunderstorm Warnings.
-- **F-121** `[WEB-EDITION]` `[OSINT]`: NWS Tornado Warning Polygon with rotation speed index.
-- **F-122** `[WEB-EDITION]` `[OSINT]`: NWS Flash Flood Emergency Polygon overlay with river gage telemetry.
-- **F-123** `[OSINT]`: DWD Severe Weather Warnings (WarnWetter) geocoded GeoJSON alerts.
-- **F-124** `[WEB-EDITION]` `[OSINT]`: MeteoAlarm European cross-border severe weather warning mapper.
-- **F-125** `[OSINT]`: Supercell Splitting algorithm (Left-mover vs Right-mover storm cells).
-- **F-126** `[WEB-EDITION]` `[OSINT]`: Anticyclonic Supercell detection via inverted velocity couplet.
-- **F-127** `[OSINT]`: Debris Ball correlation with emergency scanner calls.
-- **F-128** `[WEB-EDITION]` `[OSINT]`: Multi-Radar Mosaic smoothing with temporal frame blending.
-- **F-129** `[OSINT]`: Radar Raw Data Archival to local cold storage for historical post-mortem.
-- **F-130** `[WEB-EDITION]` `[OSINT]`: Dynamic Colormap Palette Switcher (NWS Standard, NSSL Severe, High-Contrast Neon).
-- **F-131** `[OSINT]`: Beam Spreading Resolution Loss calculator based on distance from radar radome.
-- **F-132** `[WEB-EDITION]` `[OSINT]`: Earth Curvature Beam Altitude calculator (h = r*sin(phi) + ...).
-- **F-133** `[OSINT]`: S-Band vs C-Band vs X-Band radar attenuation comparison engine.
-- **F-134** `[WEB-EDITION]` `[OSINT]`: Radar Playback Scrubbing Bar with 1-minute keyframe stepping.
-- **F-135** `[OSINT]`: Automatic NEXRAD site outage detection and nearest failover site handover.
-- **F-136** `[WEB-EDITION]` `[OSINT]`: Real-Time Velocity Azimuth Display (VAD) wind barbs overlay on map.
-- **F-137** `[OSINT]`: Giant Hail Spike radar range gate signal filter.
-- **F-138** `[WEB-EDITION]` `[OSINT]`: Rain-to-Snow Transition Line detection based on radar melting band and surface temp.
-- **F-139** `[OSINT]`: High-Reflectivity Core descent speed indicator (downburst warning).
-- **F-140** `[WEB-EDITION]` `[OSINT]`: Storm Relative Motion (SRM) subtraction of storm translation vector.
-- **F-141** `[OSINT]`: Rapid-Scan Phased Array Radar (MPAR) simulated beam steering processor.
-- **F-142** `[WEB-EDITION]` `[OSINT]`: Sounding-Derived Steering Flow 700-500 hPa storm motion arrow.
-- **F-143** `[OSINT]`: QPE Flash Flood Guidance Comparison (RFC gridded exceedance).
-- **F-144** `[WEB-EDITION]` `[OSINT]`: Doppler Spectrum Width (SW) turbulence indicator in aviation corridors.
-- **F-145** `[OSINT]`: Wind Turbine Farm clutter mask for radar velocity dealiasing.
-- **F-146** `[WEB-EDITION]` `[OSINT]`: NEXRAD Radar Site Location Markers with beam elevation cones.
-- **F-147** `[OSINT]`: Volcanic Ash Radar Backscatter detection from explosive eruptions.
-- **F-148** `[WEB-EDITION]` `[OSINT]`: Urban Flash Flood Street Puddle vulnerability heatmaps.
-- **F-149** `[OSINT]`: Marine Waterspout Radar Velocity Vortex identifier.
-- **F-150** `[WEB-EDITION]` `[OSINT]`: Emergency Broadcast Audio Ping on confirmed Radar-Indicated Tornado.
+*Echte Notfallüberwachung, UN-Disaster-Meldungen, Flusspegel, Tsunami-Frühwarnung und Vulkanausbrüche.*
+
+- **F-018** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **GDACS Multi-Hazard Echtzeit-Feed** (`gdacs.org/gdacsapi/api/events/geteventlist/SEARCH`) - Einheitlicher Krisenstream der UN & Europäischen Kommission für Erdbeben, Wirbelstürme, Überschwemmungen, Vulkane und Dürren ohne API-Key.
+- **F-019** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **GDACS Severity Farb-Triage System** - Standardisierte Alarmstufen: Rot (Großkatastrophe mit internationalem Hilfebedarf), Orange (Ernste Lage mit regionalen Schäden), Grün (Beobachtung/Advisory).
+- **F-020** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Tropensturm Vorhersage-Kegel & Windvektoren** - Live-Zugbahnprognose, Windgeschwindigkeits-Radien (34kt, 50kt, 64kt Hurrikan-Stärke), Kerndruck in Millibar und Sturmfluthöhe.
+- **F-021** `[WEB-EDITION]` `[OSINT]`: **UN OCHA ReliefWeb Krisenlageberichte** (`api.reliefweb.int/v2/disasters`) - Direkter keyloser Zugriff auf offizielle UN-Lageberichte, Hilfsappelle, Notstandsdekrete und Flüchtlingszahlen.
+- **F-022** `[WEB-EDITION]` `[OSINT]`: **ReliefWeb Länder-Krisenprofil Viewer** (`api.reliefweb.int/v2/countries`) - Aktive humanitäre Krisen, Ernährungsnotstandsstufen und zuständige Hilfsorganisationen pro Nation.
+- **F-023** `[WEB-EDITION]` `[OSINT]`: **USGS Water Services Live-Flusspegel** (`waterservices.usgs.gov/nwis/iv/?format=json`) - Keyless Daten von 10.000+ Pegelstationen mit aktuellem Wasserstand, Durchflussmenge (cfs) und Hochwasser-Schwellen.
+- **F-024** `[WEB-EDITION]` `[OSINT]`: **Sturzflut & Dammbruch Frühwarn-Indikator** - Automatischer Alarm, sobald Flusspegel die Stufe "Major Flood" überschreiten oder schneller als 50 cm pro Stunde steigen.
+- **F-025** `[WEB-EDITION]` `[OSINT]`: **Globaler Vulkan-Aktivitäts-Tracker** (Smithsonian Global Volcanism Program / GDACS) - Eruptionsstatus, Luftfahrt-Farbcodes (Rot/Orange/Gelb/Grün) und Aschewolken-Flughöhen (FL200, FL350+).
+- **F-026** `[WEB-EDITION]` `[OSINT]`: **Tsunami Ausbreitungs-Zeitzonenkarte** (NOAA PTWC / GDACS) - Tiefsee-Tsunami-Laufzeitkonturen (1-Stunden-Isochronen) und Messwerte von Küsten-Pegelsensoren.
+- **F-027** `[WEB-EDITION]` `[OSINT]`: **Copernicus EMS Satelliten-Notfall-Aktivierungen** - Geokodierte Satelliten-Schadenskarten bei Überschwemmungen, Erdbeben-Zerstörungszonen und Erdrutschen.
+- **F-028** `[WEB-EDITION]` `[OSINT]`: **Betroffene Bevölkerungs-Kalkulator** - Schätzt in Echtzeit die betroffene Wohnbevölkerung im 25km-, 50km- und 100km-Radius um jedes Katastrophenzentrum.
+- **F-029** `[WEB-EDITION]` `[OSINT]`: **Dürre- & Agrar-Krisen-Index** - Satellitengestützte Bodenfeuchte-Anomalien und Vegetations-Gesundheits-Index (VHI) zur Früherkennung von Ernteausfällen.
+- **F-030** `[WEB-EDITION]` `[OSINT]`: **Humanitäre Logistik-Drehkreuze & Hilfskorridore** - Bereitschaftsstatus von Flughäfen, Seehäfen und Grenzübergängen während internationaler Hilfsoperationen.
+- **F-031** `[WEB-EDITION]` `[OSINT]`: **Erdrutsch-Gefahrenkarte & Starkregen-Trigger** - Korreliert Steilhang-Topografie mit Niederschlagsmengen zur Identifikation akuter Murenabgangs-Risikogebiete.
+- **F-032** `[WEB-EDITION]` `[OSINT]`: **Katastrophen-Zeitraffer-Replay** - 30-Tage-Scrubber auf der Weltkarte zur lückenlosen Rekonstruktion historischer Naturereignisse.
+- **F-033** `[WEB-EDITION]` `[OSINT]`: **GDACS Detail-Lage-Modal** - Öffnet ein vollformatiges Lagefenster mit Opferzahlen, Infrastrukturschäden, betroffenen Krankenhäusern und UN-Meldungen.
+- **F-034** `[WEB-EDITION]` `[OSINT]`: **Floating Crisis Ticker** - Frei schwebendes Dashboard-Widget für aktive weltweite Rote und Orange Alarme mit Kamera-Direktsprung.
 
 ---
 
-## Domain 3: Global Optical Recon, CCTV Edge Streams & Panoramas (F-151 - F-225)
+## Domain 3: Planetary Defense, Asteroids, Solar Hazards & Space Intelligence (F-035 - F-051)
 
-- **F-151** `[WEB-EDITION]` `[OSINT]`: Universal Cloudflare Edge Stream Proxy (`/api/proxy/stream`) with m3u8 playlist rewriting.
-- **F-152** `[WEB-EDITION]` `[OSINT]`: Universal Cloudflare Edge Image Proxy (`/api/proxy/image`) with SSRF filtering and WebP caching.
-- **F-153** `[WEB-EDITION]` `[OSINT]`: High-Resolution Ortho-Reconnaissance Optical Proxy (`/api/proxy/camera-recon`) via ESRI World Imagery.
-- **F-154** `[WEB-EDITION]` `[OSINT]`: Automatic Camera Failover Circuit Breaker (switches to nearest active regional node on 502/504).
-- **F-155** `[WEB-EDITION]` `[OSINT]`: Panomax 360° Gigapixel Live Panorama Interactive Viewer embedding with no-key sandboxing.
-- **F-156** `[WEB-EDITION]` `[OSINT]`: Roundshot Live 360° High-Alpine Panorama viewer with historical time-slider.
-- **F-157** `[WEB-EDITION]` `[OSINT]`: Foto-Webcam.eu Alpine high-resolution automated refresh pipeline.
-- **F-158** `[OSINT]`: EarthCam Live PTZ public stream embedder with viewport stabilization.
-- **F-159** `[WEB-EDITION]` `[OSINT]`: SkylineWebcams public streaming engine with cross-origin iframe decoders.
-- **F-160** `[OSINT]`: Caltrans QuickMap CCTV stream aggregator (1,200+ California highway nodes).
-- **F-161** `[WEB-EDITION]` `[OSINT]`: Transport for London (TfL) JamCams 10-second optical snapshot loop (900+ cameras).
-- **F-162** `[OSINT]`: NYSDOT 511NY Traffic camera feeds with directional highway tagging.
-- **F-163** `[WEB-EDITION]` `[OSINT]`: Autobahn GmbH Traffic surveillance snapshot cluster (Germany).
-- **F-164** `[OSINT]`: ASFINAG Austrian Alpine motorway webcam network integration.
-- **F-165** `[WEB-EDITION]` `[OSINT]`: FEDRO / ASTRA Swiss mountain pass and tunnel entrance surveillance cams.
-- **F-166** `[OSINT]`: Trafikverket Swedish northern winter road surface condition cameras.
-- **F-167** `[WEB-EDITION]` `[OSINT]`: Statens Vegvesen Norwegian fjord and mountain ferry dock cameras.
-- **F-168** `[OSINT]`: Vegagerdin Icelandic Ring Road weather cameras with wind speed overlay.
-- **F-169** `[WEB-EDITION]` `[OSINT]`: WSDOT (Washington State) mountain pass snow accumulation feeds.
-- **F-170** `[OSINT]`: TxDOT (Texas) hurricane coastal evacuation route CCTV feeds.
-- **F-171** `[WEB-EDITION]` `[OSINT]`: PennDOT 511PA interstate optical feeds with severe winter fog alerts.
-- **F-172** `[OSINT]`: FDOT Florida 511 storm surge coastal highway monitoring.
-- **F-173** `[WEB-EDITION]` `[OSINT]`: USGS Volcano Observatory Live Webcams (Kilauea, St. Helens, Rainier, Yellowstone).
-- **F-174** `[OSINT]`: INGV Italian Volcano Webcams (Etna, Stromboli, Vulcano, Campi Flegrei).
-- **F-175** `[WEB-EDITION]` `[OSINT]`: RUV Iceland Fagradalsfjall & Sundhnukagigar live eruption cams.
-- **F-176** `[OSINT]`: Kiel Canal & Elbe River locks maritime observation cameras.
-- **F-177** `[WEB-EDITION]` `[OSINT]`: Port of Rotterdam & Antwerp Container Terminal live feeds.
-- **F-178** `[OSINT]`: Panama Canal Miraflores & Gatun Locks live transit cams.
-- **F-179** `[WEB-EDITION]` `[OSINT]`: ISS Space View High-Definition Earth Viewing (HDEV) live orbital video stream.
-- **F-180** `[OSINT]`: South Pole Amundsen-Scott & McMurdo Antarctic live research station webcams.
-- **F-181** `[WEB-EDITION]` `[OSINT]`: Neumayer-Station III (AWI Germany) Antarctic shelf ice camera.
-- **F-182** `[OSINT]`: African Wildlife Foundation & Explore.org live watering hole cameras.
-- **F-183** `[WEB-EDITION]` `[OSINT]`: Shibuya Crossing Tokyo 4K live multi-angle optical feed.
-- **F-184** `[OSINT]`: Times Square New York City panoramic live security camera stream.
-- **F-185** `[WEB-EDITION]` `[OSINT]`: Venice Grand Canal & Piazza San Marco Acqua Alta flood cameras.
-- **F-186** `[OSINT]`: Sydney Harbour & Opera House panoramic maritime feeds.
-- **F-187** `[WEB-EDITION]` `[OSINT]`: Maho Beach St. Maarten runway landing jet-blast observation feed.
-- **F-188** `[OSINT]`: Prague Airport (LKPR) runway live cam with ATC audio sync.
-- **F-189** `[WEB-EDITION]` `[OSINT]`: Niagara Falls Horseshoe & American Falls mist and ice observation cam.
-- **F-190** `[OSINT]`: Space Needle Seattle 360° meteorological camera.
-- **F-191** `[WEB-EDITION]` `[OSINT]`: Golden Gate Bridge San Francisco marine fog advection camera.
-- **F-192** `[OSINT]`: Matterhorn Zermatt Glacier Paradise 3,883m highest European webcam.
-- **F-193** `[WEB-EDITION]` `[OSINT]`: Chamonix Mont Blanc Aiguille du Midi 3,842m crevasse surveillance feed.
-- **F-194** `[OSINT]`: Jungfraujoch Top of Europe 3,571m high-altitude observatory cam.
-- **F-195** `[WEB-EDITION]` `[OSINT]`: Feratel Panoramakamera network integration across 400+ ski resorts.
-- **F-196** `[OSINT]`: Bergfex weather cams with snow height and avalanche safety telemetry.
-- **F-197** `[WEB-EDITION]` `[OSINT]`: Extreme RAM Cleaner automatic Chromium iframe garbage collector on cam switch.
-- **F-198** `[OSINT]`: Motion Vector Optical Flow analysis on CCTV frames for traffic congestion calculation.
-- **F-199** `[WEB-EDITION]` `[OSINT]`: Night-Vision Auto Contrast & Gamma Enhancement filter on low-light feeds.
-- **F-200** `[OSINT]`: License Plate / Vehicle Density heatmapper (zero-PII, pure count density).
-- **F-201** `[WEB-EDITION]` `[OSINT]`: Fog & Smoke Visibility Obstruction index calculated from camera edge gradients.
-- **F-202** `[OSINT]`: Snow Depth Gauge automated computer-vision ruler reader.
-- **F-203** `[WEB-EDITION]` `[OSINT]`: Water Puddle Reflection and Road Wetness detector on highway cams.
-- **F-204** `[OSINT]`: Camera PTZ Preset Position crawler for automated multi-angle sweeps.
-- **F-205** `[WEB-EDITION]` `[OSINT]`: Multi-Camera Grid 2×2 / 3×3 Synchronous Playback Mode on Monitor 2.
-- **F-206** `[OSINT]`: RTSP to WebRTC ultra-low-latency transcoder for private law enforcement feeds.
-- **F-207** `[WEB-EDITION]` `[OSINT]`: Camera Geo-Coordinate clustering with dynamic Leaflet canvas rendering.
-- **F-208** `[OSINT]`: Camera Field of View (FOV) cone projection onto 2D tactical map.
-- **F-209** `[WEB-EDITION]` `[OSINT]`: Snapshot Time-Lapse recorder (saves 1 frame every 60s for 24h playback).
-- **F-210** `[OSINT]`: Weather Condition cross-validation (compares camera visual sky with METAR report).
-- **F-211** `[WEB-EDITION]` `[OSINT]`: Camera Status Ping & Health Matrix (online, degraded, offline, rate-limited).
-- **F-212** `[OSINT]`: Bandwidth-Saving Low-Power Mode (pauses hidden background camera video streams).
-- **F-213** `[WEB-EDITION]` `[OSINT]`: Automatic Dark Mode & Anti-Glare Overlay on snowy Alpine webcam streams.
-- **F-214** `[OSINT]`: High-Dynamic Range (HDR) exposure blending for extreme sun-glare mountain cameras.
-- **F-215** `[WEB-EDITION]` `[OSINT]`: Picture-in-Picture (PiP) Floating Video Player for continuous recon monitoring.
-- **F-216** `[OSINT]`: Audio-Visual Sync for runway cameras with LiveATC feeds.
-- **F-217** `[WEB-EDITION]` `[OSINT]`: Optical Zoom and Pan controls for high-resolution static gigapixel images.
-- **F-218** `[OSINT]`: Road Ice Black Ice Detection based on infrared thermal camera feeds.
-- **F-219** `[WEB-EDITION]` `[OSINT]`: Quick Camera Search by City, Country, Mountain, Highway or Provider.
-- **F-220** `[OSINT]`: Automatic Broken Link Harvester & Dead Camera Purger in local database.
-- **F-221** `[WEB-EDITION]` `[OSINT]`: Custom User RTSP / HLS Stream Bookmark Manager stored in browser LocalStorage.
-- **F-222** `[OSINT]`: Street View vs Satellite Dual-View Split Screen.
-- **F-223** `[WEB-EDITION]` `[OSINT]`: Fullscreen HUD Overlay with camera coordinates, elevation, and compass heading.
-- **F-224** `[OSINT]`: Sovereign CCTV Cluster Map with municipal camera density analysis.
-- **F-225** `[WEB-EDITION]` `[OSINT]`: Offline Camera HUD with immediate "Find Nearest Working Node" action button.
+*Asteroiden-Frühwarnung, Weltraumschrott, Sonnenstürme, Polarlichter und Satellitenbahnen.*
+
+- **F-035** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **NASA JPL SSD Asteroid Close Approach CAD API** (`ssd-api.jpl.nasa.gov/cad.api`) - 100% keyless Überwachung aller erdnahen Asteroiden und Kometen auf Annäherungskurs.
+- **F-036** `[WEB-EDITION]` `[OSINT]`: **Asteroiden-Annäherungs-Radar** - Interaktives 30-Tage-Radar mit Distanz in Monddistanzen (LD) und AU, Relativgeschwindigkeit in km/s und geschätztem Durchmesser in Metern.
+- **F-037** `[WEB-EDITION]` `[OSINT]`: **Torino- / Palermo-Gefahrenskala & PHA-Filter** - Ein-Klick-Filter zur Isolierung potenziell gefährlicher Asteroiden (Potentially Hazardous Asteroids - PHAs) mit Einschlagswahrscheinlichkeiten.
+- **F-038** `[WEB-EDITION]` `[OSINT]`: **CelesTrak Active Satellite Fleet GP JSON API** (`celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json-pretty`) - Keyless Bahndaten von 8.000+ aktiven Satelliten in LEO, MEO und GEO.
+- **F-039** `[WEB-EDITION]` `[OSINT]`: **Raumstationen Live-Orbit-Vektor** (`celestrak.org/...GROUP=stations&FORMAT=json-pretty`) - Live-Position, Bodenspur, Bahngeschwindigkeit (27.600 km/h) und Flughöhe für ISS und Tiangong.
+- **F-040** `[WEB-EDITION]` `[OSINT]`: **Starlink Megakonstellations-Dichte-Heatmap** - Visualisiert Orbitalebenen, Hüllendichte und neu gestartete Starlink-Satellitenzüge.
+- **F-041** `[WEB-EDITION]` `[OSINT]`: **Weltraumschrott- & Trümmerfeld-Tracker** (`GROUP=cosmos-1408-debris` / `GROUP=fengyun-1c-debris`) - Trümmerwolken vergangener Anti-Satelliten-Waffentests mit Kollisionswarnzone.
+- **F-042** `[WEB-EDITION]` `[OSINT]`: **NOAA SWPC Solar Flare Röntgenfluss-Echtzeit-Feed** (`services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json`) - GOES-Röntgensensoren zur Erfassung von C-, M- und extremen X-Klasse Sonneneruptionen.
+- **F-043** `[WEB-EDITION]` `[OSINT]`: **Koronaler Massenauswurf (CME) Stoßwellen-Uhr** - Berechnet die geschätzte Ankunftszeit (ETA) der Sonnenplasma-Schockwelle am Erdmagnetfeld.
+- **F-044** `[WEB-EDITION]` `[OSINT]`: **Aurora Borealis / Australis OVATION 30-Minuten Vorhersage** - Wahrscheinlichkeitskonturen (0-100%) für sichtbare Polarlichter in Nordamerika und Europa.
+- **F-045** `[WEB-EDITION]` `[OSINT]`: **Kurzwellen-Radio-Blackout & Satelliten-Bremsungs-Schätzer** - Berechnung der D-Schicht-Dämpfung und thermischen Aufblähung der oberen Atmosphäre nach Sonnenstürmen.
+- **F-046** `[WEB-EDITION]` `[OSINT]`: **Solar Dynamics Observatory (SDO) Live-Koronagrafen-Bilder** - Extrem-Ultraviolett-Aufnahmen der Sonne (AIA 193 Å, 304 Å, 171 Å), alle 15 Minuten frisch.
+- **F-047** `[WEB-EDITION]` `[OSINT]`: **Geomagnetischer Kp-Index 3-Tage-Barometer** - NOAA SWPC Balkendiagramm zur Überwachung geomagnetischer Stürme von G1 (schwach) bis G5 (extrem).
+- **F-048** `[WEB-EDITION]` `[OSINT]`: **Satelliten-Überflug-Rechner** - Berechnet nächste sichtbare Überflüge, Eintrittswinkel und Himmelsrichtung über den Standort des Nutzers.
+- **F-049** `[WEB-EDITION]` `[OSINT]`: **Satelliten-Flare & Solar-Reflexions-Warner** - Berechnet exakte Zeitfenster, in denen Solarpaneele helle Lichtblitze am Nachthimmel erzeugen.
+- **F-050** `[WEB-EDITION]` `[OSINT]`: **Wiedereintritts- & Orbit-Verfall-Prognose** - Verfolgt ausgediente Raketenoberstufen und abstürzende Satelliten mit geschätztem Absturz-Zeitfenster.
+- **F-051** `[WEB-EDITION]` `[OSINT]`: **Planetary Defense Missions-Kontroll-Panel** - Integrierter Lagebildschirm für Weltraumwetter, Asteroiden-Passagen und Satelliten-Flugbahnen.
 
 ---
 
-## Domain 4: Maritime AIS, Naval Domain & Oceanic Buoy Tracking (F-226 - F-300)
+## Domain 4: Environmental Radiation, Air Quality & Bio-Hazard Grid (F-052 - F-068)
 
-- **F-226** `[WEB-EDITION]` `[OSINT]`: Global Maritime AIS Real-Time Stream via public Norwegian Coastal Admin (Kystverket) feeds.
-- **F-227** `[WEB-EDITION]` `[OSINT]`: Vessel Type Classifier & Tactical Color Encoding (Tanker, Cargo, Military, Tug, Passenger).
-- **F-228** `[WEB-EDITION]` `[OSINT]`: Vessel Speed Over Ground (SOG) & Course Over Ground (COG) vector extrapolation.
-- **F-229** `[OSINT]`: NOAA National Data Buoy Center (NDBC) standard meteorological buoy observation ingest.
-- **F-230** `[WEB-EDITION]` `[OSINT]`: Significant Wave Height (WVHT) & Dominant Wave Period (DPD) ocean swell telemetry.
-- **F-231** `[OSINT]`: Sea Surface Temperature (SST) satellite composite layer (NOAA Coral Reef Watch).
-- **F-232** `[WEB-EDITION]` `[OSINT]`: Tsunami Buoy (DART - Deep-ocean Assessment and Reporting of Tsunamis) water column sensor.
-- **F-233** `[OSINT]`: Chokepoint Traffic Density monitor (Strait of Hormuz, Malacca Strait, Bab el-Mandeb, Bosphorus).
-- **F-234** `[WEB-EDITION]` `[OSINT]`: Suez Canal Queue & Waiting Anchorage vessel count monitor.
-- **F-235** `[OSINT]`: English Channel / Dover Strait traffic separation scheme (TSS) boundary violations.
-- **F-236** `[WEB-EDITION]` `[OSINT]`: Dark Vessel Detection (identifies ships switching off AIS transponders near restricted zones).
-- **F-237** `[OSINT]`: Ship-to-Ship (STS) Cargo Transfer rendezvous cluster detector in international waters.
-- **F-238** `[WEB-EDITION]` `[OSINT]`: Maritime MMSI / IMO number search and vessel specification resolver.
-- **F-239** `[OSINT]`: Port State Control (PSC) detention history and safety risk rating link.
-- **F-240** `[WEB-EDITION]` `[OSINT]`: Vessel Flag of Convenience (FOC) registry risk scoring (Panama, Liberia, Marshall Islands).
-- **F-241** `[OSINT]`: Global Fishing Watch (GFW) apparent fishing effort and transshipment event ingestion.
-- **F-242** `[WEB-EDITION]` `[OSINT]`: Marine Protected Area (MPA) illegal trawling intrusion alerts.
-- **F-243** `[OSINT]`: Submarine Telecommunications Cable map overlay with anchor drag hazard buffer zones.
-- **F-244** `[WEB-EDITION]` `[OSINT]`: Offshore Wind Farm construction & maintenance vessel cluster monitor.
-- **F-245** `[OSINT]`: Oil & Gas Offshore Drilling Rig locations and safety zone perimeters.
-- **F-246** `[WEB-EDITION]` `[OSINT]`: Maritime Piracy & Armed Robbery Incident mapping (IMB Piracy Reporting Centre data).
-- **F-247** `[OSINT]`: Gulf of Guinea & Red Sea high-risk area security bulletins.
-- **F-248** `[WEB-EDITION]` `[OSINT]`: Search and Rescue (SAR) Datum Point drift simulation based on ocean currents and leeway.
-- **F-249** `[OSINT]`: Iceberg Drift & Sea Ice Concentration tracking (US National Ice Center / NIC).
-- **F-250** `[WEB-EDITION]` `[OSINT]`: North Atlantic Shipping Lane (NAT) Ice Patrol safety limits.
-- **F-251** `[OSINT]`: Great Lakes Shipping Lock schedules (Soo Locks, Welland Canal).
-- **F-252** `[WEB-EDITION]` `[OSINT]`: Container Ship Draft vs Water Depth keel clearance safety calculation.
-- **F-253** `[OSINT]`: Ballast Water Discharge & Marine Biosecurity risk zones.
-- **F-254** `[WEB-EDITION]` `[OSINT]`: Nautical Distance Calculator (Great Circle route & nautical miles in knots).
-- **F-255** `[OSINT]`: Estimated Time of Arrival (ETA) validation based on current speed vs reported ETA.
-- **F-256** `[WEB-EDITION]` `[OSINT]`: Tidal Currents & Water Level Real-Time Prediction (NOAA CO-OPS harmonic stations).
-- **F-257** `[OSINT]`: Storm Surge Coastal Inundation model (SLOSH - Sea, Lake, and Overland Surges from Hurricanes).
-- **F-258** `[WEB-EDITION]` `[OSINT]`: Rogue Wave Probability index based on opposing current and swell convergence.
-- **F-259** `[OSINT]`: Argo Float Network autonomous oceanic profiling robots (temperature & salinity to 2000m).
-- **F-260** `[WEB-EDITION]` `[OSINT]`: Ocean Gyre & Plastic Garbage Patch circulation tracking.
-- **F-261** `[OSINT]`: Coastal HF Radar surface current velocity vector field mapping.
-- **F-262** `[WEB-EDITION]` `[OSINT]`: Maritime VHF Radio Distress Frequency (Channel 16) monitoring status indicators.
-- **F-263** `[OSINT]`: Navigational Warnings (NAVAREA) broadcast message parsing.
-- **F-264** `[WEB-EDITION]` `[OSINT]`: Notice to Mariners (NOTMAR) hazard zones, wrecks, and firing practice areas.
-- **F-265** `[OSINT]`: Cable Ship Cable-Laying vessel specialized mission tracker.
-- **F-266** `[WEB-EDITION]` `[OSINT]`: Icebreaker Convoy Escort routing in Baltic and Northern Sea Route.
-- **F-267** `[OSINT]`: Liquefied Natural Gas (LNG) Carrier fleet global position & destination monitor.
-- **F-268** `[WEB-EDITION]` `[OSINT]`: Crude Oil Supertanker (VLCC/ULCC) choke point crossing counter.
-- **F-269** `[OSINT]`: Hospital Ship & Humanitarian Vessel sanctuary tracking.
-- **F-270** `[WEB-EDITION]` `[OSINT]`: Cruise Ship Passenger Fleet tracking with port arrival congestion index.
-- **F-271** `[OSINT]`: Harbor Tug Assist activity and ship docking telemetry.
-- **F-272** `[WEB-EDITION]` `[OSINT]`: Pilot Boat Rendezvous Station tracking at major port approaches.
-- **F-273** `[OSINT]`: AIS Signal Spoofing / GPS Circular Drift anomalous position pattern detector.
-- **F-274** `[WEB-EDITION]` `[OSINT]`: Maritime Weather Warning Overlays (Gale, Storm, Violent Storm, Hurricane-force Wind).
-- **F-275** `[OSINT]`: Marine Bioluminescence / Red Tide algal bloom satellite correlation.
-- **F-276** `[WEB-EDITION]` `[OSINT]`: Vessel Historical Wake / Track Path visual rendering with speed color gradients.
-- **F-277** `[OSINT]`: Bathymetry & Seabed Depth Contour mapping (GEBCO 2024 global grid).
-- **F-278** `[WEB-EDITION]` `[OSINT]`: Anchor Drag Alert when stationary vessel exceeds drift threshold in anchorage.
-- **F-279** `[OSINT]`: Dead-Reckoning calculation when vessel passes out of terrestrial AIS receiver range.
-- **F-280** `[WEB-EDITION]` `[OSINT]`: Maritime Search Filter: Filter vessels by flag, minimum speed, ship type, or destination.
-- **F-281** `[OSINT]`: AIS Station Reception Range & Coverage boundary mapping.
-- **F-282** `[WEB-EDITION]` `[OSINT]`: Ship Collision Risk (CPA - Closest Point of Approach & TCPA - Time to CPA) calculator.
-- **F-283** `[OSINT]`: Live AIS NMEA Sentence stream logger for forensic analysis.
-- **F-284** `[WEB-EDITION]` `[OSINT]`: Port Congestion Index: Average waiting hours in roads before berth entry.
-- **F-285** `[OSINT]`: Ferry Route Schedule vs Real-Time position punctuality tracker.
-- **F-286** `[WEB-EDITION]` `[OSINT]`: Coastal High Tide Flooding (Sunny Day Flooding) warning alerts.
-- **F-287** `[OSINT]`: El Niño / La Niña Southern Oscillation (ENSO) Oceanic Niño Index (ONI) tracking.
-- **F-288** `[WEB-EDITION]` `[OSINT]`: Gulf Stream & Kuroshio Current velocity boundaries and temperature fronts.
-- **F-289** `[OSINT]`: Upwelling Nutrient Zones and Commercial Fishery concentration maps.
-- **F-290** `[WEB-EDITION]` `[OSINT]`: Ship Bunker Fuel Sulfur Emission Control Area (ECA / SECA) boundary enforcement.
-- **F-291** `[OSINT]`: Satellite AIS (S-AIS) constellation pass schedule for open-ocean data gaps.
-- **F-292** `[WEB-EDITION]` `[OSINT]`: Live Harbor Webcams automatically pinned to port entry coordinates.
-- **F-293** `[OSINT]`: Subsea Pipeline integrity monitor and heavy anchor deployment alerts.
-- **F-294** `[WEB-EDITION]` `[OSINT]`: Vessel Density Heatmap rendered directly on tactical map canvas.
-- **F-295** `[OSINT]`: Wreck & Sunken Vessel historical database overlay.
-- **F-296** `[WEB-EDITION]` `[OSINT]`: Maritime Boundary / Exclusive Economic Zone (EEZ 200nm) legal limits layer.
-- **F-297** `[OSINT]`: UNCLOS Territorial Sea (12nm) and Contiguous Zone (24nm) demarcation.
-- **F-298** `[WEB-EDITION]` `[OSINT]`: Fast Vessel Intercept Vector calculator for coast guard / SAR operations.
-- **F-299** `[OSINT]`: Hydrographic Survey Vessel active sounding tracks.
-- **F-300** `[WEB-EDITION]` `[OSINT]`: Tactical Naval / Maritime SitRep exporter with ship count, flags and anomalies.
+*Radioaktivitäts-Überwachung, nukleare Sicherheitszonen, Luftschadstoffe und Waldbrand-Rauch.*
+
+- **F-052** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Safecast Open Radiation API Integration** (`api.safecast.org`) - Weltweites Bürgernetzwerk für Radioaktivitätsmessungen in Mikrosievert pro Stunde (µSv/h) und CPM ohne API-Key.
+- **F-053** `[WEB-EDITION]` `[OSINT]`: **Kernkraftwerks-Abstandsringe & Strahlungs-Referenzwert-Monitor** - Vergleicht aktuelle Messwerte mit historischen Normalwerten in 10km-, 25km- und 50km-Zonen um 440+ Atomkraftwerke weltweit.
+- **F-054** `[WEB-EDITION]` `[OSINT]`: **Staatliche Frühwarn-Messnetze (EPA RadNet & EURDEP)** - Amtliche Gammadosisleistungs-Messdaten europäischer und amerikanischer Strahlenschutzbehörden.
+- **F-055** `[WEB-EDITION]` `[OSINT]`: **Radioaktivitäts-Grenzwert-Alarm** - Optischer und akustischer Sofortalarm, sobald eine Messstation > 0,30 µSv/h anzeigt (erhöhte Strahlung über Normalpegel).
+- **F-056** `[WEB-EDITION]` `[OSINT]`: **OpenAQ Global Air Quality API v3 Integration** - Keyless Zugriff auf 30.000+ amtliche Luftgütemessstationen in über 150 Ländern.
+- **F-057** `[WEB-EDITION]` `[OSINT]`: **Feinstaub-Konzentrations-Heatmap (PM2.5 & PM10)** - Farbcodierter Luftqualitätsindex (AQI) nach EPA- und WHO-Gesundheitsstandards.
+- **F-058** `[WEB-EDITION]` `[OSINT]`: **Industrielle Schadgas-Sensorik** - Echtzeitwerte für Stickstoffdioxid (NO2), bodennahes Ozon (O3), Schwefeldioxid (SO2) und Kohlenmonoxid (CO).
+- **F-059** `[WEB-EDITION]` `[OSINT]`: **Copernicus CAMS Waldbrand-Rauchfahnen-Prognose** - 72-Stunden-Vorhersagemodell für die Ausbreitung von Ruß- und Feinstaubpartikeln.
+- **F-060** `[WEB-EDITION]` `[OSINT]`: **EFFIS Aktive Brandherde & Brandleistungs-Detektor** - Satellitenerfasste Brandherde mit Fire Radiative Power (MW) und verbrannter Hektarfläche.
+- **F-061** `[WEB-EDITION]` `[OSINT]`: **Waldbrand-Gefahrenindex (FWI)** - Kartiert Feuchtigkeitswerte feiner Brennstoffe und akute Brandgefahrstufen von Gering bis Extrem.
+- **F-062** `[WEB-EDITION]` `[OSINT]`: **Sahara-Staub- & Sandsturm-Verfolgung** - Aerosol-Optische-Tiefe (AOD) Vektoren zur Verfolgung transkontinentaler Staubwolken.
+- **F-063** `[WEB-EDITION]` `[OSINT]`: **Pollenflug- & Bio-Allergen-Gitter** - Vorhersage der Belastung durch Gräser-, Birken- und Ambrosiapollen für biologische Umweltlagebilder.
+- **F-064** `[WEB-EDITION]` `[OSINT]`: **Chemiepark- & Gefahrgut-Sicherheitsradien** - Zeichnet 5km-, 10km- und 25km-Evakuierungsradien um Industriechemieanlagen und Tanklager.
+- **F-065** `[WEB-EDITION]` `[OSINT]`: **Gaußsches Rauchfahnen-Ausbreitungsmodell** - Simuliert die windabhängige Ausbreitungsrichtung toxischer Gaswolken basierend auf Echtzeit-GFS-Winddaten.
+- **F-066** `[WEB-EDITION]` `[OSINT]`: **24-Stunden Luftqualitäts-Trenddiagramm** - Tagesverlaufskurve für Feinstaub-Peaks, Berufsverkehrsspitzen und Inversionswetterlagen.
+- **F-067** `[WEB-EDITION]` `[OSINT]`: **Taktischer Geigerzähler-Soundeffekt** - Akustische Simulation: Klick-Frequenz steigt dynamisch mit der gemessenen Strahlendosis der gewählten Station.
+- **F-068** `[WEB-EDITION]` `[OSINT]`: **Umwelt-Lage-Widget** - Kompakter Lagebalken im Dashboard mit Strahlungs-, Luftqualitäts- und Brandrisiko-Score des Kartenausschnitts.
 
 ---
 
-## Domain 5: ADS-B Flight Tracking, Transponder Decoders & Airspace Telemetry (F-301 - F-375)
+## Domain 5: Aviation Infrastructure, Airport Status & NOTAM Flight Hazards (F-069 - F-085)
 
-- **F-301** `[WEB-EDITION]` `[OSINT]`: Real-Time ADS-B Airspace Traffic ingest via OpenSky Network public API.
-- **F-302** `[WEB-EDITION]` `[OSINT]`: Mode-S Transponder Altitude, Ground Speed, True Track & Vertical Rate parsing.
-- **F-303** `[WEB-EDITION]` `[OSINT]`: Emergency Squawk Code Auto-Triggers (7700 General Emergency, 7600 Radio Failure, 7500 Hijack).
-- **F-304** `[OSINT]`: FlightRadar24 / ADS-B Exchange crowd-sourced receiver coverage gap analyzer.
-- **F-305** `[WEB-EDITION]` `[OSINT]`: Aircraft Category & Silhouette Icon rendering (Heavy Jet, Light Prop, Helicopter, UAV, Glider).
-- **F-306** `[OSINT]`: Military & Government Airframe ICAO Hex-code watchlist (VIP transport, reconnaissance, tankers).
-- **F-307** `[WEB-EDITION]` `[OSINT]`: Aerial Refueling Orbit detection (racetrack patterns between tankers and receiver aircraft).
-- **F-308** `[OSINT]`: Airborne Early Warning & Control (AWACS) patrol track identification.
-- **F-309** `[WEB-EDITION]` `[OSINT]`: Combat Air Patrol (CAP) figure-eight loitering pattern detection.
-- **F-310** `[OSINT]`: Flight Altitude Profiler (Climb, Cruise, Descent, Rapid Decompression dive detection).
-- **F-311** `[WEB-EDITION]` `[OSINT]`: Rate of Descent Alarm (>4,000 ft/min alert for severe turbulence or emergency descent).
-- **F-312** `[OSINT]`: Oceanic Airspace Track (NAT-OTS / PACOTS) daily coordinate route overlay.
-- **F-313** `[WEB-EDITION]` `[OSINT]`: Airport Holding Pattern detector (racetrack delay tracking during severe weather).
-- **F-314** `[OSINT]`: Go-Around / Missed Approach trajectory alert at destination airports.
-- **F-315** `[WEB-EDITION]` `[OSINT]`: Diverted Flight detection (divergence between filed destination and current vector).
-- **F-316** `[OSINT]`: GPS Jamming & Spoofing Heatmap derived from ADS-B Navigation Integrity Category (NIC/NACp) degradation.
-- **F-317** `[WEB-EDITION]` `[OSINT]`: Flight Path 3D Polyline rendering with altitude color encoding.
-- **F-318** `[OSINT]`: Aircraft Registration & Type lookup (FAA N-Number, European registers, airframe age & engine specs).
-- **F-319** `[WEB-EDITION]` `[OSINT]`: Notice to Airmen (NOTAM) temporary flight restrictions (TFR) polygon mapper.
-- **F-320** `[OSINT]`: Presidential & VIP VIPER Movement TFR ring generator.
-- **F-321** `[WEB-EDITION]` `[OSINT]`: Space Launch Exclusion Zone (Cape Canaveral, Vandenberg, Starbase, Baikonur, Kourou).
-- **F-322** `[OSINT]`: Supersonic Flight / Sonic Boom corridor monitoring.
-- **F-323** `[WEB-EDITION]` `[OSINT]`: Flight Wake Turbulence separation distance calculator behind Heavy aircraft.
-- **F-324** `[OSINT]`: Volcanic Ash Cloud flight hazard zone (VAAC) airspace closure tracking.
-- **F-325** `[WEB-EDITION]` `[OSINT]`: Air-to-Air Refueling rendezvous distance countdown.
-- **F-326** `[OSINT]`: Helicopter Emergency Medical Services (HEMS) active dispatch flights.
-- **F-327** `[WEB-EDITION]` `[OSINT]`: Firefighting Aircraft (airtankers, water-scoopers, smokejumper planes) tracking over active blazes.
-- **F-328** `[OSINT]`: Aerial Survey & Mapping lawnmower pattern classifier.
-- **F-329** `[WEB-EDITION]` `[OSINT]`: Glider & Sailplane thermal updraft soaring clustering.
-- **F-330** `[OSINT]`: High-Altitude Balloon / Stratospheric Airship tracking (FL600+ telemetry).
-- **F-331** `[WEB-EDITION]` `[OSINT]`: ICAO Aerodrome Location markers with runway orientations and ILS frequencies.
-- **F-332** `[OSINT]`: Airport Ground Radar (ASDE-X) simulated runway taxiway movement.
-- **F-333** `[WEB-EDITION]` `[OSINT]`: Flight Delay Index for top 100 global hub airports.
-- **F-334** `[OSINT]`: Flight Radar Range Calculator based on Line-of-Sight and atmospheric refraction.
-- **F-335** `[WEB-EDITION]` `[OSINT]`: Live ATC Radio Audio Stream connector (Broadcastify / LiveATC audio links).
-- **F-336** `[OSINT]`: ACARS (Aircraft Communications Addressing and Reporting System) message decoder.
-- **F-337** `[WEB-EDITION]` `[OSINT]`: Aircraft Ground Speed vs Airspeed Headwind/Tailwind vector calculation.
-- **F-338** `[OSINT]`: Transoceanic ETOPS (Extended-range Twin-engine Operational Performance Standards) diversion rings.
-- **F-339** `[WEB-EDITION]` `[OSINT]`: Airspace Class Boundaries (Class A, B, C, D, E, G and Special Use Airspace / SUA).
-- **F-340** `[OSINT]`: Military Operations Area (MOA) and Restricted Area (R-XXXX) active schedule monitor.
-- **F-341** `[WEB-EDITION]` `[OSINT]`: Drone No-Fly Zones around prisons, airports, critical infrastructure.
-- **F-342** `[OSINT]`: Flight Telemetry CSV & KML flight track exporter.
-- **F-343** `[WEB-EDITION]` `[OSINT]`: Multi-Aircraft Cockpit View HUD mode with virtual artificial horizon.
-- **F-344** `[OSINT]`: Airborne Weather Radar simulated beam tilt from aircraft altitude.
-- **F-345** `[WEB-EDITION]` `[OSINT]`: Clear-Air Turbulence (CAT) Encounter reports based on sudden G-force / vertical rate spikes.
-- **F-346** `[OSINT]`: In-Flight Medical Emergency diversion airport recommender based on runway length.
-- **F-347** `[WEB-EDITION]` `[OSINT]`: Aircraft Fuel Dump location monitoring over unpopulated terrain/ocean.
-- **F-348** `[OSINT]`: Flight Call Sign vs Scheduled Flight Number cross-referencing.
-- **F-349** `[WEB-EDITION]` `[OSINT]`: Aircraft Proximity Warning (TCAS alert simulation when horizontal separation < 3nm).
-- **F-350** `[OSINT]`: Global Flight Traffic Count statistics and country airspace load graphs.
-- **F-351** `[WEB-EDITION]` `[OSINT]`: Cargo Freighter Fleet Tracking (FedEx, UPS, DHL, Atlas Air).
-- **F-352** `[OSINT]`: Business Jet Charter tracker (Gulfstream, Bombardier Global, Falcon).
-- **F-353** `[WEB-EDITION]` `[OSINT]`: Search Airspace by Call Sign, ICAO Hex, Flight Number, Airline, or Origin/Dest.
-- **F-354** `[OSINT]`: Aircraft Noise Abatement preferential runway usage monitoring.
-- **F-355** `[WEB-EDITION]` `[OSINT]`: Solar Shadow Projection of aircraft onto terrain map in high-zoom mode.
-- **F-356** `[OSINT]`: Tail Strike on takeoff/landing risk sensor via pitch rate estimation.
-- **F-357** `[WEB-EDITION]` `[OSINT]`: Low Fuel Emergency (Mayday Fuel / Minimum Fuel declarations) tracker.
-- **F-358** `[OSINT]`: ADS-B MLAT (Multilateration) time-difference-of-arrival (TDOA) position solver.
-- **F-359** `[WEB-EDITION]` `[OSINT]`: Air Defense Identification Zone (ADIZ) boundary crossing alerts.
-- **F-360** `[OSINT]`: Russian Airspace Closure rerouting impact and flight duration increases.
-- **F-361** `[WEB-EDITION]` `[OSINT]`: Transpolar Flight Path tracker over Canadian and Siberian Arctic corridors.
-- **F-362** `[OSINT]`: ADS-B Receiver Station Health & Message Rate per second monitor.
-- **F-363** `[WEB-EDITION]` `[OSINT]`: Aircraft Contrail Formation Altitude predictor based on Schmidt-Appleman criterion.
-- **F-364** `[OSINT]`: Airline Hub Wave Connection efficiency index.
-- **F-365** `[WEB-EDITION]` `[OSINT]`: Bird Strike Hazard Risk zones based on seasonal migratory bird radar.
-- **F-366** `[OSINT]`: Parachute Jump Zone (PJE) active drop activity alerts.
-- **F-367** `[WEB-EDITION]` `[OSINT]`: Historical Flight Replay with interactive timeline scrubber.
-- **F-368** `[OSINT]`: Airborne Infrared Camera gimbal cross-link with target aircraft track.
-- **F-369** `[WEB-EDITION]` `[OSINT]`: Aircraft Wingtip Vortex encounter danger zones along final approach paths.
-- **F-370** `[OSINT]`: High-Altitude Reconnaissance UAV (Global Hawk, Triton) endurance trackers.
-- **F-371** `[WEB-EDITION]` `[OSINT]`: Emergency Landing Field locator within current aircraft glide ratio.
-- **F-372** `[OSINT]`: Airport Surface Wind Crosswind Component calculator for active runways.
-- **F-373** `[WEB-EDITION]` `[OSINT]`: Airframe Livery & Airline Code identification engine.
-- **F-374** `[OSINT]`: Air Traffic Control Sector boundary mapping with handover frequency display.
-- **F-375** `[WEB-EDITION]` `[OSINT]`: Comprehensive Airspace Tactical SitRep generator.
+*Flugsicherung, Flugplatz-Stopps, METAR-Klartextdekoder, Militärflug-Filter und Notfall-Squawks.*
+
+- **F-069** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **FAA NAS Airport Status API Integration** (`nasstatus.faa.gov/api/airport-status-information`) - Live-Erfassung von Ground Stops, Ground Delays und Startbahn-Verzögerungen an Großflughäfen ohne API-Key.
+- **F-070** `[WEB-EDITION]` `[OSINT]`: **Flughafen-Status & Bahnensperrungen auf der Karte** - Optische Status-Marker für weltweite Drehkreuze (JFK, ORD, ATL, LAX, LHR, FRA, CDG, HND, DXB).
+- **F-071** `[WEB-EDITION]` `[OSINT]`: **AWC METAR/TAF Klartext-Dekoder** (`aviationweather.gov/api/data/metar`) - Übersetzt kryptische ICAO-Wetterberichte auf Knopfdruck in verständliche Sprache.
+- **F-072** `[WEB-EDITION]` `[OSINT]`: **Flugwetter-Kategorie-Tagging** (VFR = Grün, MVFR = Blau, IFR = Rot, LIFR = Magenta) für über 4.000 weltweite Flugplätze.
+- **F-073** `[WEB-EDITION]` `[OSINT]`: **Seitenwind- & Gegenwind-Komponenten-Rechner** - Berechnet automatisch die exakte Gegen- und Seitenwindkomponente aller Pisten anhand des aktuellen METAR-Windvektors.
+- **F-074** `[WEB-EDITION]` `[OSINT]`: **SIGMET & AIRMET Gefahrenzonen** - Live-Polygone für schwere Gewitterzonen, schwere Vereisung, Clear-Air-Turbulenzen und Gebirgswellen.
+- **F-075** `[WEB-EDITION]` `[OSINT]`: **Vulkanasche-Sperrgebiete (VAAC)** - Kartiert gesperrte Lufträume und Flugflächen-Limits bei Vulkanausbrüchen.
+- **F-076** `[WEB-EDITION]` `[OSINT]`: **Airplanes.live Militärflugzeug-Isolierer** (`api.airplanes.live/v2/mil`) - Keyless Ein-Klick-Filter für Tankflugzeuge, Aufklärungsmaschinen (AWACS, RC-135) und strategische Transporter.
+- **F-077** `[WEB-EDITION]` `[OSINT]`: **Notfall-Transpondercode Sofortalarm** - Optische und akustische Warnung bei Squawk 7700 (General Emergency), 7600 (Funkausfall) oder 7500 (Entführung).
+- **F-078** `[WEB-EDITION]` `[OSINT]`: **Live Tower- & Flugfunk-Stream-Verzeichnis** - Verlinkte, frei zugängliche Live-ATC-Audiostreams bedeutender Verkehrsflughäfen.
+- **F-079** `[WEB-EDITION]` `[OSINT]`: **Flugzeug-Steig-/Sinkraten & Höhenprofil** - Anzeige der Vertikalgeschwindigkeit in Fuß/Minute, wahrer Eigengeschwindigkeit und barometrischer Höhe.
+- **F-080** `[WEB-EDITION]` `[OSINT]`: **Fehlanflug- & Durchstart-Erkenner** - Markiert automatisch Flugzeuge, die ihren Landeanflug unter 1.000 Fuß abbrechen und steil durchstarten.
+- **F-081** `[WEB-EDITION]` `[OSINT]`: **Flugbeschränkungsgebiete (TFR & VIP Airspace)** - Luftraumsperrzonen bei Staatsbesuchen, Raketenstarts und Großveranstaltungen.
+- **F-082** `[WEB-EDITION]` `[OSINT]`: **Großkreis-Flugdistanz- & Flugzeitrechner** - Berechnet nautische Meilen, Kompasskurs und geschätzte Flugdauer zwischen beliebigen ICAO-Flughäfen.
+- **F-083** `[WEB-EDITION]` `[OSINT]`: **Drohnen-Flugverbotszonen (UAS Geofencing)** - Markiert die 5-Meilen-Schutzzone um Flugplätze, in der ziviler Drohnenbetrieb untersagt ist.
+- **F-084** `[WEB-EDITION]` `[OSINT]`: **Flughafen-Verspätungs-Rangliste** - Zeigt die 10 am stärksten verspäteten internationalen Drehkreuze geordnet nach Wartezeit.
+- **F-085** `[WEB-EDITION]` `[OSINT]`: **Flugbetriebs-Lagepanel** - Eigener Dashboard-Monitor für Flugbeschränkungen, Wetterminima und Luftraum-Engpässe.
 
 ---
 
-## Domain 6: Seismology, Volcanology, Tsunami & Geomagnetic Hazard Detection (F-376 - F-450)
+## Domain 6: Maritime AIS Expansion, Ocean Buoys & Hydrographic Grid (F-086 - F-102)
 
-- **F-376** `[WEB-EDITION]` `[OSINT]`: USGS Real-Time Earthquake Feed (M1.0+, M2.5+, M4.5+, M6.0+ streams).
-- **F-377** `[WEB-EDITION]` `[OSINT]`: EMSC (Euro-Mediterranean Seismological Centre) real-time seismic event stream.
-- **F-378** `[WEB-EDITION]` `[OSINT]`: Earthquake Magnitude vs Focal Depth 3D Tactical Visualization.
-- **F-379** `[OSINT]`: P-Wave & S-Wave Seismic Wave Propagation velocity circles (8 km/s & 4.5 km/s).
-- **F-380** `[WEB-EDITION]` `[OSINT]`: Tsunami Warning Center (PTWC & NTWC) bulletin parser and evacuation alert triggers.
-- **F-381** `[OSINT]`: Tsunami Wave Travel Time (TTT) bathymetric contour calculator (v = sqrt(g * d)).
-- **F-382** `[WEB-EDITION]` `[OSINT]`: ShakeMap Modified Mercalli Intensity (MMI) shake contour overlays.
-- **F-383** `[OSINT]`: Peak Ground Acceleration (PGA) & Peak Ground Velocity (PGV) engineering thresholds.
-- **F-384** `[WEB-EDITION]` `[OSINT]`: Did You Feel It? (DYFI) citizen report aggregation & crowd intensity mapping.
-- **F-385** `[OSINT]`: Tectonic Plate Boundary fault line vectors (Convergent, Divergent, Transform faults).
-- **F-386** `[WEB-EDITION]` `[OSINT]`: Ring of Fire subduction zone earthquake cluster monitor.
-- **F-387** `[OSINT]`: Intraplate Seismic Hazard and ancient rift reactivation tracker (New Madrid, Rhine Graben).
-- **F-388** `[WEB-EDITION]` `[OSINT]`: Earthquake Swarm Detection algorithm (rapid sequence without single mainshock).
-- **F-389** `[OSINT]`: Volcanic Harmonic Tremor detection indicating magma movement beneath calderas.
-- **F-390** `[WEB-EDITION]` `[OSINT]`: Smithsonian Institution Global Volcanism Program (GVP) active volcano status list.
-- **F-391** `[OSINT]`: Volcanic Explosivity Index (VEI) historical comparison engine.
-- **F-392** `[WEB-EDITION]` `[OSINT]`: Volcano Color Code & Alert Level tracker (Green, Yellow, Orange, Red).
-- **F-393** `[OSINT]`: Volcanic Ash Advisory Centers (VAAC - London, Toulouse, Washington, Tokyo, Darwin, etc.).
-- **F-394** `[WEB-EDITION]` `[OSINT]`: Volcanic Ash Plume Altitude & Trajectory wind vector dispersal model.
-- **F-395** `[OSINT]`: Sulfur Dioxide (SO2) Volcanic Gas satellite emission plumes (Sentinel-5P TROPOMI).
-- **F-396** `[WEB-EDITION]` `[OSINT]`: Pyroclastic Density Current (PDC) hazard runout distance radius simulation.
-- **F-397** `[OSINT]`: Lahar (Volcanic Mudflow) drainage basin topography risk analyzer.
-- **F-398** `[WEB-EDITION]` `[OSINT]`: Caldera Inflation / Deflation InSAR ground displacement indicators.
-- **F-399** `[OSINT]`: Geysers & Hydrothermal Explosion activity monitors (Yellowstone, Taupo, Iceland).
-- **F-400** `[WEB-EDITION]` `[OSINT]`: NOAA Space Weather Prediction Center (SWPC) Solar Flare alerts (C, M, X-class).
-- **F-401** `[WEB-EDITION]` `[OSINT]`: Geomagnetic Storm Index (Kp-Index 0-9 & G1-G5 Storm levels).
-- **F-402** `[WEB-EDITION]` `[OSINT]`: Solar Wind Speed, Density & Interplanetary Magnetic Field (IMF Bz) monitor.
-- **F-403** `[WEB-EDITION]` `[OSINT]`: Aurora Borealis / Australis Viewing Probability & OVAL oval extent map.
-- **F-404** `[OSINT]`: Coronal Mass Ejection (CME) shock front arrival time predictor (Enlil Model).
-- **F-405** `[WEB-EDITION]` `[OSINT]`: Solar Radio Blackout (R1-R5) HF radio communication degradation tracker.
-- **F-406** `[OSINT]`: Solar Radiation Storm (S1-S5) satellite SEU & polar flight radiation hazard alerts.
-- **F-407** `[WEB-EDITION]` `[OSINT]`: Magnetopause Standoff Distance calculator based on solar wind dynamic pressure.
-- **F-408** `[OSINT]`: Geomagnetically Induced Currents (GIC) high-voltage power grid vulnerability index.
-- **F-409** `[WEB-EDITION]` `[OSINT]`: Ionospheric Total Electron Content (TEC) GPS signal delay & scintillation map.
-- **F-410** `[OSINT]`: Global Seismographic Network (GSN) real-time station waveform streamer (SEED/miniSEED).
-- **F-411** `[WEB-EDITION]` `[OSINT]`: Aftershock Probability & Gutenberg-Richter b-value decay forecast.
-- **F-412** `[OSINT]`: Focal Mechanism (Beach Ball) fault slip solution renderer (Normal, Reverse, Strike-Slip).
-- **F-413** `[WEB-EDITION]` `[OSINT]`: Soil Liquefaction Hazard Susceptibility based on groundwater table depth and geology.
-- **F-414** `[OSINT]`: Coseismic Landslide Hazard triggering model based on terrain slope and shake intensity.
-- **F-415** `[WEB-EDITION]` `[OSINT]`: Seiche Wave Oscillation hazard in enclosed lakes and bays during mega-quakes.
-- **F-416** `[OSINT]`: Submarine Landslide Tsunami generation predictor in coastal trenches.
-- **F-417** `[WEB-EDITION]` `[OSINT]`: Historical Megathrust Earthquake rupture zone overlays (Cascadia, Nankai, Sumatra).
-- **F-418** `[OSINT]`: Deep Focus Earthquake (focal depth > 300km) mantle transition zone tracker.
-- **F-419** `[WEB-EDITION]` `[OSINT]`: Induced Seismicity hydraulic fracturing & wastewater injection monitor.
-- **F-420** `[OSINT]`: Mining Induced Micro-Seismicity and rockburst event filters.
-- **F-421** `[WEB-EDITION]` `[OSINT]`: Nuclear Explosion Seismic Discrimination (m_b vs M_s discriminant & depth < 0km).
-- **F-422** `[OSINT]`: CTBTO (Comprehensive Nuclear-Test-Ban Treaty) Infrasound station network monitors.
-- **F-423** `[WEB-EDITION]` `[OSINT]`: Seismic Energy Release in Joules & Equivalent TNT kilotons converter.
-- **F-424** `[OSINT]`: Crustal Strain Rate & GPS Baseline shortening vectors across active fault lines.
-- **F-425** `[WEB-EDITION]` `[OSINT]`: Volcano Webcams Auto-Zoom to crater coordinate during seismic swarm.
-- **F-426** `[OSINT]`: Volcanic Gas Ratio (CO2/SO2) geochemical sensor anomaly alarms.
-- **F-427** `[WEB-EDITION]` `[OSINT]`: Acid Rain Hazard Zone around actively degassing volcanic vents.
-- **F-428** `[OSINT]`: Glacial Lake Outburst Flood (GLOF) / Jökulhlaup volcanic subglacial melting alerts.
-- **F-429** `[WEB-EDITION]` `[OSINT]`: Lava Flow Thermal Velocity & Extent projection based on digital elevation contours.
-- **F-430** `[OSINT]`: Supervolcano Resurgent Dome uplift leveling stations (Campi Flegrei bradyseism).
-- **F-431** `[WEB-EDITION]` `[OSINT]`: Solar Cycle 25 Sunspot Number & Solar Flux Index (F10.7cm) tracker.
-- **F-432** `[OSINT]`: Coronal Hole High-Speed Stream (CH HSS) solar wind forecast.
-- **F-433** `[WEB-EDITION]` `[OSINT]`: Geomagnetic Field Declination & Magnetic North Pole drift velocity monitor.
-- **F-434** `[OSINT]`: South Atlantic Anomaly (SAA) low magnetic field satellite radiation exposure zone.
-- **F-435** `[WEB-EDITION]` `[OSINT]`: Cosmic Ray Ground-Level Enhancement (GLE) neutron monitor network.
-- **F-436** `[OSINT]`: Geomagnetic Pulsations (Pc1-Pc5) magnetospheric wave diagnostics.
-- **F-437** `[WEB-EDITION]` `[OSINT]`: Global Seismic Quiet Days vs Elevated Seismicity ratio.
-- **F-438** `[OSINT]`: Slow Slip Events (SSE) and episodic tremor and slip (ETS) detectors.
-- **F-439** `[WEB-EDITION]` `[OSINT]`: Building Resonant Frequency & Structural Damage vulnerability index.
-- **F-440** `[OSINT]`: Critical Infrastructure (Dams, Nuclear Power Plants) proximity alerts to M5.0+ quakes.
-- **F-441** `[WEB-EDITION]` `[OSINT]`: Tsunami Inundation Safe Zone elevation contour highlighter (>30m safe line).
-- **F-442** `[OSINT]`: Rapid Impact Assessment & Population Exposed to strong shaking (PAGER alert system).
-- **F-443** `[WEB-EDITION]` `[OSINT]`: Emergency Whistle & SOS Audio beacon during felt seismic shock.
-- **F-444** `[OSINT]`: Subduction Megathrust Locked Zone deficit accumulation models.
-- **F-445** `[WEB-EDITION]` `[OSINT]`: Deep Ocean Trench bathymetric drop indicators (Mariana, Tonga, Kuril).
-- **F-446** `[OSINT]`: Volcano Lightning & Atmospheric Electrical Discharge tracker over eruption clouds.
-- **F-447** `[WEB-EDITION]` `[OSINT]`: Space Weather Aurora Forecast WebGL Shimmer overlay on globe.
-- **F-448** `[OSINT]`: Solar Filament Eruption & Moreton Wave shockwave detector.
-- **F-449** `[WEB-EDITION]` `[OSINT]`: Real-Time Seismic Filter: Minimum magnitude, focal depth, country, and time window.
-- **F-450** `[WEB-EDITION]` `[OSINT]`: Geological Hazard SitRep generator with earthquake and volcanic impact metrics.
+*Schiffsverkehr, Ostsee-AIS, Tiefseebojen, Monsterwellen-Alarm und Meerengen-Zähler.*
+
+- **F-086** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Digitraffic Finland Maritime Open AIS Feed** (`meri.digitraffic.fi/api/ais/v1/locations`) - 100% keyless Echtzeit-Schiffstracking in der Ostsee und im Finnischen Meerbusen.
+- **F-087** `[WEB-EDITION]` `[OSINT]`: **Schiffstyp-Farbkodierung** - Frachter (Orange), Tanker (Rot), Passagierschiff/Fähre (Blau), Militär/Patrouille (Gelb), Fischerei (Grün), Schlepper/Spezial (Lila).
+- **F-088** `[WEB-EDITION]` `[OSINT]`: **30-Minuten Kurs- & Geschwindigkeits-Vektor** - Vorausberechnete Positionspfeile basierend auf Speed Over Ground (SOG) und Course Over Ground (COG).
+- **F-089** `[WEB-EDITION]` `[OSINT]`: **NOAA NDBC Hochsee-Messbojen-Netz** (`ndbc.noaa.gov/data/realtime2/`) - 1.000+ ozeanische Bojen mit Wellenhöhe, Wellenperiode, Wassertemperatur und Luftdruck.
+- **F-090** `[WEB-EDITION]` `[OSINT]`: **Monsterwellen- & Schwerwetter-Warnsystem** - Automatischer Alarm, sobald eine Boje signifikante Wellenhöhen > 6,0 Meter (Grober Seegang / Seegang 6+) misst.
+- **F-091** `[WEB-EDITION]` `[OSINT]`: **Nadelöhr-Schiffsverkehrs-Zähler** - Live-Zählung der Schiffe auf Transitkurs in Suezkanal, Panamakanal, Straße von Hormus, Bab-el-Mandeb und Bosporus.
+- **F-092** `[WEB-EDITION]` `[OSINT]`: **"Dark Ship" AIS-Ausfall-Detektor** - Hebt Schiffe hervor, deren AIS-Signal in sicherheitskritischen Gewässern plötzlich abreißt.
+- **F-093** `[WEB-EDITION]` `[OSINT]`: **Hafenbetrieb & Schiffsabfertigungen (PortNet/NEMO)** - Gemeldete Ankünfte, aktuelle Liegeplätze und Auslaufgenehmigungen an Handelshäfen.
+- **F-094** `[WEB-EDITION]` `[OSINT]`: **Seenotrettungs-Suchmuster-Generator (SAR)** - Berechnet expandierende Quadrat- und Sektor-Suchmuster für maritime Rettungseinsätze.
+- **F-095** `[WEB-EDITION]` `[OSINT]`: **Ozeanische Tiefenlinien & Flachwasser-Overlay** - GEBCO-Unterwassertopografie zur Erkennung von Fahrrinnen, Untiefen und Tiefseegräben.
+- **F-096** `[WEB-EDITION]` `[OSINT]`: **12-Meilen-Hoheitsgewässer & 200-Meilen-AWZ Grenzen** - Vektorgrenzen der ausschließlichen Wirtschaftszonen (AWZ) aller Küstenstaaten.
+- **F-097** `[WEB-EDITION]` `[OSINT]`: **Arktische Meereis-Ausdehnung & Schifffahrts-Passagen** (NSIDC) - Eiskonzentration in Nordwestpassage und Nördlichem Seeweg.
+- **F-098** `[WEB-EDITION]` `[OSINT]`: **Meeresschutzgebiete & Illegale Fischerei Monitor** - Überlagert Naturschutzzonen mit aktiven Trawlern und Langleinenfischern.
+- **F-099** `[WEB-EDITION]` `[OSINT]`: **Nautischer Distanz- & Peilungs-Plotter** - Interaktives Messwerkzeug für exakte Seemeilen und rechtweisende Peilung zwischen Schiffspositionen.
+- **F-100** `[WEB-EDITION]` `[OSINT]`: **Schiffs-Abfangkurs- & Treffpunkt-Rechner** - Berechnet optimalen Kurs und Fahrtdauer zum Zusammentreffen zweier Schiffe auf See.
+- **F-101** `[WEB-EDITION]` `[OSINT]`: **Leuchtturm- & Seezeichen-Datenbank (AtoN)** - Positionen, Kennungen, Blitzrhythmen und Tragweiten von Leuchtfeuern und Nebelhörnern.
+- **F-102** `[WEB-EDITION]` `[OSINT]`: **See-Lagepanel** - Spezialisierter Monitor für globale Schifffahrtsrouten, Bojentelemetrie und Hafenlogistik.
 
 ---
 
-## Domain 7: Thermal Anomalies, Wildfires, Air Quality & NASA Earth Observation (F-451 - F-525)
+## Domain 7: RF Spectrum, Shortwave WebSDR & Signal Intelligence (F-103 - F-119)
 
-- **F-451** `[WEB-EDITION]` `[OSINT]`: NASA FIRMS (Fire Information for Resource Management) VIIRS 375m active fire hotspot ingest.
-- **F-452** `[WEB-EDITION]` `[OSINT]`: MODIS 1km Thermal Anomaly & Fire Radiative Power (FRP in Megawatts) calculation.
-- **F-453** `[OSINT]`: Copernicus Emergency Management Service (EMS) rapid mapping activation tracker.
-- **F-454** `[WEB-EDITION]` `[OSINT]`: Wildfire Perimeter Growth Rate & Fire Spread Vector based on surface wind.
-- **F-455** `[OSINT]`: Wildland-Urban Interface (WUI) Structure Threat probability index.
-- **F-456** `[WEB-EDITION]` `[OSINT]`: NASA Worldview True Color corrected reflectance satellite imagery daily composite layer.
-- **F-457** `[OSINT]`: Sentinel-2 MSI Multi-Spectral Normalized Difference Vegetation Index (NDVI) drought layer.
-- **F-458** `[WEB-EDITION]` `[OSINT]`: Normalized Burn Ratio (NBR) and Burned Area Severity assessment.
-- **F-459** `[OSINT]`: Landsat 8/9 Thermal Infrared Sensor (TIRS) surface temperature anomalies.
-- **F-460** `[WEB-EDITION]` `[OSINT]`: Air Quality Index (AQI) global real-time monitoring (US EPA standard).
-- **F-461** `[WEB-EDITION]` `[OSINT]`: Particulate Matter PM2.5 & PM10 fine dust particle concentration tracking.
-- **F-462** `[WEB-EDITION]` `[OSINT]`: Tropospheric Ozone (O3) ground-level lung irritant concentration mapper.
-- **F-463** `[WEB-EDITION]` `[OSINT]`: Nitrogen Dioxide (NO2) urban industrial & vehicular traffic pollution plumes.
-- **F-464** `[WEB-EDITION]` `[OSINT]`: Carbon Monoxide (CO) incomplete combustion and massive wildfire smoke tracers.
-- **F-465** `[WEB-EDITION]` `[OSINT]`: Aerosol Optical Depth (AOD at 550nm) atmospheric haze and visibility obstruction.
-- **F-466** `[OSINT]`: European Air Quality Index (CAQI / EAQI) multi-pollutant composite.
-- **F-467** `[WEB-EDITION]` `[OSINT]`: Wildfire Smoke Plume Drift forecast (HRRR-Smoke vertical integrated smoke).
-- **F-468** `[OSINT]`: Agricultural Stubble Burning seasonal surge tracking (Punjab, Southeast Asia, Amazon).
-- **F-469** `[WEB-EDITION]` `[OSINT]`: Deforestation & Illegal Logging clearing rate monitors in tropical rainforest reserves.
-- **F-470** `[OSINT]`: Gas Flaring & Methane Leak thermal footprint detection at oil fields.
-- **F-471** `[WEB-EDITION]` `[OSINT]`: Coal Mine Fire & Underground Peat Fire sub-surface thermal hotspot monitor.
-- **F-472** `[OSINT]`: Industrial Refinery Flare & Blast Furnace thermal signature monitoring.
-- **F-473** `[WEB-EDITION]` `[OSINT]`: Drought Severity & Palmer Drought Severity Index (PDSI) soil moisture deficits.
-- **F-474** `[OSINT]`: Evapotranspiration Deficit & Crop Water Stress early famine warning.
-- **F-475** `[WEB-EDITION]` `[OSINT]`: Snow Cover Extent & Snow Water Equivalent (SWE) mountain runoff monitor.
-- **F-476** `[OSINT]`: Glacier Retreat & Calving Event satellite boundary change tracker.
-- **F-477** `[WEB-EDITION]` `[OSINT]`: Sea Ice Extent & Concentration (Arctic & Antarctic daily ice edge).
-- **F-478** `[OSINT]`: Greenland Ice Sheet Melt Extent percentage tracking.
-- **F-479** `[WEB-EDITION]` `[OSINT]`: Global Lake Water Level & Reservoir Storage satellite altimetry tracking.
-- **F-480** `[OSINT]`: River Discharge & Flood Inundation surface water extent (Copernicus GloFAS).
-- **F-481** `[WEB-EDITION]` `[OSINT]`: Flash Drought rapid intensification detection (soil moisture drop > 2 categories in 2 weeks).
-- **F-482** `[OSINT]`: Dust Bowl Wind Erosion potential based on bare soil fraction and wind speed.
-- **F-483** `[WEB-EDITION]` `[OSINT]`: Urban Heat Island (UHI) temperature delta between asphalt and canopy cover.
-- **F-484** `[OSINT]`: NASA Black Marble Nighttime Lights (VIIRS Day/Night Band) electrical power grid outage detection.
-- **F-485** `[WEB-EDITION]` `[OSINT]`: Light Pollution Dark Sky Map (Bortle Scale) for astronomical observatories.
-- **F-486** `[OSINT]`: Oil Spill Coastal slick detection via Synthetic Aperture Radar (SAR) roughness dampening.
-- **F-487** `[WEB-EDITION]` `[OSINT]`: Algal Bloom Chlorophyll-a concentration in lakes and coastal bays.
-- **F-488** `[OSINT]`: Coral Bleaching Thermal Stress Degree Heating Weeks (DHW) global alerts.
-- **F-489** `[WEB-EDITION]` `[OSINT]`: Locust Swarm Breeding Zone climatic condition indicators (desert rainfall triggers).
-- **F-490** `[OSINT]`: Methane Super-Emitter satellite detection (GHGSat & Sentinel-5P plumes).
-- **F-491** `[WEB-EDITION]` `[OSINT]`: Carbon Dioxide (CO2) Global Concentration (NASA OCO-2/3 satellite feeds).
-- **F-492** `[OSINT]`: Stratospheric Ozone Hole area and minimum Dobson Units (DU) over Antarctica.
-- **F-493** `[WEB-EDITION]` `[OSINT]`: Thermal Infrared Ground Hotspot Clustering (groups fires into named wildfire complexes).
-- **F-494** `[OSINT]`: Smoke Inhalation Health Hazard warnings based on PM2.5 exceedances (>150 ug/m3).
-- **F-495** `[WEB-EDITION]` `[OSINT]`: Fire Weather Index (FWI) combining temperature, RH, wind and drought code.
-- **F-496** `[OSINT]`: Haines Index (Lower Atmosphere Stability & Dryness) for extreme crown fire potential.
-- **F-497** `[WEB-EDITION]` `[OSINT]`: Keetch-Byram Drought Index (KBDI) wildfire danger rating.
-- **F-498** `[OSINT]`: Active Fire Evacuation Zone circular and wind-driven elliptical buffers.
-- **F-499** `[WEB-EDITION]` `[OSINT]`: Ash Fall Hazard zone downwind of major industrial and forest blazes.
-- **F-500** `[OSINT]`: Real-Time Burn Scar Perimeter GeoJSON exporter.
-- **F-501** `[WEB-EDITION]` `[OSINT]`: Satellite Pass Tracker: Shows countdown to next high-res optical overpass.
-- **F-502** `[OSINT]`: Cloud Cover Filter on optical satellite imagery (automatically selects cloud-free tiles).
-- **F-503** `[WEB-EDITION]` `[OSINT]`: False Color Infrared (B8-B4-B3) vegetation health and burn scar discriminator.
-- **F-504** `[OSINT]`: Shortwave Infrared (SWIR B12-B8A-B4) smoke penetration and active flaming front visibility.
-- **F-505** `[WEB-EDITION]` `[OSINT]`: Moisture Stress Index (MSI) for forest canopy drying.
-- **F-506** `[OSINT]`: Dead Fuel Moisture (1-hour, 10-hour, 100-hour, 1000-hour timelags).
-- **F-507** `[WEB-EDITION]` `[OSINT]`: Pollen Count & Allergen Forecast (Birch, Grass, Ragweed, Olive).
-- **F-508** `[OSINT]`: Industrial Chemical Incident plume dispersion model (ALOHA chemical database).
-- **F-509** `[WEB-EDITION]` `[OSINT]`: Radiation Environmental Monitoring Network (RadNet / EURDEP ambient gamma dose rate).
-- **F-510** `[OSINT]`: Nuclear Power Plant Exclusion Zone (10-mile EPZ & 50-mile ingestion pathway).
-- **F-511** `[WEB-EDITION]` `[OSINT]`: Acidification & Soil pH degradation maps.
-- **F-512** `[OSINT]`: Land Surface Temperature (LST) anomaly from 10-year baseline.
-- **F-513** `[WEB-EDITION]` `[OSINT]`: Sea Surface Salinity (SMAP satellite) ocean current salinity tracers.
-- **F-514** `[OSINT]`: Mangrove Forest Coastal Buffer erosion trackers.
-- **F-515** `[WEB-EDITION]` `[OSINT]`: Wetland Inundation Dynamics and seasonal drying.
-- **F-516** `[OSINT]`: Permafrost Thawing & Methane Thermokarst lake expansion.
-- **F-517** `[WEB-EDITION]` `[OSINT]`: Desertification Rate & Sand Dune Migration vectors.
-- **F-518** `[OSINT]`: Urban Green Space Canopy Cover percentage per metropolitan district.
-- **F-519** `[WEB-EDITION]` `[OSINT]`: Firefighter Wind Shift Warning: Automatic alert on forecasted wind direction change.
-- **F-520** `[OSINT]`: Pyrocumulus Cloud Lightning Ignition trigger for secondary blazes.
-- **F-521** `[WEB-EDITION]` `[OSINT]`: Air Pollution Mask Recommendation Engine (N95 / FFP2 advisory triggers).
-- **F-522** `[OSINT]`: Ground-level Visibility reduction from photochemical smog and sandstorms.
-- **F-523** `[WEB-EDITION]` `[OSINT]`: Thermal Fire Brightness Temperature Kelvin indicator.
-- **F-524** `[OSINT]`: Satellite Imagery Difference Engine (Before vs After event change detection).
-- **F-525** `[WEB-EDITION]` `[OSINT]`: Tactical Environmental & Wildfire SitRep generator.
+*Weltweite WebSDR-Empfänger, Notfunkfrequenzen, Blitz-Triangulation und Funkpeilung.*
+
+- **F-103** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **KiwiSDR Globales WebSDR-Verzeichnis** (`rx.linkfanel.net/kiwisdr_com.js`) - 100% keyless Verzeichnis von 1.200+ online frei zugänglichen Software-Defined-Radio-Empfängern weltweit.
+- **F-104** `[WEB-EDITION]` `[OSINT]`: **KiwiSDR Schnell-Abstimmung** - Ein Klick öffnet den gewünschten WebSDR-Empfänger direkt auf der gewählten Frequenz im Browserfenster.
+- **F-105** `[WEB-EDITION]` `[OSINT]`: **Internationale Notruf-Frequenz-Schnellauswahl**:
+  - 2182 kHz (See-Notruf Grenzwelle)
+  - 121,5 MHz (Ziviler Luftnotruf VHF)
+  - 243,0 MHz (Militärischer Luftnotruf UHF)
+  - 14.300 MHz (Maritime Mobile Service Net)
+  - 7.110 MHz / 14.195 MHz (Globaler Notfunkverkehr der Funkamateure).
+- **F-106** `[WEB-EDITION]` `[OSINT]`: **Kurzwellen-Normalfrequenz- & Zeitzeichensender** (WWV 5/10/15/20 MHz, CHU Kanada 3330/7850/14670 kHz) - Frequenzmarker zur Prüfung der Ionosphärenausbreitung.
+- **F-107** `[WEB-EDITION]` `[OSINT]`: **Zahlensender- & Militär-Baken-Frequenzführer** - Frequenzen und Sendepläne strategischer Stationen (UVB-76 'The Buzzer' 4625 kHz, The Pip 3756 kHz, The Squeaky Wheel).
+- **F-108** `[WEB-EDITION]` `[OSINT]`: **Blitzortung / LightningMaps WebSocket Stream** - Direkte Anbindung an das weltweite elektromagnetische Blitz-Triangulationsnetzwerk.
+- **F-109** `[WEB-EDITION]` `[OSINT]`: **Echtzeit-Donnerschall-Ausbreitungsring** - Berechnet und visualisiert die Schallwelle (343 m/s) vom Blitzeinschlag zum Standort des Nutzers.
+- **F-110** `[WEB-EDITION]` `[OSINT]`: **Amateurfunk Maidenhead-Locator-Konverter** - Bidirektionale Umrechnung zwischen Breiten-/Längengraden und 6-stelligem QTH-Locator (z. B. `JO31kk`).
+- **F-111** `[WEB-EDITION]` `[OSINT]`: **Ionosphärische Grenzfequenzkarte (MUF - Maximum Usable Frequency)** - Keyless Weltkarte für Kurzwellen-Reflexion und Weitverkehrsbedingungen (DX).
+- **F-112** `[WEB-EDITION]` `[OSINT]`: **Funkhorizont-Rechner** - Berechnet optische und radioelektrische Reichweite von VHF/UHF-Antennen anhand der Masthöhe: $d \approx 4,12 \times \sqrt{h}$.
+- **F-113** `[WEB-EDITION]` `[OSINT]`: **Behördenfunk- & Rettungsdienst-Stream-Verzeichnis** (Broadcastify / OpenMHz) - Übersicht frei verfügbarer BOS- und Feuerwehr-Funkstreams.
+- **F-114** `[WEB-EDITION]` `[OSINT]`: **KiwiSDR Empfangsqualitäts-Filter** - Filtert SDR-Stationen nach Signal-Rausch-Abstand (SNR) und freien Nutzerplätzen.
+- **F-115** `[WEB-EDITION]` `[OSINT]`: **Morseschrift (CW) Text-zu-Ton & Flashtool** - Wandelt Text in 800-Hz-Morse-Audiotöne und optische Blinksignale um.
+- **F-116** `[WEB-EDITION]` `[OSINT]`: **Internationales Rufzeichen-Präfix-Verzeichnis** - Erkennt sofort das Herkunftsland jedes Funkrufzeichens (z. B. `DL` = Deutschland, `W/K/N` = USA, `JA` = Japan).
+- **F-117** `[WEB-EDITION]` `[OSINT]`: **Aurora-Funkwarnung** - Signalisiert bei geomagnetischem Kp-Index >= 5 die Möglichkeit von UKW-Überreichweiten durch Polarlichter (Aurora-Scatter).
+- **F-118** `[WEB-EDITION]` `[OSINT]`: **KiwiSDR Wasserfall-Vorschau** - Mini-Spektrum-Schnappschuss zur schnellen Beurteilung der Bandaktivität.
+- **F-119** `[WEB-EDITION]` `[OSINT]`: **Funk- & Frequenz-Lagepanel** - Zentraler Monitor für Kurzwellen-Überwachung, Notruffrequenzen und SDR-Tuning.
 
 ---
 
-## Domain 8: Tactical Multi-Monitor Command HUD, WebGL Shaders & Glass UI (F-526 - F-600)
+## Domain 8: International Borders, Critical Energy & Infrastructure Grid (F-120 - F-136)
 
-- **F-526** `[WEB-EDITION]` `[OSINT]`: Cyberpunk Military-Grade Glassmorphism HUD stylesheet with zero-lag hardware acceleration.
-- **F-527** `[WEB-EDITION]` `[OSINT]`: CRT Scanline & Phosphor Decay WebGL Post-Processing Shader toggle.
-- **F-528** `[WEB-EDITION]` `[OSINT]`: Multi-Monitor Layout Presets: 1-Monitor Laptop, 2-Monitor Dual-Head, 3-Monitor Command Bridge, 4-Monitor NOC.
-- **F-529** `[WEB-EDITION]` `[OSINT]`: 12-Card Grid Layout Engine with drag-and-drop tile rearrangement and persistent LocalStorage state.
-- **F-530** `[WEB-EDITION]` `[OSINT]`: MON-01 Tactical Global Map card with 60 FPS smooth vector panning and zoom.
-- **F-531** `[WEB-EDITION]` `[OSINT]`: MON-02 Live Optical Surveillance feed card with instant stream switcher.
-- **F-532** `[WEB-EDITION]` `[OSINT]`: MON-03 Numerical Weather Prediction & Consensus Model card.
-- **F-533** `[WEB-EDITION]` `[OSINT]`: MON-04 Doppler NEXRAD & Dual-Pol Radar telemetry card.
-- **F-534** `[WEB-EDITION]` `[OSINT]`: MON-05 Global Seismological & Tsunami hazard card.
-- **F-535** `[WEB-EDITION]` `[OSINT]`: MON-06 Space Weather & Solar Magnetosphere card.
-- **F-536** `[WEB-EDITION]` `[OSINT]`: MON-07 Thermal Wildfires & VIIRS satellite hotspot card.
-- **F-537** `[WEB-EDITION]` `[OSINT]`: MON-08 Maritime AIS & Naval Traffic telemetry card.
-- **F-538** `[WEB-EDITION]` `[OSINT]`: MON-09 ADS-B Airspace & Flight Intercept card.
-- **F-539** `[WEB-EDITION]` `[OSINT]`: MON-10 Atmospheric Air Quality & Particulate PM2.5 card.
-- **F-540** `[WEB-EDITION]` `[OSINT]`: MON-11 ISS Orbital Telemetry & Real-Time Ground Track card.
-- **F-541** `[WEB-EDITION]` `[OSINT]`: MON-12 Tactical SitRep & Threat Matrix intelligence feed card.
-- **F-542** `[WEB-EDITION]` `[OSINT]`: Tactical Audio Engine: Synthetic synthesizer bleeps, radar sweep hum, and alert sirens (Web Audio API).
-- **F-543** `[WEB-EDITION]` `[OSINT]`: Master Mute & Volume Control slider with decibel level meter.
-- **F-544** `[WEB-EDITION]` `[OSINT]`: Fullscreen Focused Mode (F11) with auto-hiding navigation chrome.
-- **F-545** `[WEB-EDITION]` `[OSINT]`: Night Vision Tactical Green Phosphor Color Theme (`#00ff66`).
-- **F-546** `[WEB-EDITION]` `[OSINT]`: Amber High-Contrast Defense Theme (`#ffb703`).
-- **F-547** `[WEB-EDITION]` `[OSINT]`: Cyberpunk Neon Cyan/Magenta Theme (`#00f0ff` / `#ff003c`).
-- **F-548** `[WEB-EDITION]` `[OSINT]`: Stealth Pitch Black OLED Theme (`#000000` with 0% backlight bleed).
-- **F-549** `[WEB-EDITION]` `[OSINT]`: Global Threat Level Status Indicator (DEFCON 1 to DEFCON 5 dynamic banner).
-- **F-550** `[WEB-EDITION]` `[OSINT]`: Live Tactical Clock displaying UTC, Zulu, GPS Time, and Local Time with millisecond ticker.
-- **F-551** `[WEB-EDITION]` `[OSINT]`: Dynamic Coordinate Crosshair Readout displaying cursor latitude, longitude, and MGRS grid.
-- **F-552** `[WEB-EDITION]` `[OSINT]`: Military Grid Reference System (MGRS) & UTM coordinate converter.
-- **F-553** `[WEB-EDITION]` `[OSINT]`: Distance Measurement Tool (Ruler) with Great Circle geodesic path rendering.
-- **F-554** `[WEB-EDITION]` `[OSINT]`: Tactical Radius Circle Tool (Draws 10km, 50km, 100km standoff buffer zones).
-- **F-555** `[WEB-EDITION]` `[OSINT]`: Polygon Area Measurement Tool for burned hectares or flooded square kilometers.
-- **F-556** `[WEB-EDITION]` `[OSINT]`: Map Basemap Switcher (Dark Tactical, Satellite Imagery, Topographic Terrain, OpenStreetMap).
-- **F-557** `[WEB-EDITION]` `[OSINT]`: 3D Tactical Globe Mode powered by Three.js / WebGL with day-night terminator shadow.
-- **F-558** `[WEB-EDITION]` `[OSINT]`: Sun Angle & Solar Declination real-time illumination on globe surface.
-- **F-559** `[WEB-EDITION]` `[OSINT]`: Moon Phase & Lunar Illumination percentage calculator for night-recon visibility.
-- **F-560** `[WEB-EDITION]` `[OSINT]`: Extreme RAM Cleaner 2.0: Deep DOM node unbinding, WebGL context loss recovery, and memory compaction.
-- **F-561** `[WEB-EDITION]` `[OSINT]`: Hardware Resource Telemetry: Monitored DOM nodes, JS heap usage, active video players, and FPS counter.
-- **F-562** `[WEB-EDITION]` `[OSINT]`: Screen Capture Tool: One-click PNG snapshot of any individual monitor card or full board.
-- **F-563** `[WEB-EDITION]` `[OSINT]`: Tactical Briefing PDF Exporter: Generates mission-ready situational reports.
-- **F-564** `[WEB-EDITION]` `[OSINT]`: Keyboard Shortcuts (Hotkey Grid): 1-9 for quick monitor focus, M for mute, Space for radar pause.
-- **F-565** `[WEB-EDITION]` `[OSINT]`: Command Palette (Ctrl+K) for instant fuzzy search across 10,000+ locations, cameras, and tools.
-- **F-566** `[WEB-EDITION]` `[OSINT]`: Notification Toast System with non-intrusive alert stacking and urgency colors.
-- **F-567** `[WEB-EDITION]` `[OSINT]`: Browser Tab Notification Badge: Displays active severe warning counts directly on favicon.
-- **F-568** `[WEB-EDITION]` `[OSINT]`: Web Audio Emergency Siren synthesizer with dual-tone frequency modulation.
-- **F-569** `[WEB-EDITION]` `[OSINT]`: Dynamic Compass Rose with magnetic variation correction.
-- **F-570** `[WEB-EDITION]` `[OSINT]`: Elevation Profile Tool: Interactive elevation graph between two selected map points.
-- **F-571** `[WEB-EDITION]` `[OSINT]`: Layer Opacity Sliders: Independent transparency controls for radar, satellite, and heatmap layers.
-- **F-572** `[WEB-EDITION]` `[OSINT]`: Tactical HUD Glass Blur level adjustment (from razor sharp 0px to heavy 20px blur).
-- **F-573** `[WEB-EDITION]` `[OSINT]`: Responsive Mobile Viewport Mode with swipeable full-screen monitor tabs.
-- **F-574** `[WEB-EDITION]` `[OSINT]`: Multi-Touch Gesture Controls: Pinch-to-zoom and two-finger map rotation.
-- **F-575** `[WEB-EDITION]` `[OSINT]`: WebGL Bloom & Glow Shader for neon interface accents and hot targets.
-- **F-576** `[WEB-EDITION]` `[OSINT]`: Target Tracking Lock: Keeps map viewport centered on moving vessel or aircraft.
-- **F-577** `[WEB-EDITION]` `[OSINT]`: Split Screen Dual-Map Compare Mode (e.g. Radar vs Satellite side-by-side).
-- **F-578** `[WEB-EDITION]` `[OSINT]`: Time Scrubber Slider synchronized across all animated weather and radar layers.
-- **F-579** `[WEB-EDITION]` `[OSINT]`: Speed Multiplier Controls for timeline animation playback (0.5x, 1x, 2x, 5x, 10x).
-- **F-580** `[WEB-EDITION]` `[OSINT]`: Map Marker Clustering with high-performance Supercluster.js integration.
-- **F-581** `[WEB-EDITION]` `[OSINT]`: Custom GeoJSON Layer Import: Drag-and-drop local KML/GeoJSON files directly onto tactical map.
-- **F-582** `[WEB-EDITION]` `[OSINT]`: Map Marker Annotation Tool: Add custom tactical pins, text notes, and danger zones.
-- **F-583** `[WEB-EDITION]` `[OSINT]`: Session State Save & Load: Export complete workspace layout and active layers to JSON.
-- **F-584** `[WEB-EDITION]` `[OSINT]`: Auto-Rotate Globe Mode for ambient SOC / NOC big-screen command room displays.
-- **F-585** `[WEB-EDITION]` `[OSINT]`: Low-Bandwidth Mode: Drops video feeds to static snapshots and throttles radar updates.
-- **F-586** `[WEB-EDITION]` `[OSINT]`: High-Contrast Accessibility Mode meeting WCAG 2.1 AAA standards.
-- **F-587** `[WEB-EDITION]` `[OSINT]`: Multi-Language UI Support (English, German, French, Spanish, Ukrainian, Japanese).
-- **F-588** `[WEB-EDITION]` `[OSINT]`: Tactical SitRep Auto-Scroll News Ticker across the bottom of the screen.
-- **F-589** `[WEB-EDITION]` `[OSINT]`: Mini-Map Inset: Overhead global navigation overview in the bottom-right corner.
-- **F-590** `[WEB-EDITION]` `[OSINT]`: Card Collapse & Maximize controls on every monitor card.
-- **F-591** `[WEB-EDITION]` `[OSINT]`: Card Pop-Out into Standalone Browser Window for multi-screen desktop setups.
-- **F-592** `[WEB-EDITION]` `[OSINT]`: Persistent Map Position: Remembers zoom and center between browser restarts.
-- **F-593** `[WEB-EDITION]` `[OSINT]`: Dynamic Grid Resizing with CSS Grid auto-fill and auto-fit minmax calculation.
-- **F-594** `[WEB-EDITION]` `[OSINT]`: Interactive Legend: Clickable legend items that toggle individual data categories.
-- **F-595** `[WEB-EDITION]` `[OSINT]`: Tactical HUD Watermark with build version, git commit hash, and verification badge.
-- **F-596** `[WEB-EDITION]` `[OSINT]`: System Diagnostic Modal: Live WebSocket ping, edge latency, and API throughput graphs.
-- **F-597** `[WEB-EDITION]` `[OSINT]`: Quick Target Bookmark Toolbar: Fast jump to Key Hotspots (Taipei, Kyiv, Hormuz, Iceland).
-- **F-598** `[WEB-EDITION]` `[OSINT]`: Ambient Room Lighting Color Sync: Web Bluetooth / Philips Hue API integration for red alert room lights.
-- **F-599** `[WEB-EDITION]` `[OSINT]`: Screen Wake Lock API integration to prevent display sleep during operations.
-- **F-600** `[WEB-EDITION]` `[OSINT]`: Master Factory Reset Button with confirmation modal to reset all settings to defaults.
+*Grenzkontrollen, Atomkraftwerke, Stromnetz-Frequenz, Staudämme und Rohöl-Pipelines.*
+
+- **F-120** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **U.S. Customs & Border Protection (CBP) Border Wait Times API** (`bwt.cbp.gov/api/bwtpublicmod`) - Keyless Echtzeit-Wartezeiten an allen Landgrenzübergängen zwischen den USA, Kanada und Mexiko.
+- **F-121** `[WEB-EDITION]` `[OSINT]`: **Fahrspuren-Aufschlüsselung an Grenzübergängen** - Standardspuren, Frachtverkehr, SENTRI / NEXUS Schnellabfertigung und Fußgängerzonen.
+- **F-122** `[WEB-EDITION]` `[OSINT]`: **Grenzposten-Status-Warnungen** - Benachrichtigung bei Spur-Reduzierungen, Grenzschließungen und Protestblockaden.
+- **F-123** `[WEB-EDITION]` `[OSINT]`: **OpenStreetMap Overpass Taktische Infrastruktur-Engine** (`overpass-api.de/api/interpreter`) - Keyless Abfrage kritischer Bauwerke:
+  - Kernkraftwerke (`power=plant + plant:source=nuclear`)
+  - Umspannwerke (`power=substation`)
+  - Öltanklager & LNG-Terminals (`man_made=storage_tank + content=oil`)
+  - Richtfunktürme & Radardome (`man_made=mast` / `man_made=tower`)
+  - Zivilschutzbunker (`amenity=bunker`).
+- **F-124** `[WEB-EDITION]` `[OSINT]`: **IAEA PRIS Nuklear-Reaktor-Datenbank** - Geokodierte Datenbank aller 440+ kommerziellen Atomreaktoren mit Megawatt-Leistung, Reaktortyp (DWR, SWR, WWER, CANDU) und Kühlwasserquelle.
+- **F-125** `[WEB-EDITION]` `[OSINT]`: **Global Dam Watch & GRanD Talsperren-Kataster** - Standorte, Staumauertyp, Speichervolumen in Mio. Kubikmetern und Zweck von 7.000+ Großtalsperren.
+- **F-126** `[WEB-EDITION]` `[OSINT]`: **Stromnetz-Netzfrequenz- & Stabilitäts-Monitor** (ENTSO-E & OpenNEM) - Live-Überwachung der Netzfrequenz (50,00 Hz Europa / 60,00 Hz USA) zur Früherkennung von Großkraftwerksausfällen.
+- **F-127** `[WEB-EDITION]` `[OSINT]`: **Stromerzeugungs-Mix-Anzeige** - Prozentuale Anteile von Atomkraft, Kohle, Erdgas, Wasserkraft, Wind und Photovoltaik am Strommix.
+- **F-128** `[WEB-EDITION]` `[OSINT]`: **Internationale Öl- & Gaspipeline-Routen** - Trassen von Nord Stream, D門zhba, Trans-Mediterranean, Keystone und Colonial Pipeline.
+- **F-129** `[WEB-EDITION]` `[OSINT]`: **Strategische Bahn-Frachtkorridore & Alpentunnel** - Gotthard-Basistunnel, Brennerpass, Kanaltunnel und Transsibirische Eisenbahn.
+- **F-130** `[WEB-EDITION]` `[OSINT]`: **Weltraum-Bahnhöfe & Raketen-Kosmodrome** (Cape Canaveral, Vandenberg, Baikonur, Kourou, Tanegashima, Wenchang) - Startrampen-Koordinaten und Seesperrzonen.
+- **F-131** `[WEB-EDITION]` `[OSINT]`: **Strategische Erdölreserve-Kavernen (SPR)** - Geografische Lagen und Füllkapazitäten strategischer Rohstofflager.
+- **F-132** `[WEB-EDITION]` `[OSINT]`: **Meerwasserentsalzungsanlagen-Atlas** - Kritische Trinkwasserproduktionsanlagen im Nahen Osten und ariden Regionen.
+- **F-133** `[WEB-EDITION]` `[OSINT]`: **Globale Halbleiter-Fabriken (Fabs)** - Standorte führender Chipfabriken (TSMC, Intel, Samsung, ASML).
+- **F-134** `[WEB-EDITION]` `[OSINT]`: **Grenzwartezeiten-Heatmap** - Farbschema (Grün < 15 Min, Gelb 15-45 Min, Rot > 45 Min, Blinkend Rot = Gesperrt).
+- **F-135** `[WEB-EDITION]` `[OSINT]`: **Kritische Infrastruktur Näherungsalarm** - Schlägt Alarm, wenn Waldbrände oder Naturkatastrophen weniger als 15 km von einem AKW, Damm oder Tanklager entfernt sind.
+- **F-136** `[WEB-EDITION]` `[OSINT]`: **Infrastruktur- & Energie-Lagepanel** - Dedizierte Großansicht für Grenzübergänge, Kraftwerksstatus und Stromnetzstabilität.
 
 ---
 
-## Domain 9: Model Context Protocol (MCP) & Autonomous AI Agent Tools (F-601 - F-675)
+## Domain 9: Neue Taktische UI Panels & Multi-Monitor Ansichten MON-13 bis MON-20 (F-137 - F-153)
 
-- **F-601** `[WEB-EDITION]` `[OSINT]`: Native Model Context Protocol (MCP) JSON-RPC 2.0 Server over Server-Sent Events (`/mcp/sse`).
-- **F-602** `[WEB-EDITION]` `[OSINT]`: MCP HTTP POST Endpoint (`/mcp`, `/mcp/messages`) for stateless agent integration.
-- **F-603** `[WEB-EDITION]` `[OSINT]`: Discovery Endpoint: `/.well-known/mcp.json` & `/.well-known/agent-card.json`.
-- **F-604** `[WEB-EDITION]` `[OSINT]`: AI Agent Manifest `llms.txt` and `llms-full.txt` optimized for LLM reasoning engines.
-- **F-605** `[WEB-EDITION]` `[OSINT]`: OpenAPI 3.1.0 Specification (`/openapi.json`) for automated tool generation.
-- **F-606** `[OSINT]`: Python Native MCP Stdio Server (`run_mcp.py`) for Claude Desktop, Cursor, and Windsurf.
-- **F-607** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_get_weather_consensus` (147-model consensus for any lat/lon).
-- **F-608** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_get_severe_storms` (NWS & MeteoAlarm active alerts).
-- **F-609** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_get_earthquakes` (USGS & EMSC seismic events with MMI).
-- **F-610** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_get_space_weather` (Kp-index, solar flare, and aurora forecast).
-- **F-611** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_get_webcams_in_radius` (locates live cameras within radius km).
-- **F-612** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_get_tactical_sitrep` (synthesizes global threat intelligence report).
-- **F-613** `[OSINT]`: MCP Tool: `omniscope_query_historical_weather` (deep historical reanalysis from ERA5).
-- **F-614** `[OSINT]`: MCP Tool: `omniscope_analyze_radar_hook_echo` (evaluates NEXRAD Doppler dipole for tornadoes).
-- **F-615** `[OSINT]`: MCP Tool: `omniscope_run_jev_prediction` (OpenJEV severe convective threat matrix calculation).
-- **F-616** `[OSINT]`: MCP Tool: `omniscope_get_flight_telemetry` (queries ADS-B airspace traffic around coordinate).
-- **F-617** `[OSINT]`: MCP Tool: `omniscope_get_marine_vessels` (queries maritime AIS traffic and dark vessel flags).
-- **F-618** `[OSINT]`: MCP Tool: `omniscope_get_firms_wildfires` (queries NASA VIIRS thermal fire hotspots).
-- **F-619** `[OSINT]`: MCP Tool: `omniscope_get_camera_snapshot` (retrieves raw base64 or binary image of any camera).
-- **F-620** `[OSINT]`: MCP Tool: `omniscope_trigger_boardroom_effect` (triggers audio/visual alarm on active user HUD).
-- **F-621** `[WEB-EDITION]` `[OSINT]`: Agent Natural Language Intent Parser: Translates prompt to tactical map coordinate.
-- **F-622** `[OSINT]`: Autonomous Threat Assessment Loop: Agent polls global sensors and compiles hourly sitrep.
-- **F-623** `[WEB-EDITION]` `[OSINT]`: Tool Call Rate-Limiter & Token Bucket to prevent upstream API exhaustion.
-- **F-624** `[OSINT]`: Structured JSON Schema validation for all 73+ Python MCP tool inputs.
-- **F-625** `[WEB-EDITION]` `[OSINT]`: Structured JSON Schema validation for all Web Edition MCP tools.
-- **F-626** `[OSINT]`: Agent Memory Vault: Stores past natural disaster coordinates and damage assessments in SQLite.
-- **F-627** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_set_board_viewport` (Agent dynamically pans user map to event).
-- **F-628** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_toggle_map_layer` (Agent dynamically activates radar or fire layer).
-- **F-629** `[WEB-EDITION]` `[OSINT]`: MCP Tool: `omniscope_set_monitor_feed` (Agent switches Monitor 2 camera to event location).
-- **F-630** `[OSINT]`: MCP Tool: `omniscope_flush_system_ram` (Agent instructs system to free cached buffers).
-- **F-631** `[WEB-EDITION]` `[OSINT]`: Tool Output Truncation & Summarization Guardrail to protect agent context window.
-- **F-632** `[OSINT]`: Multi-Agent Swarm Coordinator: Orchestrates specialized subagents (Weather, Naval, Aviation).
-- **F-633** `[WEB-EDITION]` `[OSINT]`: Live Answer Capsules in `llms.txt` for instant single-shot retrieval.
-- **F-634** `[OSINT]`: MCP Resource: `omniscope://system/health` (returns live server RAM, CPU, and worker load).
-- **F-635** `[OSINT]`: MCP Resource: `omniscope://weather/consensus/{lat}/{lon}` (URI-based resource reading).
-- **F-636** `[OSINT]`: MCP Resource: `omniscope://sitrep/current` (URI-based resource reading of live briefing).
-- **F-637** `[WEB-EDITION]` `[OSINT]`: Agent Prompt Templates for Disaster First Responders, Journalists, and Meteorologists.
-- **F-638** `[OSINT]`: Automated Evidence Packager: Compiles radar snapshot, satellite view, and METAR into zip file.
-- **F-639** `[WEB-EDITION]` `[OSINT]`: AI Chat Assistant Drawer embedded directly in the web command interface.
-- **F-640** `[OSINT]`: Semantic Vector Search across 1,000,000+ camera metadata descriptions using sqlite-vec.
-- **F-641** `[WEB-EDITION]` `[OSINT]`: Client-Side Fast Fuzzy Search over 1,500 curated webcams.
-- **F-642** `[OSINT]`: Agentic Geofencing: Sets automated triggers when severe weather enters user-defined polygon.
-- **F-643** `[WEB-EDITION]` `[OSINT]`: Browser Notification Webhook for AI Agent tactical alerts.
-- **F-644** `[OSINT]`: Autonomous Satellite Image Downloader for coordinates flagged by thermal sensors.
-- **F-645** `[WEB-EDITION]` `[OSINT]`: Cross-Origin Resource Sharing (CORS) Universal Support for all MCP endpoints.
-- **F-646** `[OSINT]`: Local LLM Support: Compatible with Ollama, llama.cpp, and vLLM local endpoints.
-- **F-647** `[WEB-EDITION]` `[OSINT]`: Direct Integration with Gemini 1.5 Pro / Flash Function Calling.
-- **F-648** `[OSINT]`: Direct Integration with Anthropic Claude 3.5 Sonnet Tool Use specs.
-- **F-649** `[WEB-EDITION]` `[OSINT]`: Direct Integration with OpenAI GPT-4o Realtime Tool Calling.
-- **F-650** `[OSINT]`: Automated Unit & Integration Test Suite (`tests/test_all_mcp_tools.py`).
-- **F-651** `[WEB-EDITION]` `[OSINT]`: Automated Edge Integration Test for `_worker.js` MCP handlers.
-- **F-652** `[OSINT]`: Model Drift & Upstream API Schema Validator (detects breaking changes in open APIs).
-- **F-653** `[WEB-EDITION]` `[OSINT]`: Graceful Degradation: MCP tools return structured error JSON rather than throwing 500s.
-- **F-654** `[OSINT]`: Agent Token Usage Profiler: Measures prompt and completion tokens per tactical query.
-- **F-655** `[WEB-EDITION]` `[OSINT]`: Interactive MCP Tool Playground inside the web settings modal.
-- **F-656** `[OSINT]`: Multi-Modal Vision Agent: Feeds camera snapshots into vision LLM for smoke/damage verification.
-- **F-657** `[WEB-EDITION]` `[OSINT]`: Zero-Authentication Public Read Policy for non-sensitive open data endpoints.
-- **F-658** `[OSINT]`: Optional Bearer Token Authentication for private desktop instances.
-- **F-659** `[WEB-EDITION]` `[OSINT]`: RFC 9309 Compliant Crawler Directives distinguishing AI Search from bulk training scrapers.
-- **F-660** `[OSINT]`: Tool Execution Timing Telemetry: Measures millisecond latency of every MCP tool call.
-- **F-661** `[WEB-EDITION]` `[OSINT]`: Agentic Audio Announcer: Uses Speech Synthesis API to read aloud urgent sitreps.
-- **F-662** `[OSINT]`: Historical Event Reconstruction: Agent replays multi-sensor feeds from any past date.
-- **F-663** `[WEB-EDITION]` `[OSINT]`: Quick Copy Curl Command for any API or MCP tool call.
-- **F-664** `[OSINT]`: Agent Sandboxing: MCP tools run in strictly read-only mode with zero filesystem write access.
-- **F-665** `[WEB-EDITION]` `[OSINT]`: Edge Cache-Control headers ensuring AI agents receive fresh data (<60s TTL).
-- **F-666** `[OSINT]`: Automated M8ven Trust Index Compliance verification script.
-- **F-667** `[WEB-EDITION]` `[OSINT]`: Dynamic Live Badge on README (`M8ven Verified`).
-- **F-668** `[OSINT]`: Git Commit Metadata Ingestion: Server reports its exact commit SHA and build timestamp via MCP.
-- **F-669** `[WEB-EDITION]` `[OSINT]`: Agent Capability Negotiation during JSON-RPC `initialize` handshake.
-- **F-670** `[OSINT]`: Background Job Manager: Agents can launch long-running telemetry monitoring tasks.
-- **F-671** `[WEB-EDITION]` `[OSINT]`: Stream Reconstruction: Agent can request sequential frames of any webcam.
-- **F-672** `[OSINT]`: Discord & Telegram Webhook Dispatcher for automated agent alerts.
-- **F-673** `[WEB-EDITION]` `[OSINT]`: In-Memory Session Cache: Remembers recent tool outputs across multi-turn agent chats.
-- **F-674** `[OSINT]`: Agent Audit Trail: Comprehensive log of all incoming agent commands and tool invocations.
-- **F-675** `[WEB-EDITION]` `[OSINT]`: Unified MCP Protocol Documentation rendered in markdown at `/mcp`.
+*Acht brandneue interaktive Lage-Monitore, Bild-in-Bild-Player, Split-Screen und 20-Monitor-Layout.*
+
+- **F-137** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-13: Cyber Outage & Subsea Cable Threat Matrix** - Live-Karte für weltweite Netzausfälle, BGP-Routenwarnungen und Seekabeltrassen.
+- **F-138** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-14: GDACS Multi-Hazard Crisis Room** - UN-Katastrophen-Feed, Tropensturm-Zugbahnen und ReliefWeb-Notstandsberichte.
+- **F-139** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-15: Asteroid & Space Hazard Sentry** - Asteroiden-Begegnungsradar, Solar-Röntgenfluss und Raumstations-Tracking.
+- **F-140** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-16: Nuclear & Radiation Sensor Grid** - Safecast-Radioaktivitätswerte, EURDEP-Gammadosis und AKW-Schutzzonen.
+- **F-141** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-17: Airport Operations & Airfield Ground Delay Board** - FAA-Flughafenstatus, METAR-Klartextdekoder und Flugplatz-Wetterkategorien.
+- **F-142** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-18: Global Border & Transit Gateways** - Grenzkontroll-Wartezeiten, Abfertigungsspuren und Transportkorridore.
+- **F-143** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-19: KiwiSDR Spectrum Scanner** - Interaktive Karte von 1.200+ WebSDR-Funkstationen mit Direkt-Tuning.
+- **F-144** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **MON-20: Critical Energy & Grid Stability Monitor** - 50/60 Hz Netzfrequenz, Stromerzeugungs-Mix und Talsperren-Füllstände.
+- **F-145** `[WEB-EDITION]` `[OSINT]`: **20-Monitor Taktik-Umschalter** - Schaltet das Dashboard stufenlos zwischen 12-Monitor-Standard und 20-Monitor-Kommandozentrale um.
+- **F-146** `[WEB-EDITION]` `[OSINT]`: **Floating Picture-in-Picture (PiP) Player** - Löst jede Kamera oder jedes Radar als frei verschiebbare Miniatur über der Hauptkarte ab.
+- **F-147** `[WEB-EDITION]` `[OSINT]`: **Dual-Viewport Split-Screen Modus** - Vergleicht Satellitenaufnahmen Seite an Seite mit Live-Doppler-Radar oder Webcam-Feeds.
+- **F-148** `[WEB-EDITION]` `[OSINT]`: **Vollbild-Kommandowand-Preset (F11)** - Optimiert für Beamer, Leitstellen und Mehrschirm-Setups im Lagezentrum.
+- **F-149** `[WEB-EDITION]` `[OSINT]`: **Drag-and-Drop Monitor-Reihenfolge** - Individuelles Verschieben und Anordnen der Monitore MON-01 bis MON-20.
+- **F-150** `[WEB-EDITION]` `[OSINT]`: **Taktischer Audio-Stummschalter** - Stummschaltung aller Alarmsirenen, Radar-Beeps und Geigerzähler-Sounds mit einem Klick.
+- **F-151** `[WEB-EDITION]` `[OSINT]`: **High-Contrast Night Recon Theme** - Echtes OLED-Schwarz (`#000000`) mit kontrastreichen Bernstein- und Cyan-Akzenten für blendfreie Nachtarbeit.
+- **F-152** `[WEB-EDITION]` `[OSINT]`: **Taktisches Fadenkreuz & Koordinaten-Retikel** - Zeigt Fadenkreuz mit Breiten-/Längengrad und Geländehöhe im Kartenzentrum.
+- **F-153** `[WEB-EDITION]` `[OSINT]`: **Panik-Schutz-Taste (Boss Key)** - Tastenkürzel `Ctrl+Shift+X` schaltet den Bildschirm blitzschnell auf ein neutrales Dokument um.
 
 ---
 
-## Domain 10: Edge Security, Zero-Trust WAF, Privacy Sandboxing & Resilient Telemetry (F-676 - F-750)
+## Domain 10: OSINT Field Tools, Calculators, Geo-Decoders & Exporters (F-154 - F-170)
 
-- **F-676** `[WEB-EDITION]` `[OSINT]`: Cloudflare Anycast Edge Deployment with sub-20ms global latency.
-- **F-677** `[WEB-EDITION]` `[OSINT]`: Zero-Tolerance Exploit Probe Barrier (Immediate 403 on `.env`, `.php`, `wp-`, `.git`, `.aws`).
-- **F-678** `[WEB-EDITION]` `[OSINT]`: Multi-Slash Normalization Defense: Catches obfuscated bypasses like `//xmlrpc.php` and `///.env`.
-- **F-679** `[WEB-EDITION]` `[OSINT]`: Database Dump & Backup Extension Blocking (`.dump`, `.sql`, `.tar.gz`, `.bak`).
-- **F-680** `[WEB-EDITION]` `[OSINT]`: Shell History & Config File Shield (`.bash_history`, `.zshrc`, `.docker/.env`).
-- **F-681** `[WEB-EDITION]` `[OSINT]`: Targeted Scanner Signature Drop (`pensketruckrental`, `finemarkbank`, `alfa-rex`).
-- **F-682** `[WEB-EDITION]` `[OSINT]`: Strict WAF Security Response Headers (`X-WAF-Action: BLOCK`, `X-Robots-Tag: noindex, nofollow`).
-- **F-683** `[WEB-EDITION]` `[OSINT]`: Strict Content-Security-Policy (CSP) with frame-ancestors 'none' and safe script nonces.
-- **F-684** `[WEB-EDITION]` `[OSINT]`: HTTP Strict Transport Security (HSTS) with `max-age=31536000; includeSubDomains; preload`.
-- **F-685** `[WEB-EDITION]` `[OSINT]`: X-Content-Type-Options: `nosniff` enforcement on all assets.
-- **F-686** `[WEB-EDITION]` `[OSINT]`: X-Frame-Options: `DENY` to prevent clickjacking attacks on the command HUD.
-- **F-687** `[WEB-EDITION]` `[OSINT]`: Referrer-Policy: `strict-origin-when-cross-origin` to prevent URL telemetry leaks.
-- **F-688** `[WEB-EDITION]` `[OSINT]`: Permissions-Policy: Disables microphone, camera, geolocation, and payment APIs unless granted.
-- **F-689** `[WEB-EDITION]` `[OSINT]`: AI Search Engine Bot Allowlist (`Googlebot`, `Bingbot`, `OAI-SearchBot`, `PerplexityBot`).
-- **F-690** `[WEB-EDITION]` `[OSINT]`: Bulk AI Scraper Hard Block on HTML UI (`GPTBot`, `CCBot`, `Bytespider`, `ClaudeBot`).
-- **F-691** `[WEB-EDITION]` `[OSINT]`: Pure Client-Side Architecture: Zero user IP addresses or browsing history logged to disk.
-- **F-692** `[WEB-EDITION]` `[OSINT]`: Server-Side Request Forgery (SSRF) Guard in Edge Proxy: Blocks private IPs (`10.0.0.0/8`, `192.168.0.0/16`, `127.0.0.1`).
-- **F-693** `[WEB-EDITION]` `[OSINT]`: IPv6 Loopback (`::1`) and Link-Local (`169.254.0.0/16`) proxy blocking.
-- **F-694** `[WEB-EDITION]` `[OSINT]`: AWS/GCP/Azure Cloud Metadata Endpoint (`169.254.169.254`) strict drop.
-- **F-695** `[WEB-EDITION]` `[OSINT]`: Upstream Proxy Content-Type Validation: Verifies image or video MIME before relaying.
-- **F-696** `[WEB-EDITION]` `[OSINT]`: Proxy Response Streaming with chunk-by-chunk piping to prevent memory bloat.
-- **F-697** `[WEB-EDITION]` `[OSINT]`: Edge In-Memory Caching for weather providers and webcam catalogs.
-- **F-698** `[WEB-EDITION]` `[OSINT]`: Client-Side Fallback Bridge (`js/web_bridge.js`): Works seamlessly offline via cached data.
-- **F-699** `[OSINT]`: SQLite Database Integrity Check (`PRAGMA integrity_check`) at server startup.
-- **F-700** `[OSINT]`: SQLite WAL Mode (Write-Ahead Logging) for concurrent zero-lock database operations.
-- **F-701** `[OSINT]`: Local Encrypted Vault for optional user API keys using AES-256-GCM.
-- **F-702** `[WEB-EDITION]` `[OSINT]`: Zero-Key Guarantee: Full web suite operates without any mandatory API keys or login.
-- **F-703** `[OSINT]`: Process Sandbox Isolation: Video decoders run in isolated subprocesses.
-- **F-704** `[WEB-EDITION]` `[OSINT]`: Sanitized HTML Rendering: All user inputs and API responses sanitized via DOMPurify.
-- **F-705** `[OSINT]`: Automated SSL Certificate Verification on all upstream Python HTTP requests.
-- **F-706** `[WEB-EDITION]` `[OSINT]`: Subresource Integrity (SRI) hashes on all external CDN scripts (Leaflet, Three.js, HLS.js).
-- **F-707** `[OSINT]`: Rate-Limit Shield: 60 requests/minute per client IP on local API endpoints.
-- **F-708** `[WEB-EDITION]` `[OSINT]`: Cloudflare DDoS Mitigation & Automatic Rate Limiting at edge points of presence.
-- **F-709** `[OSINT]`: Graceful Shutdown Handler: Closes all database connections and releases network ports cleanly.
-- **F-710** `[WEB-EDITION]` `[OSINT]`: LocalStorage Storage Quota Monitor: Prevents browser storage exhaustion.
-- **F-711** `[OSINT]`: Memory Leak Detection: Monitors Python RSS memory and triggers GC collection every 15 minutes.
-- **F-712** `[WEB-EDITION]` `[OSINT]`: JavaScript Error Boundary: Catches runtime exceptions and shows tactical recovery card.
-- **F-713** `[OSINT]`: Strict Python Typing (`mypy` compliant) across all backend services.
-- **F-714** `[WEB-EDITION]` `[OSINT]`: Strict JavaScript Syntax Verification (`node -c`) before every deployment.
-- **F-715** `[OSINT]`: Zero External Analytics or Tracking Scripts (No Google Analytics, No Facebook Pixel).
-- **F-716** `[WEB-EDITION]` `[OSINT]`: 100% GDPR, CCPA, and European Privacy Compliance by design.
-- **F-717** `[OSINT]`: Local Cold Storage Policy: All downloaded radar and satellite data stays strictly on drive `D:\`.
-- **F-718** `[WEB-EDITION]` `[OSINT]`: Edge Cold Start Optimization: Worker bundle size kept under 1MB for instant startup.
-- **F-719** `[OSINT]`: Automated Python Dependency Vulnerability Scanner (`pip-audit`).
-- **F-720** `[WEB-EDITION]` `[OSINT]`: Automated NPM Dependency Vulnerability Scanner (`npm audit`).
-- **F-721** `[OSINT]`: IP Anonymization on all diagnostic log outputs.
-- **F-722** `[WEB-EDITION]` `[OSINT]`: HTTPS Everywhere: Automatic 301 redirect from HTTP to HTTPS.
-- **F-723** `[OSINT]`: Fail-Safe Hardware Acceleration: Gracefully falls back to Canvas 2D if WebGL is unavailable.
-- **F-724** `[WEB-EDITION]` `[OSINT]`: Single-Page Application (SPA) Client-Side Router with history state preservation.
-- **F-725** `[OSINT]`: Automated Database Backup Rotation (keeps 7 daily snapshots on drive `D:\`).
-- **F-726** `[WEB-EDITION]` `[OSINT]`: Cache Invalidation Strategy: Fingerprinted asset URLs to prevent stale CSS/JS.
-- **F-727** `[OSINT]`: Cross-Platform Compatibility: Windows 10/11, Ubuntu/Debian Linux, and macOS.
-- **F-728** `[WEB-EDITION]` `[OSINT]`: Cross-Browser Compatibility: Chrome, Firefox, Safari, Edge, Brave, and Opera.
-- **F-729** `[OSINT]`: Multi-Threaded Asynchronous Task Execution powered by Python `asyncio` and `uvloop`.
-- **F-730** `[WEB-EDITION]` `[OSINT]`: Web Workers for intensive background data parsing and coordinate transformations.
-- **F-731** `[OSINT]`: Process Priority Management: Background tasks run at `IDLE_PRIORITY_CLASS` on Windows.
-- **F-732** `[WEB-EDITION]` `[OSINT]`: Service Worker PWA (Progressive Web App) offline caching capability.
-- **F-733** `[OSINT]`: Clean Uninstaller: Removes all local files and registry traces cleanly upon request.
-- **F-734** `[WEB-EDITION]` `[OSINT]`: Responsive Viewport Scaling from 3840×2160 (4K UHD) down to 360×640 mobile.
-- **F-735** `[OSINT]`: Comprehensive QA Release Auditor subagent verification protocol.
-- **F-736** `[WEB-EDITION]` `[OSINT]`: Continuous Integration & Deployment via Cloudflare Pages GitHub integration.
-- **F-737** `[OSINT]`: Open-Source Sovereignty: Zero proprietary locked APIs, 100% public data feeds.
-- **F-738** `[WEB-EDITION]` `[OSINT]`: Automated sitemap.xml generation for search engine discovery.
-- **F-739** `[OSINT]`: Forensic Log Export in standard CEF (Common Event Format) for SIEM ingestion.
-- **F-740** `[WEB-EDITION]` `[OSINT]`: Live Ping Telemetry to verify upstream data provider status.
-- **F-741** `[OSINT]`: Hardened WebSocket Server with heartbeat ping-pong frames every 30 seconds.
-- **F-742** `[WEB-EDITION]` `[OSINT]`: WebSocket Automatic Reconnect with exponential backoff and jitter.
-- **F-743** `[OSINT]`: Local Network Discovery via mDNS / Zeroconf for multi-room terminal sync.
-- **F-744** `[WEB-EDITION]` `[OSINT]`: Dark Mode Contrast Ratio > 7:1 for all text elements.
-- **F-745** `[OSINT]`: Multi-Core CPU Utilization for parallel numerical model consensus calculations.
-- **F-746** `[WEB-EDITION]` `[OSINT]`: Zero Memory Leaks: 48-hour continuous runtime soak test certified.
-- **F-747** `[OSINT]`: Automated Crash Recovery: Auto-restarts backend services if an unhandled exception occurs.
-- **F-748** `[WEB-EDITION]` `[OSINT]`: Fast Cold Start: First Contentful Paint (FCP) < 0.8s on 4G connections.
-- **F-749** `[OSINT]`: M8ven Verified Publisher Grade Maintenance protocol.
-- **F-750** `[WEB-EDITION]` `[OSINT]`: Tactical Command Grid Certification: Final Release Grade A+ Standard.
+*Foto-Geolokalisierungs-Rechner, Schattenlängen, Koordinaten-Umrechner, GeoJSON/KML-Exporte.*
+
+- **F-154** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Sonnen- & Schattenwinkel Foto-Geolokalisierungs-Rechner** - Berechnet Sonnenstand (Azimut und Elevation) für jedes historische Datum und ermittelt die erwartete Schattenlänge bekannter Objekte: $L = \frac{h}{\tan(\theta)}$.
+- **F-155** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Dämmerungs-Rechner (Bürgerlich / Nautisch / Astronomisch)** - Berechnet Sonnenauf- und -untergang, Goldene Stunde und absolute Dunkelheitsfenster für Aufklärungsmissionen.
+- **F-156** `[WEB-EDITION]` `[OSINT]` `[EXE/APK]`: **Militär- & Taktik-Koordinaten-Konverter** - Bidirektionale Sofortumrechnung zwischen:
+  - Dezimalgrad (DD: `52.5200, 13.4050`)
+  - Grad Minuten Sekunden (DMS: `52°31'12"N, 13°24'18"E`)
+  - UTM (Universal Transverse Mercator: `33U 391820 5820120`)
+  - MGRS (Military Grid Reference System: `33UUU9182020120`)
+  - Maidenhead QTH Locator (`JO62qn`).
+- **F-157** `[WEB-EDITION]` `[OSINT]`: **Großkreis-Distanz- & Peilungs-Werkzeug** - Exakte Distanz in Kilometern, Meilen und Seemeilen inklusive Anfangs- und Endkompasskurs.
+- **F-158** `[WEB-EDITION]` `[OSINT]`: **VHF/UHF Sichtlinien- & Funkhorizont-Rechner** - Berücksichtigt Sende- und Empfangsantennenhöhe über gekrümmter Erdoberfläche: $d \approx 4,12 \times (\sqrt{h_{\text{tx}}} + \sqrt{h_{\text{rx}}})$.
+- **F-159** `[WEB-EDITION]` `[OSINT]`: **METAR / TAF Rohcode Sofort-Dekoder** - Eingabefeld für Flugwettercodes (z. B. `EDDF 200820Z 04008KT 9999 FEW030 14/06 Q1022 NOSIG`) mit sofortiger Klartextanzeige.
+- **F-160** `[WEB-EDITION]` `[OSINT]`: **Seismischer P- und S-Wellen Ankunftszeit-Schätzer** - Berechnet die exakte Vorwarnzeit bis zum Eintreffen der zerstörerischen Scherwellen am Standort des Nutzers.
+- **F-161** `[WEB-EDITION]` `[OSINT]`: **Doppler-Windvektor Trigonometrische Zerlegung** - Löst Radialgeschwindigkeiten des Radars in echten meteorologischen Windvektor auf: $V_{\text{true}} = \frac{V_r}{\cos(\theta - \phi)}$.
+- **F-162** `[WEB-EDITION]` `[OSINT]`: **Geschwindigkeits-, Zeit- & Wegstrecken-Rechner** - Berechnet Reisezeiten bei vorgegebener Geschwindigkeit in Knoten, km/h oder mph.
+- **F-163** `[WEB-EDITION]` `[OSINT]`: **Taktischer Radien-Generator** - Klick auf einen Kartenpunkt zeichnet konzentrische Sperr- und Gefahrenringe (1km, 5km, 10km, 25km, 50km).
+- **F-164** `[WEB-EDITION]` `[OSINT]`: **Polygon-Flächen- & Umfangs-Messwerkzeug** - Ermöglicht das Einzeichnen von Suchgebieten und berechnet die Fläche in $\text{km}^2$, Hektar und Quadratmeilen.
+- **F-165** `[WEB-EDITION]` `[OSINT]`: **Ein-Klick GeoJSON Taktik-Export** - Exportiert alle aktiven Kartenebenen, Katastrophenpolygone und Kameras in eine standardisierte GeoJSON-Datei für QGIS und ArcGIS.
+- **F-166** `[WEB-EDITION]` `[OSINT]`: **KML / KMZ Export für Google Earth** - Erzeugt 3D-fähige KML-Dateien von Flugrouten, Satelliten-Bodenspuren und Unwetterzonen.
+- **F-167** `[WEB-EDITION]` `[OSINT]`: **CSV-Sensor-Telemetrie-Export** - Lädt sichtbare Sensortabellen (Erdbeben, Wetterstationen, Luftgütedaten) als saubere CSV-Tabelle herunter.
+- **F-168** `[WEB-EDITION]` `[OSINT]`: **Hochauflösender Taktischer Screenshot-Generator** - Erzeugt PNG-Kartenexporte mit Zeitstempel, Koordinatenraster und Klassifizierungsbanner.
+- **F-169** `[WEB-EDITION]` `[OSINT]`: **Offline-Lagebild Snapshot-Paketierer** - Packt das aktuelle Lagebild in eine autarke HTML/JS-Datei für den netzunabhängigen Einsatz im Feld.
+- **F-170** `[WEB-EDITION]` `[OSINT]`: **Missions-Fallakten Manager (Case Files)** - Speichert, benennt und lädt vollständige OSINT-Untersuchungen (aktive Ebenen, Kamera-Favoriten, Pins und Notizen).
 
 ---
 
-## Web Edition Allocation Summary
-- **Total Features in Master Plan:** 750
-- **Features Tagged `[WEB-EDITION]`:** 248 features (well above the 140+ minimum requirement!)
-- **Primary Web Focus Areas:**
-  1. Universal Edge Video & Image Stream Proxy with m3u8 playlist rewriting
-  2. Automatic High-Resolution Ortho-Reconnaissance Optical Fallback (ESRI World Imagery)
-  3. Camera Failover Circuit Breaker (Auto-connect to nearest active node on 502/504)
-  4. Client-side Doppler radar time-scrubber with smooth frame interpolation
-  5. Real-time seismic magnitude filter & tsunami travel time indicators
-  6. Space weather Kp-index and solar flare alerts
-  7. NASA FIRMS thermal wildfire hotspot layers
-  8. Maritime AIS & ADS-B aircraft overlays
-  9. MCP Serverless SSE & REST endpoints for autonomous AI agents
-  10. Extreme RAM cleaner 2.0 and WebGL memory compactor
+## 📊 Zusammenfassung des v2.1.0 Ausbauplans
+* **Gesamtanzahl neuer Features:** **170 Features** (F-001 bis F-170)
+* **Neue Groß-Monitore:** **8 neue Panels** (MON-13 bis MON-20)
+* **Web-Edition Kompatibilität:** **Über 120 Features speziell mit `[WEB-EDITION]` gekennzeichnet**
+* **Self-Hosted Core & Desktop/APK:** **Alle 170 Features uneingeschränkt nutzbar**
+* **Zero-Fake Richtlinie:** 100% echte, verifizierte offene Daten — keinerlei Fake-Simulationen oder Dummy-Platzhalter!

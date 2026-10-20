@@ -258,6 +258,14 @@
             <label><input type="checkbox" id="layer-telemetry" checked /> ▲ Verkehrs-Telemetrie (Autobahn & DOT)</label>
             <label><input type="checkbox" id="layer-weather-engines" checked /> ⬟ Wetter-Stationen (DWD / NOAA / WMO)</label>
             <label><input type="checkbox" id="layer-transit-engines" checked /> 🚀 Globaler Transit (Flug / Schiff / Bahn)</label>
+            <label style="color:#00f0ff;font-weight:700;"><input type="checkbox" id="layer-cables" checked /> 🌐 Seekabel (550+ Subsea Fiber)</label>
+            <label style="color:#ef4444;font-weight:700;"><input type="checkbox" id="layer-gdacs" checked /> ⚠️ GDACS Katastrophen (UN/EU)</label>
+            <label style="color:#a3e635;font-weight:700;"><input type="checkbox" id="layer-radiation" checked /> ☢️ Strahlung (Safecast)</label>
+            <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-baltic-ais" checked /> 🚢 Ostsee AIS Schiffe (Digitraffic)</label>
+            <label style="color:#f59e0b;font-weight:700;"><input type="checkbox" id="layer-metar" checked /> ✈️ Flughafen METAR (AWC)</label>
+            <label style="color:#fbbf24;font-weight:700;"><input type="checkbox" id="layer-kiwisdr" checked /> 📻 WebSDR Funk (KiwiSDR)</label>
+            <label style="color:#10b981;font-weight:700;"><input type="checkbox" id="layer-borders" checked /> 🛂 Grenzwartezeiten (US CBP)</label>
+            <label style="color:#c084fc;font-weight:700;"><input type="checkbox" id="layer-tor" checked /> 🧅 Tor Relays (Onionoo)</label>
         </div>
         <div class="weather-mode-ctrl" style="display:inline-flex;align-items:center;gap:4px;background:#090e1a;padding:2px 8px;border-radius:4px;border:1px solid #1e293b;">
             <span style="font-size:0.7rem;color:#94a3b8;font-weight:700;">WETTER-ANZEIGE:</span>
@@ -354,6 +362,10 @@
                         <span>🔮</span>
                         <span id="jev-mode-btn-text">JEV 500M (GPU/NPU)</span>
                     </button>
+                    <button id="btn-toggle-osint-tools" class="ops-btn" style="background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;" title="Taktische OSINT Feld-Werkzeuge (Schattenrechner, MGRS-Konverter, METAR-Decoder, Geo-Export)">
+                        <span>🛠️</span>
+                        <span>OSINT TOOLS</span>
+                    </button>
                 </div>
                 <div id="map-mode-hint" style="font-size:0.75rem;color:var(--text-muted);">
                     CLICK ANYWHERE ON MAP TO LOCK NEAREST WEBCAM & WEATHER
@@ -430,6 +442,150 @@
 
             <div class="monitor-body" style="position:relative;">
                 <div id="map"></div>
+
+                <!-- OSINT FIELD TOOLS DRAWER (SLIDE-OVER TACTICAL WORKBENCH) -->
+                <div id="osint-tools-drawer" class="osint-tools-drawer hidden" style="display:none;position:absolute;top:0;right:0;width:380px;max-width:90%;height:100%;background:#090d1a;border-left:2px solid #f59e0b;box-shadow:-5px 0 25px rgba(0,0,0,0.85);z-index:1000;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;contain:layout style;">
+                    <!-- DRAWER HEADER -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#0d1527;border-bottom:1px solid #1e293b;flex-shrink:0;">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="color:#f59e0b;font-size:1.1rem;">🛠️</span>
+                            <strong style="color:#f59e0b;font-size:0.85rem;letter-spacing:0.5px;">OSINT TACTICAL TOOLBOX</strong>
+                        </div>
+                        <button id="btn-close-osint-tools" class="ops-btn" style="padding:2px 8px;font-size:0.75rem;background:transparent;border:1px solid #334155;color:#94a3b8;cursor:pointer;">✕</button>
+                    </div>
+
+                    <!-- DRAWER TABS -->
+                    <div style="display:flex;background:#060a14;border-bottom:1px solid #1e293b;overflow-x:auto;flex-shrink:0;">
+                        <button class="ops-btn active osint-tab-btn" data-tab="tab-shadow" style="flex:1;padding:8px 4px;font-size:0.68rem;border:none;border-bottom:2px solid #f59e0b;color:#f59e0b;background:#090f20;cursor:pointer;white-space:nowrap;">☀️ SCHATTEN</button>
+                        <button class="ops-btn osint-tab-btn" data-tab="tab-coords" style="flex:1;padding:8px 4px;font-size:0.68rem;border:none;border-bottom:2px solid transparent;color:#94a3b8;background:transparent;cursor:pointer;white-space:nowrap;">🌐 KOORDINATEN</button>
+                        <button class="ops-btn osint-tab-btn" data-tab="tab-metar" style="flex:1;padding:8px 4px;font-size:0.68rem;border:none;border-bottom:2px solid transparent;color:#94a3b8;background:transparent;cursor:pointer;white-space:nowrap;">✈️ METAR</button>
+                        <button class="ops-btn osint-tab-btn" data-tab="tab-export" style="flex:1;padding:8px 4px;font-size:0.68rem;border:none;border-bottom:2px solid transparent;color:#94a3b8;background:transparent;cursor:pointer;white-space:nowrap;">💾 EXPORT</button>
+                    </div>
+
+                    <!-- DRAWER CONTENT BODY -->
+                    <div style="flex:1;padding:12px;overflow-y:auto;box-sizing:border-box;">
+                        
+                        <!-- TAB 1: SUN & SHADOW PHOTO-GEOLOCATION -->
+                        <div id="tab-shadow" class="osint-tab-pane">
+                            <div style="font-size:0.72rem;color:#facc15;font-weight:bold;margin-bottom:6px;">☀️ SONNENSTAND & SCHATTENRECHNER (CHRONOLOCATION)</div>
+                            <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:10px;line-height:1.4;">Berechnet Sonnenazimut, Höhenwinkel und Schattenwurf für Foto-Geolokalisierung und Zeitbestimmung.</div>
+                            
+                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">STANDORT (BREITE / LÄNGE):</label>
+                                    <div style="display:flex;gap:4px;">
+                                        <input type="number" step="0.0001" id="tool-sun-lat" class="ops-input" value="50.1109" style="flex:1;font-size:0.75rem;padding:4px;background:#030712;border:1px solid #334155;color:#fff;" />
+                                        <input type="number" step="0.0001" id="tool-sun-lon" class="ops-input" value="8.6821" style="flex:1;font-size:0.75rem;padding:4px;background:#030712;border:1px solid #334155;color:#fff;" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">DATUM & UHRZEIT (LOKALZEIT):</label>
+                                    <input type="datetime-local" id="tool-sun-datetime" class="ops-input" style="width:100%;font-size:0.75rem;padding:4px;background:#030712;border:1px solid #334155;color:#fff;" />
+                                </div>
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">OBJEKTHÖHE (METER):</label>
+                                    <input type="number" step="0.1" id="tool-sun-height" class="ops-input" value="1.8" style="width:100%;font-size:0.75rem;padding:4px;background:#030712;border:1px solid #334155;color:#fff;" />
+                                </div>
+                                <button id="btn-calc-sun-shadow" class="ops-btn" style="padding:6px;background:#b45309;color:#fff;font-weight:bold;font-size:0.75rem;border:none;cursor:pointer;margin-top:4px;">
+                                    ☀️ SCHATTENWINKEL BERECHNEN
+                                </button>
+                                
+                                <div id="tool-sun-result" style="background:#030712;border:1px solid #1e293b;padding:8px;border-radius:4px;font-size:0.72rem;margin-top:6px;line-height:1.5;">
+                                    <div>Sonnenazimut: <strong id="res-sun-azimuth" style="color:#f59e0b;">--°</strong></div>
+                                    <div>Sonnenhöhe: <strong id="res-sun-altitude" style="color:#facc15;">--°</strong></div>
+                                    <div>Schattenlänge: <strong id="res-shadow-length" style="color:#38bdf8;">-- m</strong></div>
+                                    <div>Schattenrichtung: <strong id="res-shadow-dir" style="color:#10b981;">--°</strong></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: COORDINATE CONVERTER -->
+                        <div id="tab-coords" class="osint-tab-pane" style="display:none;">
+                            <div style="font-size:0.72rem;color:#38bdf8;font-weight:bold;margin-bottom:6px;">🌐 TAKTISCHER KOORDINATEN-KONVERTER</div>
+                            <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:10px;">Konvertiert nahtlos zwischen DD, DMS, UTM, MGRS und QTH-Locator.</div>
+                            
+                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">DECIMAL DEGREES (DD):</label>
+                                    <input type="text" id="tool-coord-dd" class="ops-input" value="50.1109, 8.6821" style="width:100%;font-size:0.75rem;padding:4px;background:#030712;border:1px solid #334155;color:#fff;" />
+                                </div>
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">DEGREES MINUTES SECONDS (DMS):</label>
+                                    <input type="text" id="tool-coord-dms" readonly class="ops-input" value="50° 06' 39\" N, 08° 40' 55\" E" style="width:100%;font-size:0.75rem;padding:4px;background:#080d1a;border:1px solid #1e293b;color:#38bdf8;" />
+                                </div>
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">MGRS (MILITARY GRID):</label>
+                                    <input type="text" id="tool-coord-mgrs" readonly class="ops-input" value="32U MA 77284 51025" style="width:100%;font-size:0.75rem;padding:4px;background:#080d1a;border:1px solid #1e293b;color:#10b981;" />
+                                </div>
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">MAIDENHEAD QTH-LOCATOR:</label>
+                                    <input type="text" id="tool-coord-qth" readonly class="ops-input" value="JO40ec" style="width:100%;font-size:0.75rem;padding:4px;background:#080d1a;border:1px solid #1e293b;color:#facc15;" />
+                                </div>
+                                <div style="display:flex;gap:6px;margin-top:6px;">
+                                    <button id="btn-convert-coords" class="ops-btn" style="flex:1;padding:6px;background:#0284c7;color:#fff;font-weight:bold;font-size:0.72rem;border:none;cursor:pointer;">
+                                        🔄 KONVERTIEREN
+                                    </button>
+                                    <button id="btn-jump-coords" class="ops-btn" style="flex:1;padding:6px;background:#047857;color:#fff;font-weight:bold;font-size:0.72rem;border:none;cursor:pointer;">
+                                        🎯 ZU KARTE SPRINGEN
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: METAR / TAF RAW DECODER -->
+                        <div id="tab-metar" class="osint-tab-pane" style="display:none;">
+                            <div style="font-size:0.72rem;color:#10b981;font-weight:bold;margin-bottom:6px;">✈️ RAW TELETYPE METAR / TAF DECODER</div>
+                            <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:8px;">Füge einen beliebigen ICAO METAR-String ein, um alle Flugparameter aufzuschlüsseln.</div>
+                            
+                            <textarea id="tool-metar-input" rows="3" class="ops-input" style="width:100%;font-size:0.72rem;padding:6px;background:#030712;border:1px solid #334155;color:#a3e635;font-family:monospace;box-sizing:border-box;">METAR EDDF 200850Z AUTO 07010KT 9999 FEW017 09/04 Q1016 NOSIG</textarea>
+                            <button id="btn-decode-metar" class="ops-btn" style="width:100%;padding:6px;background:#059669;color:#fff;font-weight:bold;font-size:0.72rem;border:none;cursor:pointer;margin-top:6px;">
+                                📜 METAR AUFSCHLÜSSELN
+                            </button>
+                            
+                            <div id="tool-metar-output" style="background:#030712;border:1px solid #1e293b;padding:8px;border-radius:4px;font-size:0.72rem;margin-top:8px;line-height:1.5;">
+                                <div>Flugplatz: <strong id="res-metar-icao" style="color:#fff;">EDDF (Frankfurt)</strong></div>
+                                <div>Flugkategorie: <strong id="res-metar-cat" style="color:#10b981;">VFR</strong></div>
+                                <div>Wind: <span id="res-metar-wind" style="color:#facc15;">070° mit 10 KT (18.5 km/h)</span></div>
+                                <div>Sicht: <span id="res-metar-vis" style="color:#38bdf8;">10 km oder mehr (9999)</span></div>
+                                <div>Bewölkung: <span id="res-metar-clouds" style="color:#cbd5e1;">FEW bei 1.700 ft AGL</span></div>
+                                <div>Temperatur / QNH: <span id="res-metar-temp" style="color:#10b981;">9°C / Taupunkt 4°C // 1016 hPa</span></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: GEO-DATA EXPORTER -->
+                        <div id="tab-export" class="osint-tab-pane" style="display:none;">
+                            <div style="font-size:0.72rem;color:#c084fc;font-weight:bold;margin-bottom:6px;">💾 OSINT DATEN-EXPORT (1-CLICK)</div>
+                            <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:10px;">Exportiere aktive Karten-Layer zur forensischen Analyse in GIS-Software (QGIS, ArcGIS, Google Earth).</div>
+                            
+                            <div style="display:flex;flex-direction:column;gap:8px;">
+                                <div>
+                                    <label style="font-size:0.65rem;color:#64748b;">LAYER ZUM EXPORTIEREN:</label>
+                                    <select id="tool-export-layer-select" class="ops-select" style="width:100%;font-size:0.75rem;padding:4px;background:#030712;border:1px solid #334155;color:#fff;">
+                                        <option value="cables">🌐 Submarine Fiber Cables (GeoJSON)</option>
+                                        <option value="gdacs">⚠️ GDACS Multi-Hazard Disasters</option>
+                                        <option value="radiation">☢️ Safecast Radiation Sensors</option>
+                                        <option value="baltic_ais">🚢 Baltic Maritime AIS Vessels</option>
+                                        <option value="metar">✈️ Aerodrome METAR Weather</option>
+                                        <option value="kiwisdr">📻 KiwiSDR HF Radio Receivers</option>
+                                        <option value="borders">🛂 US CBP Border Wait Times</option>
+                                    </select>
+                                </div>
+                                <div style="display:flex;gap:6px;margin-top:6px;">
+                                    <button id="btn-export-geojson" class="ops-btn" style="flex:1;padding:7px;background:#6d28d9;color:#fff;font-weight:bold;font-size:0.72rem;border:none;cursor:pointer;">
+                                        📄 GEOJSON
+                                    </button>
+                                    <button id="btn-export-kml" class="ops-btn" style="flex:1;padding:7px;background:#2563eb;color:#fff;font-weight:bold;font-size:0.72rem;border:none;cursor:pointer;">
+                                        🌍 KML (EARTH)
+                                    </button>
+                                    <button id="btn-export-csv" class="ops-btn" style="flex:1;padding:7px;background:#059669;color:#fff;font-weight:bold;font-size:0.72rem;border:none;cursor:pointer;">
+                                        📊 CSV TABLE
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
 
                 <!-- Jev AI Forecast Floating Dossier HUD -->
                 <div id="jev-forecast-hud" class="jev-forecast-hud hidden">
