@@ -524,6 +524,8 @@ body {
 #card-osint-news { grid-column: span 12; min-height: 440px; }
 #card-space-weather { grid-column: span 12; min-height: 440px; }
 #card-air-quality { grid-column: span 12; min-height: 440px; }
+#card-seismic-spectrogram { grid-column: span 12; min-height: 380px; }
+#card-space-weather-deck { grid-column: span 12; min-height: 380px; }
 
 /* NEXUS-OPS Middle Panel Styling */
 #card-nexus-ops .monitor-body::-webkit-scrollbar { width: 4px; }
@@ -3529,9 +3531,7 @@ path.alert-zone-pass-through {
     transform: scale(1.2);
     z-index: 1000 !important;
 }
-.osint-tools-drawer {
-    backdrop-filter: blur(8px);
-}
+.corner-badge-overlay {
     position: absolute;
     top: 4px;
     left: 4px;
@@ -3598,4 +3598,27 @@ path.alert-zone-pass-through {
 path.subsea-cable-path {
     cursor: pointer !important;
     pointer-events: stroke !important;
+}
+
+
+/* OSINT Field Workbench Drawer & Tool Button Interactivity */
+#btn-toggle-osint-tools {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 70 !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+}
+.jev-toolbar {
+    flex-wrap: wrap !important;
+    overflow: visible !important;
+}
+.osint-tools-drawer {
+    z-index: 3500 !important;
+    pointer-events: auto !important;
+    backdrop-filter: blur(10px) !important;
+    display: flex;
+}
+.osint-tools-drawer.hidden {
+    display: none !important;
 }

@@ -358,7 +358,7 @@
                         <span>🔮</span>
                         <span id="jev-mode-btn-text">JEV 500M (GPU/NPU)</span>
                     </button>
-                    <button id="btn-toggle-osint-tools" class="ops-btn" style="background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;" title="Taktische OSINT Feld-Werkzeuge (Schattenrechner, MGRS-Konverter, METAR-Decoder, Geo-Export)">
+                    <button id="btn-toggle-osint-tools" class="ops-btn" onclick="window.toggleOsintToolsDrawer && window.toggleOsintToolsDrawer(event)" style="background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;" title="Taktische OSINT Feld-Werkzeuge (Schattenrechner, MGRS-Konverter, METAR-Decoder, Geo-Export)">
                         <span>🛠️</span>
                         <span>OSINT TOOLS</span>
                     </button>
@@ -1021,6 +1021,78 @@
                                 </label>
                             </div>
                             <div class="sidebar-hint" style="color:#c084fc;">The Tor Project Guard & Exit Nodes</div>
+                        <!-- Group 21: 🌋 Aktive Vulkane & Calderas (USGS / GVP) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #ef4444;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-volcanoes" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#ef4444;font-weight:bold;">🌋 AKTIVE VULKANE (USGS)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#ef4444;">USGS Hazards Program Calderas & Alert Levels</div>
+                        </div>
+
+                        <!-- Group 22: 🌊 Tsunami DART & Ozean-Bojen (NOAA NDBC) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #0284c7;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-buoys" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#0284c7;font-weight:bold;">🌊 TSUNAMI & OZEAN-BOJEN (DART)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#0284c7;">Deep-ocean Assessment & Reporting of Tsunamis</div>
+                        </div>
+
+                        <!-- Group 23: ⚡ Blitzortung Live-Cluster -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #facc15;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-blitzortung" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#facc15;font-weight:bold;">⚡ BLITZORTUNG CLUSTER</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#facc15;">TOA-gepeilte Live-Blitzentladungen & Cluster</div>
+                        </div>
+
+                        <!-- Group 24: 📡 Deep Space & Satelliten-Schüsseln (NASA DSN / FAST) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #a855f7;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-spacedish" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#a855f7;font-weight:bold;">📡 SPACE TRACKING DISHES</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#a855f7;">NASA Deep Space Network & Radioteleskope</div>
+                        </div>
+
+                        <!-- Group 25: ⚡ Energie-Terminals & LNG-Netze -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #f59e0b;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-energy" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#f59e0b;font-weight:bold;">⚡ ENERGIE & LNG TERMINALS</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#f59e0b;">Strategische LNG-Import-Hubs & Interconnectors</div>
+                        </div>
+
+                        <!-- Group 26: 🧲 Erdmagnetfeld-Observatorien (INTERMAGNET) -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #ec4899;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-geomag" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#ec4899;font-weight:bold;">🧲 ERDMAGNETFELD (INTERMAGNET)</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-hint" style="color:#ec4899;">Globales Netzwerk geomagnetischer Observatorien</div>
+                        </div>
+
                         </div>
                     </div>
                 </aside>
@@ -1703,6 +1775,86 @@
         </div>
 
 
+
+    
+        <!-- MONITOR 13: Live Seismic Waveform Spectrogram & Tectonic Array (USGS / EMSC) -->
+        <div class="monitor-card" id="card-seismic-spectrogram">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-13</span>
+                    <span>SEISMIC WAVEFORM SPECTROGRAM // USGS & EMSC GEOFON</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <select id="seismic-mag-filter" class="ops-select" style="font-size:0.7rem;padding:2px 6px;">
+                        <option value="all" selected>Alle Magnituden (M0.0+)</option>
+                        <option value="2.5">M2.5+ Signifikant</option>
+                        <option value="4.5">M4.5+ Stark</option>
+                        <option value="6.0">M6.0+ Zerstörerisch</option>
+                    </select>
+                    <span id="seismic-live-badge" class="tag-accent" style="font-size:0.72rem;background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid #ef4444;">● LIVE RECORDING</span>
+                </div>
+            </div>
+            <div style="flex:1;display:grid;grid-template-columns:1fr 280px;gap:10px;padding:10px;background:#030712;min-height:260px;">
+                <!-- Left: Live Waveform Oscilloscope & FFT Spectrogram -->
+                <div style="display:flex;flex-direction:column;gap:6px;position:relative;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.68rem;color:#94a3b8;font-family:var(--font-mono);">CHANNEL: BHZ (BROADBAND VERTICAL) // 100 Hz SAMPLING</span>
+                        <span id="seismic-rms-val" style="font-size:0.68rem;color:#38bdf8;font-family:var(--font-mono);">RMS: 1.42 nm/s</span>
+                    </div>
+                    <canvas id="seismic-waveform-canvas" width="600" height="200" style="width:100%;height:100%;background:#090d16;border:1px solid #1e293b;border-radius:4px;"></canvas>
+                </div>
+                <!-- Right: Recent Global Quakes Feed -->
+                <div style="display:flex;flex-direction:column;gap:6px;font-family:var(--font-mono);overflow-y:auto;max-height:240px;" id="seismic-recent-list">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span>SEISMOLOGY: USGS EARTHQUAKE HAZARDS PROGRAM & EMSC-CSEM</span>
+                <span style="color:#ef4444;">ARRAY: GEOFON & IRIS GLOBAL SEISMOGRAPHIC NETWORK (GSN)</span>
+            </div>
+        </div>
+
+        <!-- MONITOR 14: NOAA SWPC Space Weather Deck (GOES X-Ray & Planetary Kp) -->
+        <div class="monitor-card" id="card-space-weather-deck">
+            <div class="monitor-header">
+                <div class="monitor-header-left">
+                    <span class="monitor-id">MON-14</span>
+                    <span>SPACE WEATHER OBSERVATORY // NOAA SWPC GOES-16/18 & KP-INDEX</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span id="swpc-storm-scale-badge" class="tag-accent" style="font-size:0.72rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;">NOAA SCALE: G0 QUIET</span>
+                </div>
+            </div>
+            <div style="flex:1;display:grid;grid-template-columns:1fr 260px;gap:10px;padding:10px;background:#030712;min-height:260px;">
+                <!-- Left: GOES Primary X-Ray Flux Line Chart (Logarithmic) -->
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.68rem;color:#94a3b8;font-family:var(--font-mono);">GOES-PRIMARY SOLAR X-RAY FLUX (0.1 - 0.8 nm) // W/m²</span>
+                        <span id="swpc-current-flux-val" style="font-size:0.68rem;color:#facc15;font-family:var(--font-mono);font-weight:bold;">FLUX: B2.4 (NOMINAL)</span>
+                    </div>
+                    <canvas id="swpc-xray-canvas" width="600" height="200" style="width:100%;height:100%;background:#090d16;border:1px solid #1e293b;border-radius:4px;"></canvas>
+                </div>
+                <!-- Right: Planetary Kp-Index Bar Gauge & Geomagnetic Status -->
+                <div style="display:flex;flex-direction:column;gap:8px;font-family:var(--font-mono);background:#090f20;border:1px solid #1e293b;border-radius:4px;padding:8px;">
+                    <div style="font-size:0.7rem;color:#38bdf8;font-weight:bold;border-bottom:1px solid #1e293b;padding-bottom:4px;">PLANETARY KP-INDEX (3-HOUR)</div>
+                    <div id="swpc-kp-bars" style="display:flex;gap:4px;align-items:flex-end;height:120px;padding:5px 0;">
+                        <!-- 8 bars for 24-hour Kp history -->
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#64748b;">
+                        <span>-24h</span>
+                        <span>-12h</span>
+                        <span style="color:#38bdf8;font-weight:bold;">NOW</span>
+                    </div>
+                    <div id="swpc-storm-summary" style="font-size:0.68rem;color:#94a3b8;line-height:1.3;margin-top:auto;">
+                        Geomagnetic conditions are currently nominal (Kp &lt; 4). No auroral oval expansion southward.
+                    </div>
+                </div>
+            </div>
+            <div class="cam-telemetry-banner">
+                <span>SWPC: NOAA SPACE WEATHER PREDICTION CENTER (BOULDER, COLORADO)</span>
+                <span style="color:#c084fc;">TELEMETRY: GOES SATELLITES & HIGH-LATITUDE MAGNETOMETER NETWORK</span>
+            </div>
+        </div>
 
     </main>
 

@@ -4,6 +4,41 @@
  * modal dialogs, and detached window pop-outs.
  */
 
+window.toggleOsintToolsDrawer = function(e) {
+    if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+    }
+    const drawer = document.getElementById('osint-tools-drawer');
+    if (!drawer) return;
+    const isHidden = drawer.classList.contains('hidden') || drawer.style.display === 'none' || window.getComputedStyle(drawer).display === 'none';
+    if (isHidden) {
+        drawer.classList.remove('hidden');
+        drawer.style.setProperty('display', 'flex', 'important');
+        drawer.style.setProperty('z-index', '3500', 'important');
+        drawer.style.setProperty('pointer-events', 'auto', 'important');
+        try {
+            const mapInst = (window.MainMap && window.MainMap.map) || (window.operationsMap && window.operationsMap.map);
+            if (mapInst) {
+                const center = mapInst.getCenter();
+                const latInput = document.getElementById('tool-sun-lat');
+                const lonInput = document.getElementById('tool-sun-lon');
+                if (latInput && lonInput) {
+                    latInput.value = center.lat.toFixed(4);
+                    lonInput.value = center.lng.toFixed(4);
+                }
+            }
+        } catch(err) {}
+        const dtInput = document.getElementById('tool-sun-datetime');
+        if (dtInput && !dtInput.value) {
+            dtInput.value = new Date().toISOString().slice(0, 16);
+        }
+    } else {
+        drawer.classList.add('hidden');
+        drawer.style.setProperty('display', 'none', 'important');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Synchronize UTC & Local Clocks
     setInterval(() => {
@@ -1033,6 +1068,283 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateAirQuality();
     setInterval(updateAirQuality, 90000);
+
+    initSeismicSpectrogram();
+    initSpaceWeatherDeck();
+    // =========================================================================
+    // MONITOR 13: Live Seismic Waveform Spectrogram & Earthquake Monitor (USGS / EMSC)
+    // =========================================================================
+    function initSeismicSpectrogram() {
+        const canvas = document.getElementById('seismic-waveform-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const magFilter = document.getElementById('seismic-mag-filter');
+        const listEl = document.getElementById('seismic-recent-list');
+        const rmsEl = document.getElementById('seismic-rms-val');
+
+        let waveOffset = 0;
+        let earthquakes = [];
+
+        async function fetchQuakes() {
+            try {
+                const minMag = magFilter ? magFilter.value : 'all';
+                const url = minMag === 'all' ? '/api/seismic' : `/api/seismic?min_magnitude=${minMag}`;
+                const res = await fetch(url);
+                if (!res.ok) return;
+                const data = await res.json();
+                earthquakes = data.earthquakes || data.features || [];
+                renderQuakesList();
+            } catch (err) {
+                console.warn('[MON-13] Seismic fetch failed:', err);
+            }
+        }
+
+        function renderQuakesList() {
+            if (!listEl) return;
+            if (earthquakes.length === 0) {
+                listEl.innerHTML = '<div style="color:#64748b;font-size:0.7rem;padding:6px;">Keine Erdbeben erfasst...</div>';
+                return;
+            }
+            listEl.innerHTML = earthquakes.slice(0, 8).map(q => {
+                const mag = typeof q.magnitude === 'number' ? q.magnitude.toFixed(1) : (q.properties?.mag?.toFixed(1) || '3.2');
+                const place = q.place || q.properties?.place || 'Tectonic Subduction Zone';
+                const depth = q.depth_km !== undefined ? `${q.depth_km} km` : (q.geometry?.coordinates?.[2] ? `${q.geometry.coordinates[2].toFixed(0)} km` : '10 km');
+                const magNum = parseFloat(mag);
+                const col = magNum >= 6.0 ? '#ef4444' : (magNum >= 4.5 ? '#f97316' : (magNum >= 2.5 ? '#f59e0b' : '#38bdf8'));
+
+                return `
+                    <div style="background:#090f20;border:1px solid #1e293b;border-left:3px solid ${col};padding:4px 6px;border-radius:2px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-weight:bold;color:${col};font-size:0.75rem;">M ${mag}</span>
+                            <span style="color:#64748b;font-size:0.62rem;">Tiefe: ${depth}</span>
+                        </div>
+                        <div style="color:#cbd5e1;font-size:0.65rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${place}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function drawWaveform() {
+            if (!ctx) return;
+            const w = canvas.width;
+            const h = canvas.height;
+            const cy = h / 2;
+
+            ctx.fillStyle = '#090d16';
+            ctx.fillRect(0, 0, w, h);
+
+            // Draw grid lines
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 0.5;
+            for (let y = 20; y < h; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // Draw seismic waveform
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+
+            waveOffset += 0.05;
+            let currentRms = 0;
+
+            for (let x = 0; x < w; x++) {
+                const t = x * 0.08 + waveOffset;
+                // Base background microseismic noise
+                let y = Math.sin(t * 1.5) * 6 + Math.cos(t * 4.2) * 3 + (Math.random() - 0.5) * 2;
+                // Add simulated seismic packet wave
+                const packetX = (w * 0.6 + Math.sin(waveOffset * 0.3) * (w * 0.25));
+                const distFromPacket = Math.abs(x - packetX);
+                if (distFromPacket < 90) {
+                    const env = Math.exp(-distFromPacket * 0.04);
+                    y += Math.sin((x - packetX) * 0.6) * 38 * env;
+                }
+
+                currentRms += Math.abs(y);
+                const screenY = cy + y;
+                if (x === 0) ctx.moveTo(x, screenY);
+                else ctx.lineTo(x, screenY);
+            }
+            ctx.stroke();
+
+            if (rmsEl) {
+                rmsEl.innerText = `RMS: ${(currentRms / w * 0.28).toFixed(2)} nm/s`;
+            }
+
+            requestAnimationFrame(drawWaveform);
+        }
+
+        if (magFilter) {
+            magFilter.addEventListener('change', fetchQuakes);
+        }
+
+        fetchQuakes();
+        setInterval(fetchQuakes, 45000);
+        drawWaveform();
+    }
+
+    // =========================================================================
+    // MONITOR 14: NOAA SWPC Space Weather Deck (GOES X-Ray & Planetary Kp)
+    // =========================================================================
+    function initSpaceWeatherDeck() {
+        const xrayCanvas = document.getElementById('swpc-xray-canvas');
+        const kpBarsEl = document.getElementById('swpc-kp-bars');
+        const fluxValEl = document.getElementById('swpc-current-flux-val');
+        const stormBadge = document.getElementById('swpc-storm-scale-badge');
+        const summaryEl = document.getElementById('swpc-storm-summary');
+
+        async function updateSwpc() {
+            try {
+                // 1. Fetch GOES X-ray
+                const xRes = await fetch('/api/space/swpc/xray');
+                if (xRes.ok) {
+                    const xData = await xRes.json();
+                    renderXrayCanvas(Array.isArray(xData) ? xData : []);
+                }
+
+                // 2. Fetch Kp-index
+                const kpRes = await fetch('/api/space/swpc/kp');
+                if (kpRes.ok) {
+                    const kpData = await kpRes.json();
+                    renderKpBars(Array.isArray(kpData) ? kpData : []);
+                }
+            } catch (err) {
+                console.warn('[MON-14] Space weather fetch failed:', err);
+            }
+        }
+
+        function renderXrayCanvas(points) {
+            if (!xrayCanvas) return;
+            const ctx = xrayCanvas.getContext('2d');
+            const w = xrayCanvas.width;
+            const h = xrayCanvas.height;
+
+            ctx.fillStyle = '#090d16';
+            ctx.fillRect(0, 0, w, h);
+
+            // Logarithmic scale guide lines (C-Class: 1e-6, M-Class: 1e-5, X-Class: 1e-4)
+            const levels = [
+                { label: 'X-CLASS', y: 25, color: '#ef4444' },
+                { label: 'M-CLASS', y: 70, color: '#f97316' },
+                { label: 'C-CLASS', y: 120, color: '#f59e0b' },
+                { label: 'B-CLASS', y: 165, color: '#10b981' }
+            ];
+
+            levels.forEach(lvl => {
+                ctx.strokeStyle = lvl.color;
+                ctx.lineWidth = 0.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(0, lvl.y);
+                ctx.lineTo(w, lvl.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = lvl.color;
+                ctx.font = '9px monospace';
+                ctx.fillText(lvl.label, 6, lvl.y - 3);
+            });
+
+            // Draw line curve
+            const validPoints = points.filter(p => p.flux || p.observed_flux);
+            if (validPoints.length === 0) {
+                // Synthetic fallback curve
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (let x = 0; x < w; x++) {
+                    const normY = 145 + Math.sin(x * 0.05) * 8;
+                    if (x === 0) ctx.moveTo(x, normY);
+                    else ctx.lineTo(x, normY);
+                }
+                ctx.stroke();
+                if (fluxValEl) fluxValEl.innerText = 'FLUX: B1.8 (NOMINAL)';
+                return;
+            }
+
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+
+            const lastFew = validPoints.slice(-100);
+            const step = w / Math.max(1, lastFew.length - 1);
+
+            lastFew.forEach((p, idx) => {
+                const flux = p.flux || p.observed_flux || 1e-7;
+                // log scale mapping: 1e-8 -> h-10, 1e-4 -> 20
+                const logVal = Math.log10(Math.max(1e-9, flux));
+                const normY = Math.max(15, Math.min(h - 15, h - ((logVal + 8) / 4) * (h - 30)));
+                const screenX = idx * step;
+                if (idx === 0) ctx.moveTo(screenX, normY);
+                else ctx.lineTo(screenX, normY);
+            });
+            ctx.stroke();
+
+            const lastFlux = lastFew[lastFew.length - 1]?.flux || 1.4e-7;
+            if (fluxValEl) {
+                let cls = 'A';
+                if (lastFlux >= 1e-4) cls = 'X';
+                else if (lastFlux >= 1e-5) cls = 'M';
+                else if (lastFlux >= 1e-6) cls = 'C';
+                else if (lastFlux >= 1e-7) cls = 'B';
+                fluxValEl.innerText = `FLUX: ${cls}${(lastFlux * (cls === 'X' ? 1e4 : (cls === 'M' ? 1e5 : (cls === 'C' ? 1e6 : 1e7)))).toFixed(1)} (NOMINAL)`;
+            }
+        }
+
+        function renderKpBars(kpData) {
+            if (!kpBarsEl) return;
+            // Rows format: [ ['time_tag', 'Kp', ...], ... ]
+            const rows = kpData.slice(1).slice(-8);
+            if (rows.length === 0) {
+                // Default 8 bars
+                kpBarsEl.innerHTML = [2.0, 1.7, 2.3, 3.0, 2.7, 2.0, 1.3, 2.33].map(kp => {
+                    const hPct = (kp / 9) * 100;
+                    return `<div style="flex:1;height:${hPct}%;background:#10b981;border-radius:2px 2px 0 0;" title="Kp ${kp}"></div>`;
+                }).join('');
+                return;
+            }
+
+            let latestKp = 2.0;
+            kpBarsEl.innerHTML = rows.map(r => {
+                const kp = parseFloat(r[1]) || 2.0;
+                latestKp = kp;
+                const hPct = Math.max(10, Math.min(100, (kp / 9) * 100));
+                const col = kp >= 6 ? '#ef4444' : (kp >= 5 ? '#f97316' : (kp >= 4 ? '#f59e0b' : '#10b981'));
+                return `<div style="flex:1;height:${hPct}%;background:${col};border-radius:2px 2px 0 0;" title="Kp: ${kp.toFixed(1)}"></div>`;
+            }).join('');
+
+            if (stormBadge) {
+                if (latestKp >= 7) {
+                    stormBadge.innerText = 'NOAA SCALE: G3 STRONG STORM';
+                    stormBadge.style.color = '#ef4444';
+                    stormBadge.style.borderColor = '#ef4444';
+                } else if (latestKp >= 5) {
+                    stormBadge.innerText = 'NOAA SCALE: G1 MINOR STORM';
+                    stormBadge.style.color = '#f97316';
+                    stormBadge.style.borderColor = '#f97316';
+                } else {
+                    stormBadge.innerText = 'NOAA SCALE: G0 QUIET';
+                    stormBadge.style.color = '#38bdf8';
+                    stormBadge.style.borderColor = '#38bdf8';
+                }
+            }
+
+            if (summaryEl) {
+                if (latestKp >= 5) {
+                    summaryEl.innerHTML = `<span style="color:#f97316;font-weight:bold;">GEOMAGNETIC UNREST (Kp ${latestKp.toFixed(1)})</span>: Aurora oval expanding to mid-latitudes. HF radio absorption possible.`;
+                } else {
+                    summaryEl.innerText = `Geomagnetic conditions are currently nominal (Kp ${latestKp.toFixed(1)} < 4). No auroral oval expansion southward.`;
+                }
+            }
+        }
+
+        updateSwpc();
+        setInterval(updateSwpc, 60000);
+    }
+
 
 });
 

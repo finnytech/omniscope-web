@@ -3334,6 +3334,243 @@ class StreamPlayer {
             window.RamCleaner.updateTelemetryBadge();
         }
     }
+
+    showVolcanoDeepDive(volcano, coords) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const name = volcano.v_name || 'Active Caldera';
+        const alert = (volcano.alert || 'GREEN').toUpperCase();
+        const alertColors = { 'GREEN': '#10b981', 'YELLOW': '#f59e0b', 'ORANGE': '#f97316', 'RED': '#ef4444' };
+        const alertCol = alertColors[alert] || '#ef4444';
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '🌋 VOLCANO DOSSIER';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `VOLCANIC CALDERA // ${name.toUpperCase()}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <span style="font-size:0.65rem;color:#ef4444;letter-spacing:1px;font-weight:bold;">USGS VOLCANO HAZARDS PROGRAM</span>
+                        <h2 style="margin:2px 0 0 0;font-size:1.1rem;color:#f8fafc;font-weight:700;">${name}</h2>
+                    </div>
+                    <span style="background:${alertCol}22;color:${alertCol};border:1px solid ${alertCol};padding:3px 8px;font-size:0.75rem;font-weight:bold;border-radius:3px;">
+                        ALERT: ${alert}
+                    </span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">VULKANTYP / STRUCTURAL MORPHOLOGY</div>
+                        <div style="font-size:0.85rem;color:#f1f5f9;font-weight:bold;margin-top:2px;">${volcano.type || 'Stratovolcano'}</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">GIPFELHÖHE / SUMMIT ELEVATION</div>
+                        <div style="font-size:0.85rem;color:#38bdf8;font-weight:bold;margin-top:2px;">${volcano.elev || 0} m über NN</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">GEOGRAFISCHE REGION / STAAT</div>
+                        <div style="font-size:0.85rem;color:#f1f5f9;font-weight:bold;margin-top:2px;">${volcano.country || 'Global'}</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">KOORDINATEN</div>
+                        <div style="font-size:0.85rem;color:#a855f7;font-weight:bold;margin-top:2px;">${coords ? coords[0].toFixed(3) + '°N, ' + coords[1].toFixed(3) + '°E' : '--'}</div>
+                    </div>
+                </div>
+                <div style="background:#0f172a;padding:10px;border-radius:4px;border:1px solid #1e293b;line-height:1.4;font-size:0.75rem;color:#94a3b8;margin-bottom:12px;">
+                    <strong style="color:#ef4444;">FRÜHWARNSYSTEM // ERUPTIONS-MONITORING:</strong><br>
+                    Kontinuierliche Infraschall-Messung, seismische Tremor-Überwachung und satellitengestützte SO₂-Gasfluss-Spektroskopie zur Erkennung magmatischer Aufstiegsprozesse.
+                </div>
+            </div>
+        `;
+    }
+
+    showBuoyDeepDive(buoy) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const isDart = buoy.type === 'tsunami_dart';
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = isDart ? '🌊 TSUNAMI DART' : '🌊 OCEAN BUOY';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `NOAA NDBC BUOY // ${buoy.name.toUpperCase()}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <span style="font-size:0.65rem;color:#0284c7;letter-spacing:1px;font-weight:bold;">NOAA NATIONAL DATA BUOY CENTER (NDBC)</span>
+                        <h2 style="margin:2px 0 0 0;font-size:1.1rem;color:#f8fafc;font-weight:700;">${buoy.name} (${buoy.id})</h2>
+                    </div>
+                    <span style="background:rgba(2,132,199,0.2);color:#38bdf8;border:1px solid #0284c7;padding:3px 8px;font-size:0.75rem;font-weight:bold;border-radius:3px;">
+                        STATUS: ${buoy.tsunami_status || 'NOMINAL'}
+                    </span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">SIGNIFIKANTE WELLENHÖHE</div>
+                        <div style="font-size:1.1rem;color:#38bdf8;font-weight:bold;margin-top:2px;">${buoy.wave_height_m} m</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">WASSERTEMPERATUR (SST)</div>
+                        <div style="font-size:1.1rem;color:#10b981;font-weight:bold;margin-top:2px;">${buoy.water_temp_c} °C</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">LUFTDRUCK AUF MEERESHÖHE</div>
+                        <div style="font-size:1.1rem;color:#f59e0b;font-weight:bold;margin-top:2px;">${buoy.pressure_hpa} hPa</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">STANDORT (LAT / LON)</div>
+                        <div style="font-size:0.85rem;color:#a855f7;font-weight:bold;margin-top:4px;">${buoy.lat}°N, ${buoy.lon}°E</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    showBlitzortungDeepDive(station) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '⚡ BLITZORTUNG';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `BLITZORTUNG NODE // ${station.name.toUpperCase()}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <span style="font-size:0.65rem;color:#facc15;letter-spacing:1px;font-weight:bold;">BLITZORTUNG.ORG COMMUNITY SENSOR GRID</span>
+                        <h2 style="margin:2px 0 0 0;font-size:1.1rem;color:#f8fafc;font-weight:700;">${station.name}</h2>
+                    </div>
+                    <span style="background:rgba(250,204,21,0.2);color:#facc15;border:1px solid #facc15;padding:3px 8px;font-size:0.75rem;font-weight:bold;border-radius:3px;">
+                        LIVE AKTIV
+                    </span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">BLITZRATE</div>
+                        <div style="font-size:1.1rem;color:#facc15;font-weight:bold;margin-top:2px;">${station.strikes} / min</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">SPITZENSTROM (PEAK CURRENT)</div>
+                        <div style="font-size:1.1rem;color:#ef4444;font-weight:bold;margin-top:2px;">${station.current_ka} kA</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    showSpaceDishDeepDive(dish) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '📡 SPACE TRACKING';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `SPACE DISH // ${dish.name.toUpperCase()}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <span style="font-size:0.65rem;color:#a855f7;letter-spacing:1px;font-weight:bold;">DEEP SPACE NETWORK & RADIO ASTRONOMY</span>
+                        <h2 style="margin:2px 0 0 0;font-size:1.1rem;color:#f8fafc;font-weight:700;">${dish.name}</h2>
+                    </div>
+                    <span style="background:rgba(168,85,247,0.2);color:#c084fc;border:1px solid #a855f7;padding:3px 8px;font-size:0.75rem;font-weight:bold;border-radius:3px;">
+                        TRACKING ACTIVE
+                    </span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">ZIELOBJEKT / MISSION TARGET</div>
+                        <div style="font-size:0.85rem;color:#38bdf8;font-weight:bold;margin-top:2px;">${dish.target}</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">FREQUENZBAND / SPEKTRUM</div>
+                        <div style="font-size:0.85rem;color:#facc15;font-weight:bold;margin-top:2px;">${dish.freq}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    showEnergyDeepDive(terminal) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '⚡ ENERGY TERMINAL';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `ENERGY TERMINAL // ${terminal.name.toUpperCase()}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <span style="font-size:0.65rem;color:#f59e0b;letter-spacing:1px;font-weight:bold;">STRATEGIC ENERGY INFRASTRUCTURE</span>
+                        <h2 style="margin:2px 0 0 0;font-size:1.1rem;color:#f8fafc;font-weight:700;">${terminal.name}</h2>
+                    </div>
+                    <span style="background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid #f59e0b;padding:3px 8px;font-size:0.75rem;font-weight:bold;border-radius:3px;">
+                        OPERATIONAL
+                    </span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">TERMINAL TYP</div>
+                        <div style="font-size:0.85rem;color:#38bdf8;font-weight:bold;margin-top:2px;">${terminal.type}</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">KAPAZITÄT / DURCHSATZ</div>
+                        <div style="font-size:0.85rem;color:#10b981;font-weight:bold;margin-top:2px;">${terminal.cap}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    showGeomagDeepDive(geomag) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) typePill.innerText = '🧲 GEOMAGNETIC NODE';
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `INTERMAGNET // ${geomag.name.toUpperCase()}`;
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#09090b;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div>
+                        <span style="font-size:0.65rem;color:#ec4899;letter-spacing:1px;font-weight:bold;">INTERMAGNET GLOBAL OBSERVATORY NETWORK</span>
+                        <h2 style="margin:2px 0 0 0;font-size:1.1rem;color:#f8fafc;font-weight:700;">${geomag.name} (${geomag.code})</h2>
+                    </div>
+                    <span style="background:rgba(236,72,153,0.2);color:#ec4899;border:1px solid #ec4899;padding:3px 8px;font-size:0.75rem;font-weight:bold;border-radius:3px;">
+                        OBSERVATORY ACTIVE
+                    </span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">MAGNETFELD TOTALINTENSITÄT (F)</div>
+                        <div style="font-size:1.1rem;color:#ec4899;font-weight:bold;margin-top:2px;">${geomag.field_nt} nT</div>
+                    </div>
+                    <div style="background:#0f172a;padding:8px;border-radius:4px;border:1px solid #1e293b;">
+                        <div style="font-size:0.62rem;color:#64748b;">STAAT / NATIONALE BETREIBER</div>
+                        <div style="font-size:0.85rem;color:#f1f5f9;font-weight:bold;margin-top:2px;">${geomag.country}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
 }
 
 window.MainPlayer = new StreamPlayer('webcam-player-container');
