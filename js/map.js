@@ -385,19 +385,17 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
 }
 
 class OperationsMap {
-    getDynamicNodeRadius(baseRadius = 4.0) {
+    getDynamicNodeRadius(baseRadius = 5.0) {
         const zoom = this.map ? this.map.getZoom() : 4;
-        // User requested: smaller, balanced tactical node radius (compact points, not oversized discs)
         let r = baseRadius;
         if (zoom <= 4) {
-            r = Math.max(3.0, baseRadius - 0.5);
+            r = Math.max(4.0, baseRadius - 0.5);
         } else if (zoom <= 7) {
-            r = baseRadius + (zoom - 4) * 0.35;
+            r = baseRadius + (zoom - 4) * 0.45;
         } else {
-            // zoom 8+: subtle scaling, max 6.5 - 7.0px
-            r = baseRadius + 1.05 + Math.min(zoom - 7, 5) * 0.3;
+            r = baseRadius + 1.35 + Math.min(zoom - 7, 5) * 0.45;
         }
-        return Math.min(7.0, Math.max(3.0, Math.round(r * 10) / 10));
+        return Math.min(8.5, Math.max(4.0, Math.round(r * 10) / 10));
     }
 
     updateAllMarkerRadii() {
@@ -448,6 +446,10 @@ class OperationsMap {
         });
 
         // Dedicated interaction panes to allow markers to sit cleanly above weather zones
+        if (!this.map.getPane('cablesPane')) {
+            this.map.createPane('cablesPane');
+            this.map.getPane('cablesPane').style.zIndex = '350';
+        }
         if (!this.map.getPane('weatherZonesPane')) {
             this.map.createPane('weatherZonesPane');
             this.map.getPane('weatherZonesPane').style.zIndex = '420';
@@ -457,7 +459,7 @@ class OperationsMap {
             this.map.getPane('sensorMarkersPane').style.zIndex = '460';
         }
 
-        this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 15, pane: 'sensorMarkersPane' });
+        this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane' });
         this._lastLayerClickTime = 0;
         L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
@@ -5983,8 +5985,8 @@ class OperationsMap {
                         <span class="noaa-city-label">${st.city || st.id}</span>
                     </div>
                 `,
-                iconSize: [0, 0],
-                iconAnchor: [0, 0]
+                iconSize: [110, 24],
+                iconAnchor: [55, 12]
             });
 
             const popupContent = `
@@ -6334,8 +6336,8 @@ class OperationsMap {
                         <span>🌪️ ${tor.city}</span>
                     </div>
                 `,
-                iconSize: [0, 0],
-                iconAnchor: [0, 0]
+                iconSize: [110, 24],
+                iconAnchor: [55, 12]
             });
 
             const popupHtml = `
@@ -6383,8 +6385,8 @@ class OperationsMap {
                         <span>💨 ${w.city}</span>
                     </div>
                 `,
-                iconSize: [0, 0],
-                iconAnchor: [0, 0]
+                iconSize: [110, 24],
+                iconAnchor: [55, 12]
             });
 
             const popupHtml = `
@@ -7059,6 +7061,7 @@ OperationsMap.prototype.fetchSubmarineCables = async function() {
         this.cablesLayer.clearLayers();
 
         const cableLayer = L.geoJSON(geojson, {
+            pane: 'cablesPane',
             style: () => ({
                 color: '#00f0ff',
                 weight: 3.2,
@@ -7112,7 +7115,8 @@ OperationsMap.prototype.fetchSubmarineCables = async function() {
                     if (!coords || coords.length < 2) return;
                     const lpName = lp.properties ? (lp.properties.name || lp.properties.id) : 'Cable Station';
                     const ptMarker = L.circleMarker([coords[1], coords[0]], {
-                        radius: 3.5,
+                        renderer: this.canvasRenderer,
+                        radius: 4.5,
                         fillColor: '#00f0ff',
                         color: '#ffffff',
                         weight: 1.5,
@@ -7197,12 +7201,13 @@ OperationsMap.prototype.fetchSafecastRadiation = async function() {
             const cpm = Number(m.value) || 20;
             const color = cpm > 250 ? '#ef4444' : (cpm > 60 ? '#f59e0b' : '#10b981');
             const radMarker = L.circleMarker([m.latitude, m.longitude], {
-                radius: cpm > 100 ? 7 : 5,
+                renderer: this.canvasRenderer,
+                radius: cpm > 100 ? 7.5 : 5.5,
                 fillColor: color,
                 color: '#fff',
-                weight: 1,
-                opacity: 0.9,
-                fillOpacity: 0.8
+                weight: 1.2,
+                opacity: 0.95,
+                fillOpacity: 0.85
             });
 
             const label = m.station ? `${m.station} (${m.city || 'Station'})` : 'LIVE GEIGER';
@@ -7492,12 +7497,13 @@ OperationsMap.prototype.fetchTorRelays = async function() {
             const color = isExit ? '#f43f5e' : '#a855f7';
 
             const marker = L.circleMarker([lat, lon], {
-                radius: isExit ? 6 : 4,
+                renderer: this.canvasRenderer,
+                radius: isExit ? 6.5 : 5.0,
                 fillColor: color,
                 color: '#fff',
-                weight: 1,
-                opacity: 0.9,
-                fillOpacity: 0.8
+                weight: 1.2,
+                opacity: 0.95,
+                fillOpacity: 0.85
             });
 
             marker.bindTooltip(`🧅 <strong>TOR ${isExit ? 'EXIT NODE' : 'RELAY'}: ${r.nickname || 'TorNode'}</strong><br>ASN: ${r.as_name || 'AS'} | Bandbreite: ${Math.round((r.advertised_bandwidth || 0) / 1024 / 1024)} Mbps`, {

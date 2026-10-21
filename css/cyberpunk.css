@@ -3577,3 +3577,25 @@ path.alert-zone-pass-through {
         display: none !important;
     }
 }
+
+
+/* Zero-Miss Tactical Marker Clickability */
+.noaa-station-custom-marker,
+.archive-tornado-marker,
+.archive-wind-marker,
+.cbp-border-icon,
+.metar-station-icon,
+.kiwisdr-icon {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+.noaa-weather-pin-wrap,
+.archive-tornado-pin-wrap,
+.archive-wind-pin-wrap {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+path.subsea-cable-path {
+    cursor: pointer !important;
+    pointer-events: stroke !important;
+}
