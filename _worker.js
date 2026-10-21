@@ -1682,7 +1682,13 @@ export default {
     if (url.hostname.startsWith("www.")) {
       const cleanUrl = new URL(request.url);
       cleanUrl.hostname = url.hostname.replace(/^www\./, "");
-      return Response.redirect(cleanUrl.toString(), 301);
+      return new Response(null, {
+        status: 301,
+        headers: {
+          "Location": cleanUrl.toString(),
+          ...corsHeaders
+        }
+      });
     }
 
     // 0b. WAF CUSTOM RULE: EXPLOIT & PROBE SCANNER ZERO-TOLERANCE IMMEDIATE BLOCK (403 DROP)

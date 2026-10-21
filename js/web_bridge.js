@@ -54,6 +54,18 @@
             return window._originalFetch(resource, init);
         }
 
+        // On HTTP/HTTPS, delegate /api calls directly to the Cloudflare Edge Worker first
+        if (window.location.protocol.startsWith('http')) {
+            try {
+                const edgeRes = await window._originalFetch(resource, init);
+                if (edgeRes && (edgeRes.ok || edgeRes.status === 304)) {
+                    return edgeRes;
+                }
+            } catch (edgeErr) {
+                console.warn('[OmniScope WebBridge] Edge fetch failed, falling back to client simulation:', edgeErr);
+            }
+        }
+
         // 1. /api/capabilities
         if (urlStr.includes('/api/capabilities')) {
             return jsonResponse({
@@ -668,7 +680,7 @@ const PRIMARY_US_STATIONS = [
         // 9.15 Dedicated NOAA USA Live Weather Stations Feed
         if (urlStr.includes('/api/weather/noaa/feed')) {
             try {
-                const edgeRes = await window._originalFetch(url, options);
+                const edgeRes = await window._originalFetch(resource, init);
                 if (edgeRes && edgeRes.ok) {
                     const edgeData = await edgeRes.json();
                     if (edgeData && edgeData.stations && edgeData.stations.length > 0) {
@@ -719,7 +731,7 @@ const PRIMARY_US_STATIONS = [
         // 9.16 Individual NOAA Station Observation
         if (urlStr.includes('/api/weather/noaa/station/')) {
             try {
-                const edgeRes = await window._originalFetch(url, options);
+                const edgeRes = await window._originalFetch(resource, init);
                 if (edgeRes && edgeRes.ok) {
                     return edgeRes;
                 }
