@@ -2436,10 +2436,24 @@ class OperationsMap {
             maxNative = 9;
             hudStatus = '🛰️ INFRAROT SATELLITEN-WOLKEN (NASA GIBS)';
         } else if (prov === 'dwd') {
-            // DWD Germany Coverage: RainViewer calibrated scheme 1 (Meteo DWD)
-            tileUrl = `${host}${path}/256/{z}/{x}/{y}/1/1_1.png`;
-            maxNative = 8;
-            hudStatus = '🇩🇪 DWD RADAR DEUTSCHLAND';
+            // Official Native Deutscher Wetterdienst (DWD) 1km x 1km Radar Composite (Zero RainViewer)
+            if (this.dwdNativeWms && this.map.hasLayer(this.dwdNativeWms)) {
+                this.map.removeLayer(this.dwdNativeWms);
+            }
+            this.dwdNativeWms = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
+                layers: 'dwd:Niederschlagsradar',
+                format: 'image/png',
+                transparent: true,
+                opacity: this.radarOpacity || 0.85,
+                maxZoom: 18,
+                zIndex: 600,
+                attribution: 'Deutscher Wetterdienst (DWD)'
+            });
+            this.dwdNativeWms.addTo(this.map);
+            this.activeWmsLayer = this.dwdNativeWms;
+            const hudEl = document.getElementById('radar-hud-status');
+            if (hudEl) hudEl.innerText = '🇩🇪 NATIVES DWD RADAR (1x1 KM ECHTDATEN)';
+            return;
         } else if (prov === 'owm_rain' || mode === 'rain_rate') {
             // Precipitation Intensity Mode (Scheme 7 = Rainbow mm/h)
             tileUrl = `${host}${path}/256/{z}/{x}/{y}/7/1_1.png`;
