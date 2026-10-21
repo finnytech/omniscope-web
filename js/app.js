@@ -1349,3 +1349,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
+
+// Ecosystem player alias
+if (window.MainPlayer) window.OmniPlayer = window.MainPlayer;

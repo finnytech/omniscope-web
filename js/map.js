@@ -303,17 +303,48 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
             this._renderer._updateDiamond(this);
         }
     });
+    
+    // High-Precision Hitbox matching visual size + comfortable click buffer (avoids expensive Math.sqrt)
+    L.CircleMarker.prototype._containsPoint = function (p) {
+        const pt = this._point;
+        if (!pt) return false;
+        const dx = p.x - pt.x;
+        const dy = p.y - pt.y;
+        const r = this._radius || 6.0;
+        // Generous hitbox: at least 20px radius, or visual radius + 12px
+        const hitRadius = Math.max(20.0, r + 12.0);
+        return (dx * dx + dy * dy) <= (hitRadius * hitRadius);
+    };
+
     L.diamondMarker = function (latlng, options) {
         return new L.DiamondMarker(latlng, options);
     };
 
     if (L.Canvas) {
         L.Canvas.include({
+            _updateCircle: function (layer) {
+                if (!this._drawing || layer._empty()) return;
+                const p = layer._point;
+                const r = Math.max(Math.round(layer._radius), 1);
+                const b = this._bounds;
+                if (b && (p.x + r < b.min.x - 30 || p.x - r > b.max.x + 30 || p.y + r < b.min.y - 30 || p.y - r > b.max.y + 30)) {
+                    return; // Viewport culled, massive FPS boost!
+                }
+                if (this._drawnLayers) { this._drawnLayers[layer._leaflet_id] = layer; }
+                const ctx = this._ctx;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r, 0, Math.PI * 2, false);
+                this._fillStroke(ctx, layer);
+            },
             _updateSquare: function (layer) {
                 if (!this._drawing || layer._empty()) { return; }
                 const p = layer._point,
                       ctx = this._ctx,
                       r = Math.max(Math.round(layer._radius), 1);
+                const b = this._bounds;
+                if (b && (p.x + r < b.min.x - 30 || p.x - r > b.max.x + 30 || p.y + r < b.min.y - 30 || p.y - r > b.max.y + 30)) {
+                    return;
+                }
                 if (this._drawnLayers) { this._drawnLayers[layer._leaflet_id] = layer; }
                 ctx.beginPath();
                 ctx.rect(p.x - r, p.y - r, r * 2, r * 2);
@@ -324,6 +355,10 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                 const p = layer._point,
                       ctx = this._ctx,
                       r = Math.max(Math.round(layer._radius), 1) * 1.25;
+                const b = this._bounds;
+                if (b && (p.x + r < b.min.x - 30 || p.x - r > b.max.x + 30 || p.y + r < b.min.y - 30 || p.y - r > b.max.y + 30)) {
+                    return;
+                }
                 if (this._drawnLayers) { this._drawnLayers[layer._leaflet_id] = layer; }
                 ctx.beginPath();
                 ctx.moveTo(p.x, p.y - r);
@@ -337,6 +372,10 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                 const p = layer._point,
                       ctx = this._ctx,
                       r = Math.max(Math.round(layer._radius), 1) * 1.15;
+                const b = this._bounds;
+                if (b && (p.x + r < b.min.x - 30 || p.x - r > b.max.x + 30 || p.y + r < b.min.y - 30 || p.y - r > b.max.y + 30)) {
+                    return;
+                }
                 if (this._drawnLayers) { this._drawnLayers[layer._leaflet_id] = layer; }
                 ctx.beginPath();
                 for (let i = 0; i < 5; i++) {
@@ -354,6 +393,10 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                 const p = layer._point,
                       ctx = this._ctx,
                       r = Math.max(Math.round(layer._radius), 1) * 1.2;
+                const b = this._bounds;
+                if (b && (p.x + r < b.min.x - 30 || p.x - r > b.max.x + 30 || p.y + r < b.min.y - 30 || p.y - r > b.max.y + 30)) {
+                    return;
+                }
                 if (this._drawnLayers) { this._drawnLayers[layer._leaflet_id] = layer; }
                 ctx.beginPath();
                 for (let i = 0; i < 6; i++) {
@@ -371,6 +414,10 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                 const p = layer._point,
                       ctx = this._ctx,
                       r = Math.max(Math.round(layer._radius), 1) * 1.25;
+                const b = this._bounds;
+                if (b && (p.x + r < b.min.x - 30 || p.x - r > b.max.x + 30 || p.y + r < b.min.y - 30 || p.y - r > b.max.y + 30)) {
+                    return;
+                }
                 if (this._drawnLayers) { this._drawnLayers[layer._leaflet_id] = layer; }
                 ctx.beginPath();
                 ctx.moveTo(p.x, p.y - r);
@@ -388,14 +435,20 @@ class OperationsMap {
     getDynamicNodeRadius(baseRadius = 5.0) {
         const zoom = this.map ? this.map.getZoom() : 4;
         let r = baseRadius;
-        if (zoom <= 4) {
-            r = Math.max(4.0, baseRadius - 0.5);
+        if (zoom <= 3) {
+            r = Math.max(4.0, baseRadius - 1.0);
+        } else if (zoom <= 5) {
+            r = baseRadius;
         } else if (zoom <= 7) {
-            r = baseRadius + (zoom - 4) * 0.45;
+            r = baseRadius + (zoom - 5) * 1.6;
+        } else if (zoom <= 10) {
+            r = baseRadius + 3.2 + (zoom - 7) * 2.4;
+        } else if (zoom <= 13) {
+            r = baseRadius + 10.4 + (zoom - 10) * 3.0;
         } else {
-            r = baseRadius + 1.35 + Math.min(zoom - 7, 5) * 0.45;
+            r = baseRadius + 19.4 + (zoom - 13) * 3.5;
         }
-        return Math.min(8.5, Math.max(4.0, Math.round(r * 10) / 10));
+        return Math.min(36.0, Math.max(4.0, Math.round(r * 10) / 10));
     }
 
     updateAllMarkerRadii() {
@@ -466,6 +519,7 @@ class OperationsMap {
         }
 
         this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane' });
+        this.cablesCanvasRenderer = L.canvas({ padding: 0.25, tolerance: 15, pane: 'cablesPane' });
         this._lastLayerClickTime = 0;
         L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
@@ -735,7 +789,7 @@ class OperationsMap {
             }, 150);
         };
         this.map.on('moveend', onMapViewportChanged);
-        this.map.on('zoom', () => this.updateAllMarkerRadii());
+        // Ultra-performance: only update radii on zoomend to maintain 60 FPS smoothly
         this.map.on('zoomend', () => {
             this.updateAllMarkerRadii();
             onMapViewportChanged();
@@ -743,10 +797,62 @@ class OperationsMap {
 
         // Map Click: Direct Ground Weather Station, Sector Webcams & Proximity Camera Lock
         this.map.on('click', async (e) => {
-            if (this.isJevForecastMode) return; // In Jev mode, handling is done via box-drawing mousedown/mouseup
-            // CRITICAL: If a marker, polygon, camera, weather station, or danger zone was clicked, DO NOT trigger sector scan!
-            if (Date.now() - (this._lastLayerClickTime || 0) < 500) return;
-            if (e.originalEvent && (e.originalEvent._layerClicked || e.originalEvent.defaultPrevented)) return;
+            if (this.isJevForecastMode) return;
+            // CRITICAL: If a marker, polygon, camera, weather station was clicked, DO NOT trigger sector scan!
+            if (Date.now() - (this._lastLayerClickTime || 0) < 800) return;
+            if (Date.now() - (window._lastMapNodeClick || 0) < 800) return;
+            if (e.originalEvent && (e.originalEvent._layerClicked || e.originalEvent._markerClicked || e.originalEvent.defaultPrevented)) return;
+
+            // Check if click was within generous 36px radius of ANY layer node: snaps directly to marker
+            const clickPt = e.containerPoint;
+            let nearestMarker = null;
+            let minDistSq = 36 * 36;
+
+            const checkGroupProximity = (group) => {
+                if (!group || !this.map || !this.map.hasLayer(group)) return;
+                if (typeof group.eachLayer === 'function') {
+                    group.eachLayer(m => {
+                        let pt = m._point;
+                        if (!pt && typeof m.getLatLng === 'function') {
+                            try { pt = this.map.latLngToContainerPoint(m.getLatLng()); } catch(_) {}
+                        }
+                        if (pt) {
+                            const dx = clickPt.x - pt.x;
+                            const dy = clickPt.y - pt.y;
+                            const dSq = dx * dx + dy * dy;
+                            if (dSq < minDistSq) {
+                                minDistSq = dSq;
+                                nearestMarker = m;
+                            }
+                        }
+                    });
+                }
+            };
+
+            if (this.activeCamMarkers) {
+                for (const m of this.activeCamMarkers.values()) {
+                    if (m && m._point) {
+                        const dx = clickPt.x - m._point.x;
+                        const dy = clickPt.y - m._point.y;
+                        const dSq = dx * dx + dy * dy;
+                        if (dSq < minDistSq) {
+                            minDistSq = dSq;
+                            nearestMarker = m;
+                        }
+                    }
+                }
+            }
+
+            [this.camsLayer, this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
+             this.radiationLayer, this.torLayer, this.volcanoLayer, this.buoyLayer,
+             this.blitzortungLayer, this.spaceDishLayer, this.energyLayer, this.geomagLayer,
+             this.bordersLayer, this.balticAisLayer, this.gdacsLayer].forEach(checkGroupProximity);
+
+            if (nearestMarker) {
+                this.notifyLayerClicked(e);
+                nearestMarker.fire('click', e);
+                return;
+            }
 
             const { lat, lng } = e.latlng;
             await this.onMapLocationClicked(lat, lng);
@@ -7096,6 +7202,7 @@ OperationsMap.prototype.fetchSubmarineCables = async function() {
 
         const cableLayer = L.geoJSON(geojson, {
             pane: 'cablesPane',
+            renderer: this.cablesCanvasRenderer,
             style: () => ({
                 color: '#00f0ff',
                 weight: 3.2,
@@ -7290,20 +7397,16 @@ OperationsMap.prototype.fetchBalticAis = async function() {
             const sog = p.sog !== undefined ? p.sog : 0;
             const cog = p.cog !== undefined ? p.cog : 0;
 
-            const shipIcon = L.divIcon({
-                className: 'baltic-ship-icon',
-                html: `
-                    <div style="transform: rotate(${cog}deg); width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;">
-                        <svg viewBox="0 0 24 24" width="16" height="16" style="filter: drop-shadow(0 0 4px #06b6d4);">
-                            <polygon points="12,2 22,22 12,18 2,22" fill="#06b6d4" stroke="#ffffff" stroke-width="1.5" />
-                        </svg>
-                    </div>
-                `,
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
+            const marker = L.triangleMarker([lat, lon], {
+                renderer: this.canvasRenderer,
+                radius: this.getDynamicNodeRadius(4.8),
+                fillColor: '#06b6d4',
+                color: '#ffffff',
+                weight: 1.2,
+                opacity: 0.95,
+                fillOpacity: 0.9
             });
-
-            const marker = L.marker([lat, lon], { icon: shipIcon });
+            marker._baseRadius = 4.8;
             marker.bindTooltip(`🚢 <strong>BALTIC AIS // MMSI ${mmsi}</strong><br>Speed: ${sog} kn • Kurs: ${cog}°<br><span style="font-size:0.65rem;color:#38bdf8;">Klick für Schiffs-Dossier MON-02</span>`, {
                 direction: 'top',
                 offset: [0, -6]
@@ -7336,18 +7439,16 @@ OperationsMap.prototype.fetchMetarStations = async function() {
             const cat = st.fltCat || 'VFR';
             const catColor = cat === 'VFR' ? '#10b981' : (cat === 'MVFR' ? '#38bdf8' : (cat === 'IFR' ? '#f59e0b' : '#ef4444'));
 
-            const icon = L.divIcon({
-                className: 'metar-station-icon',
-                html: `
-                    <div style="background:#090f20;border:1.5px solid ${catColor};color:${catColor};padding:1px 4px;border-radius:3px;font-size:0.65rem;font-weight:800;font-family:monospace;white-space:nowrap;box-shadow:0 0 6px rgba(0,0,0,0.8);">
-                        ✈️ ${st.icaoId}
-                    </div>
-                `,
-                iconSize: [40, 16],
-                iconAnchor: [20, 8]
+            const marker = L.pentagonMarker([st.lat, st.lon], {
+                renderer: this.canvasRenderer,
+                radius: this.getDynamicNodeRadius(4.6),
+                fillColor: catColor,
+                color: '#ffffff',
+                weight: 1.2,
+                opacity: 0.95,
+                fillOpacity: 0.9
             });
-
-            const marker = L.marker([st.lat, st.lon], { icon: icon });
+            marker._baseRadius = 4.6;
             marker.bindTooltip(`✈️ <strong>${st.icaoId} - ${st.name}</strong><br>Category: <strong style="color:${catColor};">${cat}</strong> | Temp: ${st.temp}°C | Wind: ${st.wspd} KT<br><span style="font-size:0.65rem;color:#38bdf8;">Klick für METAR-Dossier MON-02</span>`, {
                 direction: 'top',
                 offset: [0, -8]
@@ -7397,18 +7498,16 @@ OperationsMap.prototype.fetchKiwiSdr = async function() {
             const lon = parseFloat(match[2]);
             if (isNaN(lat) || isNaN(lon)) return;
 
-            const icon = L.divIcon({
-                className: 'kiwisdr-icon',
-                html: `
-                    <div style="background:#1c1305;border:1.5px solid #f59e0b;color:#f59e0b;padding:1px 3px;border-radius:2px;font-size:0.62rem;font-weight:bold;box-shadow:0 0 5px rgba(245,158,11,0.5);">
-                        📻 SDR
-                    </div>
-                `,
-                iconSize: [30, 14],
-                iconAnchor: [15, 7]
+            const marker = L.squareMarker([lat, lon], {
+                renderer: this.canvasRenderer,
+                radius: this.getDynamicNodeRadius(4.5),
+                fillColor: '#f59e0b',
+                color: '#ffffff',
+                weight: 1.2,
+                opacity: 0.95,
+                fillOpacity: 0.9
             });
-
-            const marker = L.marker([lat, lon], { icon: icon });
+            marker._baseRadius = 4.5;
             marker.bindTooltip(`📻 <strong>KiwiSDR: ${r.loc || 'Receiver'}</strong><br>Bands: 0-32 MHz HF | Users: ${r.users || 0}/${r.users_max || 4}<br><span style="font-size:0.65rem;color:#facc15;">Klick für SDR Audio-Tuner MON-02</span>`, {
                 direction: 'top',
                 offset: [0, -8]
@@ -7590,9 +7689,11 @@ OperationsMap.prototype.fetchVolcanoCalderas = async function() {
                 offset: [0, -5]
             });
 
-            marker.on('click', () => {
-                if (window.OmniPlayer && window.OmniPlayer.showVolcanoDeepDive) {
-                    window.OmniPlayer.showVolcanoDeepDive(p, [lat, lon]);
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                const pl = window.MainPlayer || window.OmniPlayer;
+                if (pl && typeof pl.showVolcanoDeepDive === 'function') {
+                    pl.showVolcanoDeepDive(p, [lat, lon]);
                 }
             });
 
@@ -7630,9 +7731,11 @@ OperationsMap.prototype.fetchTsunamiBuoys = async function() {
                 offset: [0, -5]
             });
 
-            marker.on('click', () => {
-                if (window.OmniPlayer && window.OmniPlayer.showBuoyDeepDive) {
-                    window.OmniPlayer.showBuoyDeepDive(b);
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                const pl = window.MainPlayer || window.OmniPlayer;
+                if (pl && typeof pl.showBuoyDeepDive === 'function') {
+                    pl.showBuoyDeepDive(b);
                 }
             });
 
@@ -7677,9 +7780,11 @@ OperationsMap.prototype.fetchBlitzortungClusters = async function() {
                 offset: [0, -5]
             });
 
-            marker.on('click', () => {
-                if (window.OmniPlayer && window.OmniPlayer.showBlitzortungDeepDive) {
-                    window.OmniPlayer.showBlitzortungDeepDive(s);
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                const pl = window.MainPlayer || window.OmniPlayer;
+                if (pl && typeof pl.showBlitzortungDeepDive === 'function') {
+                    pl.showBlitzortungDeepDive(s);
                 }
             });
 
@@ -7717,9 +7822,11 @@ OperationsMap.prototype.fetchSpaceTrackingDishes = async function() {
                 offset: [0, -5]
             });
 
-            marker.on('click', () => {
-                if (window.OmniPlayer && window.OmniPlayer.showSpaceDishDeepDive) {
-                    window.OmniPlayer.showSpaceDishDeepDive(d);
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                const pl = window.MainPlayer || window.OmniPlayer;
+                if (pl && typeof pl.showSpaceDishDeepDive === 'function') {
+                    pl.showSpaceDishDeepDive(d);
                 }
             });
 
@@ -7757,9 +7864,11 @@ OperationsMap.prototype.fetchEnergyTerminals = async function() {
                 offset: [0, -5]
             });
 
-            marker.on('click', () => {
-                if (window.OmniPlayer && window.OmniPlayer.showEnergyDeepDive) {
-                    window.OmniPlayer.showEnergyDeepDive(t);
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                const pl = window.MainPlayer || window.OmniPlayer;
+                if (pl && typeof pl.showEnergyDeepDive === 'function') {
+                    pl.showEnergyDeepDive(t);
                 }
             });
 
@@ -7798,9 +7907,11 @@ OperationsMap.prototype.fetchGeomagneticStations = async function() {
                 offset: [0, -5]
             });
 
-            marker.on('click', () => {
-                if (window.OmniPlayer && window.OmniPlayer.showGeomagDeepDive) {
-                    window.OmniPlayer.showGeomagDeepDive(s);
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                const pl = window.MainPlayer || window.OmniPlayer;
+                if (pl && typeof pl.showGeomagDeepDive === 'function') {
+                    pl.showGeomagDeepDive(s);
                 }
             });
 
