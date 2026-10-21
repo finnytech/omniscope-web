@@ -257,64 +257,106 @@ window.PROVIDER_COLORS = {
 // Enables rendering 10,000+ interactive nodes simultaneously on a single Canvas
 // ==============================================================================
 if (typeof L !== 'undefined' && !L.SquareMarker) {
-    // 1. Square Marker (■ Pinkes Viereck - Flock Safety ALPR)
-    L.SquareMarker = L.CircleMarker.extend({
-        _updatePath: function () {
-            this._renderer._updateSquare(this);
-        }
-    });
-    L.squareMarker = function (latlng, options) {
-        return new L.SquareMarker(latlng, options);
-    };
-
-    // 2. Triangle Marker (▲ Gelbes Dreieck - Telemetrie)
-    L.TriangleMarker = L.CircleMarker.extend({
-        _updatePath: function () {
-            this._renderer._updateTriangle(this);
-        }
-    });
-    L.triangleMarker = function (latlng, options) {
-        return new L.TriangleMarker(latlng, options);
-    };
-
-    // 3. Pentagon Marker (⬟ Grünes Fünfeck - Wetterstationen)
-    L.PentagonMarker = L.CircleMarker.extend({
-        _updatePath: function () {
-            this._renderer._updatePentagon(this);
-        }
-    });
-    L.pentagonMarker = function (latlng, options) {
-        return new L.PentagonMarker(latlng, options);
-    };
-
-    // 4. Hexagon Marker (⬢ Rotes Sechseck - Tornados & Unwetter)
-    L.HexagonMarker = L.CircleMarker.extend({
-        _updatePath: function () {
-            this._renderer._updateHexagon(this);
-        }
-    });
-    L.hexagonMarker = function (latlng, options) {
-        return new L.HexagonMarker(latlng, options);
-    };
-
-    // 5. Diamond Marker (◆ Orange Raute - Erdbeben / USGS)
-    L.DiamondMarker = L.CircleMarker.extend({
-        _updatePath: function () {
-            this._renderer._updateDiamond(this);
-        }
-    });
-    
-    // High-Precision Hitbox matching visual size + comfortable click buffer (avoids expensive Math.sqrt)
+    // Universal high-precision hit test for circle markers
     L.CircleMarker.prototype._containsPoint = function (p) {
         const pt = this._point;
         if (!pt) return false;
         const dx = p.x - pt.x;
         const dy = p.y - pt.y;
         const r = this._radius || 6.0;
-        // Generous hitbox: at least 20px radius, or visual radius + 12px
-        const hitRadius = Math.max(20.0, r + 12.0);
+        const hitRadius = Math.max(24.0, r + 14.0);
         return (dx * dx + dy * dy) <= (hitRadius * hitRadius);
     };
+
+    // 1. Square Marker (■ Würfel / ALPR / KiwiSDR) with box hitbox
+    L.SquareMarker = L.CircleMarker.extend({
+        _updatePath: function () {
+            this._renderer._updateSquare(this);
+        },
+        _containsPoint: function (p) {
+            const pt = this._point;
+            if (!pt) return false;
+            const r = this._radius || 6.0;
+            const hit = Math.max(24.0, r + 14.0);
+            return Math.abs(p.x - pt.x) <= hit && Math.abs(p.y - pt.y) <= hit;
+        }
+    });
+    L.squareMarker = function (latlng, options) {
+        return new L.SquareMarker(latlng, options);
+    };
+
+    // 2. Triangle Marker (▲ Dreieck - Telemetrie / Schiffe)
+    L.TriangleMarker = L.CircleMarker.extend({
+        _updatePath: function () {
+            this._renderer._updateTriangle(this);
+        },
+        _containsPoint: function (p) {
+            const pt = this._point;
+            if (!pt) return false;
+            const r = this._radius || 6.0;
+            const hit = Math.max(24.0, r + 14.0);
+            const dx = p.x - pt.x;
+            const dy = p.y - pt.y;
+            return (dx * dx + dy * dy) <= (hit * hit);
+        }
+    });
+    L.triangleMarker = function (latlng, options) {
+        return new L.TriangleMarker(latlng, options);
+    };
+
+    // 3. Pentagon Marker (⬟ Fünfeck - Wetterstationen / METAR)
+    L.PentagonMarker = L.CircleMarker.extend({
+        _updatePath: function () {
+            this._renderer._updatePentagon(this);
+        },
+        _containsPoint: function (p) {
+            const pt = this._point;
+            if (!pt) return false;
+            const r = this._radius || 6.0;
+            const hit = Math.max(24.0, r + 14.0);
+            const dx = p.x - pt.x;
+            const dy = p.y - pt.y;
+            return (dx * dx + dy * dy) <= (hit * hit);
+        }
+    });
+    L.pentagonMarker = function (latlng, options) {
+        return new L.PentagonMarker(latlng, options);
+    };
+
+    // 4. Hexagon Marker (⬢ Sechseck - Tornados & Unwetter)
+    L.HexagonMarker = L.CircleMarker.extend({
+        _updatePath: function () {
+            this._renderer._updateHexagon(this);
+        },
+        _containsPoint: function (p) {
+            const pt = this._point;
+            if (!pt) return false;
+            const r = this._radius || 6.0;
+            const hit = Math.max(24.0, r + 14.0);
+            const dx = p.x - pt.x;
+            const dy = p.y - pt.y;
+            return (dx * dx + dy * dy) <= (hit * hit);
+        }
+    });
+    L.hexagonMarker = function (latlng, options) {
+        return new L.HexagonMarker(latlng, options);
+    };
+
+    // 5. Diamond Marker (◆ Raute - Erdbeben / USGS)
+    L.DiamondMarker = L.CircleMarker.extend({
+        _updatePath: function () {
+            this._renderer._updateDiamond(this);
+        },
+        _containsPoint: function (p) {
+            const pt = this._point;
+            if (!pt) return false;
+            const r = this._radius || 6.0;
+            const hit = Math.max(24.0, r + 14.0);
+            const dx = p.x - pt.x;
+            const dy = p.y - pt.y;
+            return (dx * dx + dy * dy) <= (hit * hit);
+        }
+    });
 
     L.diamondMarker = function (latlng, options) {
         return new L.DiamondMarker(latlng, options);
@@ -426,6 +468,82 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                 ctx.lineTo(p.x - r * 0.85, p.y);
                 ctx.closePath();
                 this._fillStroke(ctx, layer);
+            },
+            _onClick: function (e) {
+                const point = this._map.mouseEventToLayerPoint(e);
+                let clickedLayer = null;
+                let minDistSq = Infinity;
+
+                for (let order = this._drawFirst; order; order = order.next) {
+                    const layer = order.layer;
+                    if (layer && layer.options && layer.options.interactive !== false) {
+                        const pt = layer._point;
+                        if (pt) {
+                            const dx = point.x - pt.x;
+                            const dy = point.y - pt.y;
+                            const r = layer._radius || 6.0;
+                            const hitRadius = Math.max(24.0, r + 14.0);
+                            const dSq = dx * dx + dy * dy;
+                            if (dSq <= hitRadius * hitRadius && dSq < minDistSq) {
+                                minDistSq = dSq;
+                                clickedLayer = layer;
+                            }
+                        }
+                    }
+                }
+
+                if (clickedLayer) {
+                    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                    if (e.originalEvent) {
+                        e.originalEvent._layerClicked = true;
+                        e.originalEvent._stopped = true;
+                        if (typeof e.originalEvent.stopPropagation === 'function') e.originalEvent.stopPropagation();
+                    }
+                    if (window.MapController) {
+                        window.MapController._lastLayerClickTime = Date.now();
+                    }
+                    window._lastMapNodeClick = Date.now();
+                    this._fireEvent([clickedLayer], e);
+                    if (typeof clickedLayer.openPopup === 'function' && !clickedLayer.isPopupOpen()) {
+                        try { clickedLayer.openPopup(); } catch(_) {}
+                    }
+                }
+            },
+            _onMouseMove: function (e) {
+                if (!this._map || this._map.dragging.moving() || this._map._animatingZoom) return;
+                const point = this._map.mouseEventToLayerPoint(e);
+                let candidateHoveredLayer = null;
+                let minDistSq = Infinity;
+
+                for (let order = this._drawFirst; order; order = order.next) {
+                    const layer = order.layer;
+                    if (layer && layer.options && layer.options.interactive !== false) {
+                        const pt = layer._point;
+                        if (pt) {
+                            const dx = point.x - pt.x;
+                            const dy = point.y - pt.y;
+                            const r = layer._radius || 6.0;
+                            const hitRadius = Math.max(24.0, r + 14.0);
+                            const dSq = dx * dx + dy * dy;
+                            if (dSq <= hitRadius * hitRadius && dSq < minDistSq) {
+                                minDistSq = dSq;
+                                candidateHoveredLayer = layer;
+                            }
+                        }
+                    }
+                }
+
+                if (candidateHoveredLayer !== this._hoveredLayer) {
+                    this._handleMouseOut(e);
+                    if (candidateHoveredLayer) {
+                        if (this._container) L.DomUtil.addClass(this._container, 'leaflet-interactive');
+                        this._fireEvent([candidateHoveredLayer], e, 'mouseover');
+                        this._hoveredLayer = candidateHoveredLayer;
+                    }
+                }
+                if (this._hoveredLayer) {
+                    this._fireEvent([this._hoveredLayer], e);
+                }
             }
         });
     }
@@ -518,7 +636,7 @@ class OperationsMap {
             this.map.getPane('sensorMarkersPane').style.zIndex = '460';
         }
 
-        this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane' });
+        this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane', interactive: true });
         this.cablesCanvasRenderer = L.canvas({ padding: 0.25, tolerance: 15, pane: 'cablesPane' });
         this._lastLayerClickTime = 0;
         L.control.zoom({ position: 'bottomright' }).addTo(this.map);
@@ -803,27 +921,27 @@ class OperationsMap {
             if (Date.now() - (window._lastMapNodeClick || 0) < 800) return;
             if (e.originalEvent && (e.originalEvent._layerClicked || e.originalEvent._markerClicked || e.originalEvent.defaultPrevented)) return;
 
-            // Check if click was within generous 36px radius of ANY layer node: snaps directly to marker
+            // Check if click was within generous 40px radius of ANY layer node: converts geographic coords to exact screen pixels
             const clickPt = e.containerPoint;
             let nearestMarker = null;
-            let minDistSq = 36 * 36;
+            let minDistSq = 40 * 40;
 
             const checkGroupProximity = (group) => {
                 if (!group || !this.map || !this.map.hasLayer(group)) return;
                 if (typeof group.eachLayer === 'function') {
                     group.eachLayer(m => {
-                        let pt = m._point;
-                        if (!pt && typeof m.getLatLng === 'function') {
-                            try { pt = this.map.latLngToContainerPoint(m.getLatLng()); } catch(_) {}
-                        }
-                        if (pt) {
-                            const dx = clickPt.x - pt.x;
-                            const dy = clickPt.y - pt.y;
-                            const dSq = dx * dx + dy * dy;
-                            if (dSq < minDistSq) {
-                                minDistSq = dSq;
-                                nearestMarker = m;
-                            }
+                        const mLatlng = typeof m.getLatLng === 'function' ? m.getLatLng() : m._latlng;
+                        if (mLatlng) {
+                            try {
+                                const pt = this.map.latLngToContainerPoint(mLatlng);
+                                const dx = clickPt.x - pt.x;
+                                const dy = clickPt.y - pt.y;
+                                const dSq = dx * dx + dy * dy;
+                                if (dSq < minDistSq) {
+                                    minDistSq = dSq;
+                                    nearestMarker = m;
+                                }
+                            } catch (_) {}
                         }
                     });
                 }
@@ -831,14 +949,18 @@ class OperationsMap {
 
             if (this.activeCamMarkers) {
                 for (const m of this.activeCamMarkers.values()) {
-                    if (m && m._point) {
-                        const dx = clickPt.x - m._point.x;
-                        const dy = clickPt.y - m._point.y;
-                        const dSq = dx * dx + dy * dy;
-                        if (dSq < minDistSq) {
-                            minDistSq = dSq;
-                            nearestMarker = m;
-                        }
+                    const mLatlng = typeof m.getLatLng === 'function' ? m.getLatLng() : m._latlng;
+                    if (mLatlng) {
+                        try {
+                            const pt = this.map.latLngToContainerPoint(mLatlng);
+                            const dx = clickPt.x - pt.x;
+                            const dy = clickPt.y - pt.y;
+                            const dSq = dx * dx + dy * dy;
+                            if (dSq < minDistSq) {
+                                minDistSq = dSq;
+                                nearestMarker = m;
+                            }
+                        } catch (_) {}
                     }
                 }
             }
@@ -850,7 +972,17 @@ class OperationsMap {
 
             if (nearestMarker) {
                 this.notifyLayerClicked(e);
+                if (e.originalEvent) {
+                    e.originalEvent._layerClicked = true;
+                    e.originalEvent._stopped = true;
+                    if (typeof e.originalEvent.stopPropagation === 'function') {
+                        e.originalEvent.stopPropagation();
+                    }
+                }
                 nearestMarker.fire('click', e);
+                if (typeof nearestMarker.openPopup === 'function' && !nearestMarker.isPopupOpen()) {
+                    try { nearestMarker.openPopup(); } catch(_) {}
+                }
                 return;
             }
 
@@ -2041,9 +2173,11 @@ class OperationsMap {
 
     notifyLayerClicked(ev) {
         this._lastLayerClickTime = Date.now();
+        window._lastMapNodeClick = Date.now();
         if (ev) {
             if (ev.originalEvent) {
                 ev.originalEvent._layerClicked = true;
+                ev.originalEvent._stopped = true;
                 if (typeof ev.originalEvent.stopPropagation === 'function') {
                     ev.originalEvent.stopPropagation();
                 }
@@ -2052,7 +2186,10 @@ class OperationsMap {
                 ev.stopPropagation();
             }
             if (window.L && L.DomEvent && typeof L.DomEvent.stopPropagation === 'function') {
-                L.DomEvent.stopPropagation(ev);
+                try {
+                    if (ev.originalEvent) L.DomEvent.stopPropagation(ev.originalEvent);
+                    L.DomEvent.stopPropagation(ev);
+                } catch(_) {}
             }
         }
     }

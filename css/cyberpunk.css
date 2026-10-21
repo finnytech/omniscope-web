@@ -3622,3 +3622,14 @@ path.subsea-cable-path {
 .osint-tools-drawer.hidden {
     display: none !important;
 }
+
+/* Force all Leaflet canvas layers to accept mouse events and show pointer cursor */
+.leaflet-pane > canvas,
+.leaflet-container canvas,
+.leaflet-pane.leaflet-sensorMarkersPane-pane,
+.leaflet-pane.leaflet-cablesPane-pane {
+    pointer-events: auto !important;
+}
+.leaflet-container canvas.leaflet-interactive {
+    cursor: pointer !important;
+}
