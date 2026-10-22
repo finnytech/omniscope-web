@@ -646,7 +646,6 @@ class OperationsMap {
         if (!this.map.getPane('disasterPane')) {
             this.map.createPane('disasterPane');
             this.map.getPane('disasterPane').style.zIndex = '680';
-            this.map.getPane('disasterPane').style.pointerEvents = 'auto';
         }
 
         this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane', interactive: true });
