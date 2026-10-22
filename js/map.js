@@ -508,6 +508,14 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                     }
                     window._lastMapNodeClick = Date.now();
                     this._fireEvent([clickedLayer], e);
+                    try {
+                        clickedLayer.fire('click', {
+                            latlng: typeof clickedLayer.getLatLng === 'function' ? clickedLayer.getLatLng() : clickedLayer._latlng,
+                            layerPoint: clickedLayer._point,
+                            containerPoint: this._map.layerPointToContainerPoint(clickedLayer._point),
+                            originalEvent: e.originalEvent || e
+                        });
+                    } catch (_) {}
                     if (typeof clickedLayer.openPopup === 'function' && !clickedLayer.isPopupOpen()) {
                         try { clickedLayer.openPopup(); } catch(_) {}
                     }
@@ -641,11 +649,24 @@ class OperationsMap {
         }
         if (!this.map.getPane('sensorMarkersPane')) {
             this.map.createPane('sensorMarkersPane');
-            this.map.getPane('sensorMarkersPane').style.zIndex = '620';
+            this.map.getPane('sensorMarkersPane').style.zIndex = '550';
+        } else {
+            this.map.getPane('sensorMarkersPane').style.zIndex = '550';
+        }
+        if (this.map.getPane('markerPane')) {
+            this.map.getPane('markerPane').style.zIndex = '650';
         }
         if (!this.map.getPane('disasterPane')) {
             this.map.createPane('disasterPane');
-            this.map.getPane('disasterPane').style.zIndex = '680';
+            this.map.getPane('disasterPane').style.zIndex = '660';
+        } else {
+            this.map.getPane('disasterPane').style.zIndex = '660';
+        }
+        if (this.map.getPane('tooltipPane')) {
+            this.map.getPane('tooltipPane').style.zIndex = '700';
+        }
+        if (this.map.getPane('popupPane')) {
+            this.map.getPane('popupPane').style.zIndex = '750';
         }
 
         this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane', interactive: true });
@@ -977,7 +998,8 @@ class OperationsMap {
                 }
             }
 
-            [this.camsLayer, this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
+            [this.tornadoGroundLayer, this.archiveEventsLayer, this.alertsLayer, this.quakesLayer,
+             this.camsLayer, this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
              this.radiationLayer, this.torLayer, this.volcanoLayer, this.buoyLayer,
              this.blitzortungLayer, this.spaceDishLayer, this.energyLayer, this.geomagLayer,
              this.bordersLayer, this.balticAisLayer, this.gdacsLayer, this.noaaStationsLayer].forEach(checkGroupProximity);
@@ -1170,9 +1192,35 @@ class OperationsMap {
                     }
                 } else if (mapping.isNoaaRadar) {
                     this.enableNoaaRadar(isChecked);
-                } else if (mapping.layer) {
+                } else if (mapping.layer || mapping.topId === 'layer-alerts' || mapping.topId === 'layer-tornado-ground') {
                     if (isChecked) {
-                        if (!this.map.hasLayer(mapping.layer)) mapping.layer.addTo(this.map);
+                        if (mapping.topId === 'layer-alerts' || mapping.topId === 'layer-tornado-ground') {
+                            if (!this.map.hasLayer(this.alertsLayer)) this.alertsLayer.addTo(this.map);
+                            if (!this.map.hasLayer(this.tornadoGroundLayer)) this.tornadoGroundLayer.addTo(this.map);
+                            const topT = document.getElementById('layer-tornado-ground');
+                            const sideT = document.getElementById('side-layer-tornado-ground');
+                            if (topT) topT.checked = true;
+                            if (sideT) sideT.checked = true;
+                            const topA = document.getElementById('layer-alerts');
+                            const sideA = document.getElementById('side-layer-alerts');
+                            if (topA) topA.checked = true;
+                            if (sideA) sideA.checked = true;
+                            if (this.rawTornadoGroundAlerts && this.rawTornadoGroundAlerts.length > 0) {
+                                this.renderTornadoGroundAlerts(this.rawTornadoGroundAlerts);
+                            }
+                            if (this.rawAlerts && this.rawAlerts.length > 0) {
+                                this.renderSevereAlerts(this.rawAlerts);
+                            }
+                            if ((!this.rawAlerts || this.rawAlerts.length === 0) && (!this.rawTornadoGroundAlerts || this.rawTornadoGroundAlerts.length === 0)) {
+                                this.fetchSevereAlerts();
+                            }
+                        } else if (mapping.topId === 'layer-archive-events') {
+                            if (!this.map.hasLayer(this.archiveEventsLayer)) this.archiveEventsLayer.addTo(this.map);
+                            if (this.currentArchiveData) this.plotArchiveEvents(this.currentArchiveData);
+                        } else {
+                            if (!this.map.hasLayer(mapping.layer)) mapping.layer.addTo(this.map);
+                        }
+
                         if (mapping.topId === 'layer-noaa-stations' && this.noaaStationMarkers.size === 0) {
                             this.fetchNoaaUsaWeather();
                         } else if (mapping.topId === 'layer-cables' && this.cablesLayer.getLayers().length === 0) {
@@ -1193,7 +1241,20 @@ class OperationsMap {
                             this.fetchTorRelays();
                         }
                     } else {
-                        if (this.map.hasLayer(mapping.layer)) this.map.removeLayer(mapping.layer);
+                        if (mapping.topId === 'layer-alerts' || mapping.topId === 'layer-tornado-ground') {
+                            if (this.map.hasLayer(this.alertsLayer)) this.map.removeLayer(this.alertsLayer);
+                            if (this.map.hasLayer(this.tornadoGroundLayer)) this.map.removeLayer(this.tornadoGroundLayer);
+                            const topT = document.getElementById('layer-tornado-ground');
+                            const sideT = document.getElementById('side-layer-tornado-ground');
+                            if (topT) topT.checked = false;
+                            if (sideT) sideT.checked = false;
+                            const topA = document.getElementById('layer-alerts');
+                            const sideA = document.getElementById('side-layer-alerts');
+                            if (topA) topA.checked = false;
+                            if (sideA) sideA.checked = false;
+                        } else if (mapping.layer) {
+                            if (this.map.hasLayer(mapping.layer)) this.map.removeLayer(mapping.layer);
+                        }
                     }
                 }
             };
@@ -1233,6 +1294,27 @@ class OperationsMap {
                     }
                 }
             });
+
+            if (enable) {
+                if (!this.map.hasLayer(this.tornadoGroundLayer)) this.tornadoGroundLayer.addTo(this.map);
+                if (!this.map.hasLayer(this.alertsLayer)) this.alertsLayer.addTo(this.map);
+                if (this.rawTornadoGroundAlerts && this.rawTornadoGroundAlerts.length > 0) {
+                    this.renderTornadoGroundAlerts(this.rawTornadoGroundAlerts);
+                }
+                if (this.rawAlerts && this.rawAlerts.length > 0) {
+                    this.renderSevereAlerts(this.rawAlerts);
+                }
+                if ((!this.rawAlerts || this.rawAlerts.length === 0) && (!this.rawTornadoGroundAlerts || this.rawTornadoGroundAlerts.length === 0)) {
+                    this.fetchSevereAlerts();
+                }
+                if (this.currentArchiveData) {
+                    this.plotArchiveEvents(this.currentArchiveData);
+                }
+            } else {
+                if (this.map.hasLayer(this.tornadoGroundLayer)) this.map.removeLayer(this.tornadoGroundLayer);
+                if (this.map.hasLayer(this.alertsLayer)) this.map.removeLayer(this.alertsLayer);
+                if (this.map.hasLayer(this.archiveEventsLayer)) this.map.removeLayer(this.archiveEventsLayer);
+            }
 
             // Sync Cams, Telemetry & Flock Nodes
             const topCams = document.getElementById('layer-cams');
@@ -3207,7 +3289,7 @@ class OperationsMap {
                 ];
                 waypoints.forEach(({ pt, eta }) => {
                     const wp = L.circleMarker([pt.lat, pt.lon], {
-                        pane: 'sensorMarkersPane',
+                        renderer: this.canvasRenderer,
                         radius: 5,
                         color: '#ffffff',
                         fillColor: '#ef4444',

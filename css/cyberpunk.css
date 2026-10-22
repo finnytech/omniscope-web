@@ -1045,6 +1045,7 @@ body {
     bottom: 10px;
     left: 10px;
     z-index: 1000;
+    pointer-events: none;
     background: rgba(15, 23, 42, 0.97);
     border: 1px solid var(--border-strong);
     border-radius: 6px;
@@ -1054,6 +1055,10 @@ body {
     gap: 12px;
     font-size: 0.75rem;
     color: var(--text-muted);
+}
+
+.radar-hud-controls > * {
+    pointer-events: auto;
 }
 
 .radar-hud-controls input[type="range"] {
