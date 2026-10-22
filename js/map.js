@@ -484,7 +484,11 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                             const r = layer._radius || 6.0;
                             const hitRadius = Math.max(24.0, r + 14.0);
                             const dSq = dx * dx + dy * dy;
-                            if (dSq <= hitRadius * hitRadius && dSq < minDistSq) {
+                            let isHit = (dSq <= hitRadius * hitRadius);
+                            if (!isHit && typeof layer._containsPoint === 'function') {
+                                try { isHit = layer._containsPoint(point); } catch (_) {}
+                            }
+                            if (isHit && dSq < minDistSq) {
                                 minDistSq = dSq;
                                 clickedLayer = layer;
                             }
@@ -525,7 +529,11 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
                             const r = layer._radius || 6.0;
                             const hitRadius = Math.max(24.0, r + 14.0);
                             const dSq = dx * dx + dy * dy;
-                            if (dSq <= hitRadius * hitRadius && dSq < minDistSq) {
+                            let isHit = (dSq <= hitRadius * hitRadius);
+                            if (!isHit && typeof layer._containsPoint === 'function') {
+                                try { isHit = layer._containsPoint(point); } catch (_) {}
+                            }
+                            if (isHit && dSq < minDistSq) {
                                 minDistSq = dSq;
                                 candidateHoveredLayer = layer;
                             }
@@ -633,7 +641,7 @@ class OperationsMap {
         }
         if (!this.map.getPane('sensorMarkersPane')) {
             this.map.createPane('sensorMarkersPane');
-            this.map.getPane('sensorMarkersPane').style.zIndex = '460';
+            this.map.getPane('sensorMarkersPane').style.zIndex = '620';
         }
 
         this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane', interactive: true });
@@ -968,7 +976,7 @@ class OperationsMap {
             [this.camsLayer, this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
              this.radiationLayer, this.torLayer, this.volcanoLayer, this.buoyLayer,
              this.blitzortungLayer, this.spaceDishLayer, this.energyLayer, this.geomagLayer,
-             this.bordersLayer, this.balticAisLayer, this.gdacsLayer].forEach(checkGroupProximity);
+             this.bordersLayer, this.balticAisLayer, this.gdacsLayer, this.noaaStationsLayer].forEach(checkGroupProximity);
 
             if (nearestMarker) {
                 this.notifyLayerClicked(e);
@@ -4740,9 +4748,22 @@ class OperationsMap {
                     </div>
                 `;
 
-                const marker = L.marker([p.lat, p.lon], { icon: engineIcon })
-                    .bindPopup(popupHtml)
-                    .addTo(this.weatherEnginesLayer);
+                const marker = L.diamondMarker([p.lat, p.lon], {
+                    renderer: this.canvasRenderer,
+                    radius: this.getDynamicNodeRadius(5.5),
+                    fillColor: color,
+                    color: '#ffffff',
+                    weight: 1.5,
+                    fillOpacity: 0.9,
+                    interactive: true
+                }).bindPopup(popupHtml)
+                  .addTo(this.weatherEnginesLayer);
+                marker._baseRadius = 5.5;
+
+                marker.on('click', (ev) => {
+                    this.notifyLayerClicked(ev);
+                    marker.openPopup();
+                });
 
                 this.weatherEngineMarkers.set(markerKey, marker);
             });
