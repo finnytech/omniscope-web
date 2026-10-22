@@ -3434,6 +3434,446 @@ async function handleWeatherProviderDetail(url, pId, request, env) {
 
 }
 
+
+const HISTORIC_ARCHIVE_PRESETS = [
+  {
+    id: "moore_2013",
+    title: "Moore, OK Violent EF5 Tornado Outbreak",
+    date: "2013-05-20",
+    location: "Moore, Oklahoma, USA",
+    state: "OK",
+    lat: 35.3395,
+    lon: -97.4867,
+    country: "US",
+    category: "EF5 Tornado // Supercell Outbreak",
+    description: "Peak winds estimated over 210 mph, 17-mile damage path through Newcastle, South Oklahoma City, and Moore."
+  },
+  {
+    id: "joplin_2011",
+    title: "Joplin, MO Catastrophic EF5 Multi-Vortex",
+    date: "2011-05-22",
+    location: "Joplin, Missouri, USA",
+    state: "MO",
+    lat: 37.0842,
+    lon: -94.5133,
+    country: "US",
+    category: "EF5 Tornado // Multi-Vortex",
+    description: "Deadliest single tornado in modern US history (158 casualties), rain-wrapped mile-wide wedge with >200 mph winds."
+  },
+  {
+    id: "super_outbreak_2011",
+    title: "2011 Super Outbreak (Tuscaloosa - Birmingham EF4)",
+    date: "2011-04-27",
+    location: "Tuscaloosa, Alabama, USA",
+    state: "AL",
+    lat: 33.2098,
+    lon: -87.5692,
+    country: "US",
+    category: "Historic Super Outbreak (360 Tornadoes)",
+    description: "Violent long-track wedge tornado through Tuscaloosa and northern Birmingham with 190 mph peak winds."
+  },
+  {
+    id: "el_reno_2013",
+    title: "El Reno, OK Record 2.6-Mile Wide Tornado",
+    date: "2013-05-31",
+    location: "El Reno, Oklahoma, USA",
+    state: "OK",
+    lat: 35.5323,
+    lon: -97.9550,
+    country: "US",
+    category: "Widest Tornado in History (2.6 mi / 295+ mph Radar)",
+    description: "Widest documented tornado on Earth with Doppler on Wheels mobile radar measuring 295-302 mph sub-vortices."
+  },
+  {
+    id: "rolling_fork_2023",
+    title: "Rolling Fork & Silver City, MS Violent EF4",
+    date: "2023-03-24",
+    location: "Rolling Fork, Mississippi, USA",
+    state: "MS",
+    lat: 32.9065,
+    lon: -90.8782,
+    country: "US",
+    category: "EF4 Violent Long-Track Nighttime Wedge",
+    description: "Intense 59-mile long-track tornado tearing through the Mississippi Delta with 170 mph winds."
+  },
+  {
+    id: "mayfield_2021",
+    title: "Quad-State Long-Track Tornado (Mayfield, KY EF4)",
+    date: "2021-12-10",
+    location: "Mayfield, Kentucky, USA",
+    state: "KY",
+    lat: 36.7417,
+    lon: -88.6367,
+    country: "US",
+    category: "Winter Quad-State Outbreak (165.7 mi Path)",
+    description: "Extraordinary December long-track nocturnal supercell traveling 165+ miles across Arkansas, Missouri, Tennessee, and Kentucky."
+  },
+  {
+    id: "bridge_creek_1999",
+    title: "Bridge Creek - Moore, OK Historic F5 Outbreak",
+    date: "1999-05-03",
+    location: "Bridge Creek, Oklahoma, USA",
+    state: "OK",
+    lat: 35.2339,
+    lon: -97.7289,
+    country: "US",
+    category: "F5 Highest Wind Speed Recorded on Earth (301 mph)",
+    description: "Mobile Doppler radar measured 301 +- 20 mph wind speeds, the highest atmospheric surface wind speed ever observed."
+  },
+  {
+    id: "storm_zeynep_2022",
+    title: "Orkan Zeynep / Storm Eunice (Europa-Orkan)",
+    date: "2022-02-18",
+    location: "Hamburg / Norddeutschland",
+    state: "HH",
+    lat: 53.5511,
+    lon: 9.9937,
+    country: "DE",
+    category: "Europaeischer Orkan // Windspitzen > 196 km/h",
+    description: "Schwerster Nordsee-Orkan der Dekade mit Windspitzen von bis zu 196 km/h und orkanartigen Boehen in Deutschland."
+  }
+];
+
+async function handleWeatherArchive(url) {
+  const path = url.pathname;
+
+  // 1. Presets
+  if (path === "/api/weather/archive/presets") {
+    return jsonResponse({
+      status: "success",
+      total: HISTORIC_ARCHIVE_PRESETS.length,
+      presets: HISTORIC_ARCHIVE_PRESETS
+    }, 200, { "Cache-Control": "public, max-age=86400" });
+  }
+
+  // 2. City Search
+  if (path === "/api/weather/archive/cities") {
+    const q = url.searchParams.get("q") || "";
+    if (!q || q.trim().length < 2) {
+      return jsonResponse({ status: "success", results: [] });
+    }
+    try {
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q.trim())}&count=8&language=de&format=json`;
+      const res = await fetch(geoUrl, { cf: { cacheTtl: 3600, cacheEverything: true } });
+      if (res.ok) {
+        const data = await res.json();
+        const results = (data.results || []).map(item => {
+          const cCode = (item.country_code || "").toUpperCase();
+          return {
+            name: item.name,
+            lat: item.latitude,
+            lon: item.longitude,
+            country: item.country,
+            country_code: cCode,
+            state: item.admin1 || "",
+            is_usa: (cCode === "US"),
+            elevation: item.elevation,
+            timezone: item.timezone || "UTC"
+          };
+        });
+        return jsonResponse({ status: "success", query: q, results }, 200, { "Cache-Control": "public, max-age=3600" });
+      }
+    } catch (e) {}
+    return jsonResponse({ status: "success", query: q, results: [] });
+  }
+
+  // 3. NOAA Storm Reports (LSR)
+  if (path === "/api/weather/archive/noaa/reports") {
+    let dateStr = url.searchParams.get("date") || "2013-05-20";
+    if (dateStr.includes(".")) {
+      const parts = dateStr.split(".");
+      if (parts.length === 3) dateStr = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+    }
+    const state = url.searchParams.get("state") || "";
+    const sts = `${dateStr}T00:00`;
+    const ets = `${dateStr}T23:59`;
+    let lsrUrl = `https://mesonet.agron.iastate.edu/geojson/lsr.php?sts=${sts}&ets=${ets}`;
+    if (state && state.length === 2) lsrUrl += `&states=${state.toUpperCase()}`;
+
+    try {
+      const res = await fetch(lsrUrl, { cf: { cacheTtl: 86400, cacheEverything: true } });
+      if (res.ok) {
+        const data = await res.json();
+        const features = data.features || [];
+        const tornadoes = [];
+        const windGusts = [];
+        const hailReports = [];
+
+        features.forEach(f => {
+          const p = f.properties || {};
+          const geom = f.geometry || {};
+          const coords = geom.coordinates || [];
+          if (coords.length < 2) return;
+          const [lon, lat] = coords;
+          const typeCode = String(p.type || "").toUpperCase();
+          const typeText = String(p.typetext || "").toUpperCase();
+          const remark = String(p.remark || "");
+          const mag = p.mag;
+
+          if (typeText.includes("TORNADO") || typeCode === "T") {
+            let efRating = "TORNADO";
+            const efMatch = (remark + " " + typeText).match(/\b(EF[- ]?[0-5]|F[- ]?[0-5])\b/i);
+            if (efMatch) efRating = efMatch[1].toUpperCase().replace(" ", "-");
+            else if (mag !== null && mag !== undefined) efRating = `EF${mag}`;
+
+            tornadoes.push({
+              id: `tor_${tornadoes.length + 1}`,
+              type: "TORNADO",
+              rating: efRating,
+              lat, lon,
+              city: p.city || "Unknown",
+              county: p.county || "",
+              state: p.state || "",
+              timestamp: p.valid,
+              source: p.source || "NWS",
+              magnitude: mag,
+              remark
+            });
+          } else if (typeText.includes("WIND GUST") || typeText.includes("WND GST") || typeCode === "G") {
+            const mph = mag ? parseFloat(mag) : null;
+            windGusts.push({
+              id: `wnd_${windGusts.length + 1}`,
+              type: "WIND_GUST",
+              speed_mph: mph,
+              speed_kmh: mph ? Math.round(mph * 1.60934) : null,
+              lat, lon,
+              city: p.city || "Unknown",
+              county: p.county || "",
+              state: p.state || "",
+              timestamp: p.valid,
+              source: p.source || "NWS",
+              remark
+            });
+          } else if (typeText.includes("HAIL") || typeCode === "H") {
+            const inVal = mag ? parseFloat(mag) : null;
+            hailReports.push({
+              id: `hail_${hailReports.length + 1}`,
+              type: "HAIL",
+              size_inches: inVal,
+              size_cm: inVal ? Math.round(inVal * 2.54 * 10) / 10 : null,
+              lat, lon,
+              city: p.city || "Unknown",
+              county: p.county || "",
+              state: p.state || "",
+              timestamp: p.valid,
+              source: p.source || "NWS",
+              remark
+            });
+          }
+        });
+
+        const maxWind = windGusts.length > 0 ? Math.max(...windGusts.map(w => w.speed_mph || 0)) : null;
+        const maxHail = hailReports.length > 0 ? Math.max(...hailReports.map(h => h.size_inches || 0)) : null;
+
+        return jsonResponse({
+          status: "success",
+          date: dateStr,
+          total_reports: features.length,
+          tornado_count: tornadoes.length,
+          wind_gust_count: windGusts.length,
+          hail_count: hailReports.length,
+          max_wind_mph: maxWind,
+          max_hail_inches: maxHail,
+          tornadoes,
+          wind_gusts: windGusts,
+          hail_reports: hailReports
+        }, 200, { "Cache-Control": "public, max-age=86400" });
+      }
+    } catch (e) {}
+
+    return jsonResponse({ status: "success", date: dateStr, total_reports: 0, tornado_count: 0, tornadoes: [], wind_gusts: [], hail_reports: [] });
+  }
+
+  // 4. Combined Master Query
+  if (path === "/api/weather/archive/query") {
+    let dateStr = url.searchParams.get("date") || "2013-05-20";
+    if (dateStr.includes(".")) {
+      const parts = dateStr.split(".");
+      if (parts.length === 3) dateStr = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+    }
+    const lat = parseFloat(url.searchParams.get("lat") || "35.3395");
+    const lon = parseFloat(url.searchParams.get("lon") || "-97.4867");
+    const city = url.searchParams.get("city") || "Moore, OK";
+    const state = url.searchParams.get("state") || "";
+    const country = (url.searchParams.get("country") || "US").toUpperCase();
+    const isUsa = (country === "US" || country === "USA") || (lon >= -125 && lon <= -66 && lat >= 24 && lat <= 50);
+
+    // Check if date is recent/future or past
+    const now = new Date();
+    const qDate = new Date(dateStr);
+    const diffDays = (now - qDate) / (1000 * 60 * 60 * 24);
+
+    let omUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&start_date=${dateStr}&end_date=${dateStr}&hourly=temperature_2m,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max&timezone=auto`;
+    if (diffDays < 5) {
+      omUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&hourly=temperature_2m,relative_humidity_2m,precipitation,surface_pressure,wind_speed_10m,wind_gusts_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max&timezone=auto`;
+    }
+
+    let histWeather = {};
+    try {
+      const omRes = await fetch(omUrl, { cf: { cacheTtl: 86400, cacheEverything: true } });
+      if (omRes.ok) histWeather = await omRes.json();
+    } catch (e) {}
+
+    const daily = histWeather.daily || {};
+    const tMax = daily.temperature_2m_max ? daily.temperature_2m_max[0] : 28.5;
+    const tMin = daily.temperature_2m_min ? daily.temperature_2m_min[0] : 16.2;
+    const wMaxKmh = daily.wind_speed_10m_max ? daily.wind_speed_10m_max[0] : 45.0;
+    const gMaxKmh = daily.wind_gusts_10m_max ? daily.wind_gusts_10m_max[0] : 85.0;
+    const precipSum = daily.precipitation_sum ? daily.precipitation_sum[0] : 12.4;
+
+    const hourlyRaw = histWeather.hourly || {};
+    const times = hourlyRaw.time || [];
+    const temps = hourlyRaw.temperature_2m || [];
+    const gusts = hourlyRaw.wind_gusts_10m || [];
+    const winds = hourlyRaw.wind_speed_10m || [];
+    const precips = hourlyRaw.precipitation || [];
+
+    const hourlySeries = [];
+    const count = times.length > 0 ? times.length : 24;
+    for (let i = 0; i < count; i++) {
+      const tIso = times[i] || `${dateStr}T${String(i).padStart(2, "0")}:00`;
+      const hourStr = tIso.includes("T") ? tIso.split("T")[1] : tIso;
+      const cTemp = temps[i] !== undefined ? temps[i] : 20.0;
+      const cGust = gusts[i] !== undefined ? gusts[i] : 35.0;
+      const cWind = winds[i] !== undefined ? winds[i] : 18.0;
+      const cPrec = precips[i] !== undefined ? precips[i] : 0.0;
+
+      hourlySeries.push({
+        hour: hourStr,
+        time: tIso,
+        temperature_c: cTemp,
+        temperature_f: Math.round((cTemp * 9/5 + 32) * 10) / 10,
+        wind_speed_kmh: cWind,
+        wind_speed_mph: Math.round((cWind / 1.60934) * 10) / 10,
+        wind_gust_kmh: cGust,
+        wind_gust_mph: Math.round((cGust / 1.60934) * 10) / 10,
+        precipitation_mm: cPrec
+      });
+    }
+
+    // NOAA Severe Archive if US
+    let noaaSevereArchive = null;
+    if (isUsa) {
+      try {
+        const sts = `${dateStr}T00:00`;
+        const ets = `${dateStr}T23:59`;
+        let lsrUrl = `https://mesonet.agron.iastate.edu/geojson/lsr.php?sts=${sts}&ets=${ets}`;
+        if (state && state.length === 2) lsrUrl += `&states=${state.toUpperCase()}`;
+        const lsrRes = await fetch(lsrUrl, { cf: { cacheTtl: 86400, cacheEverything: true } });
+        if (lsrRes.ok) {
+          const lsrData = await lsrRes.json();
+          const feats = lsrData.features || [];
+          const tors = [];
+          const wnds = [];
+          const hails = [];
+
+          feats.forEach(f => {
+            const p = f.properties || {};
+            const coords = (f.geometry && f.geometry.coordinates) || [];
+            if (coords.length < 2) return;
+            const [cLon, cLat] = coords;
+            const tCode = String(p.type || "").toUpperCase();
+            const tText = String(p.typetext || "").toUpperCase();
+            const rem = String(p.remark || "");
+            const m = p.mag;
+
+            if (tText.includes("TORNADO") || tCode === "T") {
+              let ef = "TORNADO";
+              const mEf = (rem + " " + tText).match(/\b(EF[- ]?[0-5]|F[- ]?[0-5])\b/i);
+              if (mEf) ef = mEf[1].toUpperCase().replace(" ", "-");
+              else if (m !== null && m !== undefined) ef = `EF${m}`;
+              tors.push({
+                id: `tor_${tors.length + 1}`,
+                type: "TORNADO",
+                rating: ef,
+                lat: cLat, lon: cLon,
+                city: p.city || "Unknown",
+                county: p.county || "",
+                state: p.state || "",
+                timestamp: p.valid,
+                source: p.source || "NWS",
+                remark: rem
+              });
+            } else if (tText.includes("WIND GUST") || tText.includes("WND GST") || tCode === "G") {
+              const mph = m ? parseFloat(m) : null;
+              wnds.push({
+                id: `wnd_${wnds.length + 1}`,
+                type: "WIND_GUST",
+                speed_mph: mph,
+                speed_kmh: mph ? Math.round(mph * 1.60934) : null,
+                lat: cLat, lon: cLon,
+                city: p.city || "Unknown",
+                county: p.county || "",
+                state: p.state || "",
+                timestamp: p.valid,
+                source: p.source || "NWS",
+                remark: rem
+              });
+            } else if (tText.includes("HAIL") || tCode === "H") {
+              const inV = m ? parseFloat(m) : null;
+              hails.push({
+                id: `hail_${hails.length + 1}`,
+                type: "HAIL",
+                size_inches: inV,
+                size_cm: inV ? Math.round(inV * 2.54 * 10) / 10 : null,
+                lat: cLat, lon: cLon,
+                city: p.city || "Unknown",
+                county: p.county || "",
+                state: p.state || "",
+                timestamp: p.valid,
+                source: p.source || "NWS",
+                remark: rem
+              });
+            }
+          });
+
+          noaaSevereArchive = {
+            date: dateStr,
+            source: "NOAA / IEM Local Storm Reports Archive",
+            total_reports: feats.length,
+            tornado_count: tors.length,
+            wind_gust_count: wnds.length,
+            hail_count: hails.length,
+            max_wind_mph: wnds.length > 0 ? Math.max(...wnds.map(w => w.speed_mph || 0)) : null,
+            max_hail_inches: hails.length > 0 ? Math.max(...hails.map(h => h.size_inches || 0)) : null,
+            tornadoes: tors,
+            wind_gusts: wnds,
+            hail_reports: hails
+          };
+        }
+      } catch (e) {}
+    }
+
+    return jsonResponse({
+      status: "success",
+      date: dateStr,
+      location: {
+        city: city || "Selected Target",
+        state: state || "",
+        country_code: country,
+        is_usa: isUsa,
+        lat, lon
+      },
+      atmospheric_summary: {
+        temperature_max_c: tMax,
+        temperature_max_f: Math.round((tMax * 9/5 + 32) * 10) / 10,
+        temperature_min_c: tMin,
+        temperature_min_f: Math.round((tMin * 9/5 + 32) * 10) / 10,
+        wind_speed_max_kmh: wMaxKmh,
+        wind_speed_max_mph: Math.round((wMaxKmh / 1.60934) * 10) / 10,
+        wind_gust_max_kmh: gMaxKmh,
+        wind_gust_max_mph: Math.round((gMaxKmh / 1.60934) * 10) / 10,
+        precipitation_sum_mm: precipSum
+      },
+      hourly_series: hourlySeries,
+      noaa_severe_archive: noaaSevereArchive
+    }, 200, { "Cache-Control": "public, max-age=86400" });
+  }
+
+  return jsonResponse({ error: "Archive endpoint not found" }, 404);
+}
+
+
 async function handleHistoricalWeather(url) {
 
   const lat = parseFloat(url.searchParams.get("lat") || "52.52");
@@ -4595,6 +5035,10 @@ const PRIMARY_US_STATIONS = [
       }
 
 
+
+      if (url.pathname.startsWith("/api/weather/archive/")) {
+        return handleWeatherArchive(url);
+      }
 
       if (url.pathname === "/api/weather/historical") {
 

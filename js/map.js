@@ -643,6 +643,11 @@ class OperationsMap {
             this.map.createPane('sensorMarkersPane');
             this.map.getPane('sensorMarkersPane').style.zIndex = '620';
         }
+        if (!this.map.getPane('disasterPane')) {
+            this.map.createPane('disasterPane');
+            this.map.getPane('disasterPane').style.zIndex = '680';
+            this.map.getPane('disasterPane').style.pointerEvents = 'auto';
+        }
 
         this.canvasRenderer = L.canvas({ padding: 0.5, tolerance: 28, pane: 'sensorMarkersPane', interactive: true });
         this.cablesCanvasRenderer = L.canvas({ padding: 0.25, tolerance: 15, pane: 'cablesPane' });
@@ -4417,13 +4422,27 @@ class OperationsMap {
                 fillColor: '#f97316',
                 fillOpacity: 0.88,
                 weight: 1.5
-            }).bindPopup(`<strong>MAGNITUDE ${mag}</strong><br>${place}<br>Depth: ${depth} km<br>Time: ${time} UTC<br><span style="color:#f97316;font-size:11px;">[CLICK TO OPEN DOSSIER]</span>`)
-              .addTo(this.quakesLayer);
+            }).bindPopup(`
+                <div style="font-family:var(--font-mono);font-size:11px;min-width:220px;color:#f8fafc;">
+                    <div style="font-weight:bold;color:#ef4444;border-bottom:1px solid #334155;padding-bottom:3px;margin-bottom:5px;">
+                        🌋 MAGNITUDE ${mag} Mw // ERDBEBEN
+                    </div>
+                    <div style="margin-bottom:2px;"><strong>ORT:</strong> <span style="color:#e2e8f0;">${place}</span></div>
+                    <div style="margin-bottom:2px;"><strong>TIEFE:</strong> <span style="color:#38bdf8;">${depth} km</span></div>
+                    <div style="margin-bottom:4px;"><strong>ZEIT:</strong> <span style="color:#94a3b8;">${time} UTC</span></div>
+                    <button class="ops-btn" style="width:100%;margin-top:4px;padding:5px 8px;font-size:10px;background:rgba(239,68,68,0.22);border:1px solid #ef4444;color:#ef4444;cursor:pointer;font-weight:900;" onclick="if(window.MainPlayer && window.MainPlayer.showSeismicDeepDive) window.MainPlayer.showSeismicDeepDive({ mag: ${mag}, place: '${(place || '').replace(/'/g, '')}', depth: ${depth}, time: '${time}', lat: ${lat}, lon: ${lon}, source: 'USGS Global Seismology Network' })">
+                        🌋 MON-02 SEISMOGRAMM (3s UPDATE)
+                    </button>
+                </div>
+            `).addTo(this.quakesLayer);
 
             const openDossier = (e) => {
                 this.notifyLayerClicked(e);
                 this.placeReticle(lat, lon);
                 this.map.setView([lat, lon], 7);
+                if (window.MainPlayer && window.MainPlayer.showSeismicDeepDive) {
+                    window.MainPlayer.showSeismicDeepDive({ mag: mag, place: place, depth: depth, time: time, lat: lat, lon: lon, source: 'USGS Global Seismology Network' });
+                }
                 if (window.showTacticalDossier) {
                     window.showTacticalDossier(
                         `USGS SEISMIC // M ${mag}`,
@@ -4753,6 +4772,16 @@ class OperationsMap {
                         ${(window.isRadarStation ? window.isRadarStation(p) : false) ? `
                         <button class="ops-btn" style="width:100%;margin-top:6px;padding:5px 8px;font-size:10px;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(0,240,255,0.3);" onclick="window.lockRadarStationTarget('${p.id}', ${p.lat}, ${p.lon}, '${(p.name || '').replace(/'/g, '')}', '${(p.agency || 'Radar Net').replace(/'/g, '')}', 150)">
                             🎯 ANVISIERE WETTERSTATION // RADAR DISH
+                        </button>
+                        ` : ''}
+                        ${(p.category === 'seismic' || p.id.includes('seismic') || p.id.includes('emsc')) ? `
+                        <button class="ops-btn" style="width:100%;margin-top:6px;padding:5px 8px;font-size:10px;background:rgba(239,68,68,0.22);border:1px solid #ef4444;color:#ef4444;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(239,68,68,0.3);" onclick="if(window.MainPlayer && window.MainPlayer.showSeismicDeepDive) window.MainPlayer.showSeismicDeepDive(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                            🌋 MON-02 SEISMOGRAMM // 3-ACHSEN WAVEFORM (3s UPDATE)
+                        </button>
+                        ` : ''}
+                        ${(p.category === 'storm_prediction' || p.category === 'numerical_model' || p.id.includes('storm') || p.id.includes('aladin') || (p.type && p.type.includes('Convective'))) ? `
+                        <button class="ops-btn" style="width:100%;margin-top:6px;padding:5px 8px;font-size:10px;background:rgba(249,115,22,0.22);border:1px solid #f97316;color:#f97316;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(249,115,22,0.3);" onclick="if(window.MainPlayer && window.MainPlayer.showStormPredictionDeepDive) window.MainPlayer.showStormPredictionDeepDive(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                            ⚡ MON-02 STURM-PROGNOSE // THERMODYNAMIK (3s UPDATE)
                         </button>
                         ` : ''}
                     </div>
@@ -6481,7 +6510,17 @@ class OperationsMap {
         if (submitBtn) {
             submitBtn.addEventListener('click', () => {
                 const dateInput = document.getElementById('archive-date-input');
-                const dateVal = dateInput ? dateInput.value : '2013-05-20';
+                let dateVal = dateInput ? dateInput.value.trim() : '2013-05-20';
+                // Normalize European DD.MM.YYYY to ISO YYYY-MM-DD
+                if (dateVal.includes('.')) {
+                    const parts = dateVal.split('.');
+                    if (parts.length === 3) {
+                        const day = parts[0].padStart(2, '0');
+                        const month = parts[1].padStart(2, '0');
+                        const year = parts[2];
+                        dateVal = `${year}-${month}-${day}`;
+                    }
+                }
                 const loc = this.currentArchiveLocation || { lat: 35.3395, lon: -97.4867, city: 'Moore', state: 'OK', country: 'US' };
                 this.runArchiveQuery(dateVal, loc.lat, loc.lon, loc.city, loc.state, loc.country);
             });
@@ -7478,16 +7517,41 @@ OperationsMap.prototype.fetchGdacsDisasters = async function() {
             const pulseIcon = L.divIcon({
                 className: 'gdacs-pulse-icon',
                 html: `
-                    <div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
-                        <div style="position:absolute;width:100%;height:100%;border-radius:50%;background:${color};opacity:0.35;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
-                        <div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 10px ${color};"></div>
+                    <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;">
+                        <div style="position:absolute;width:100%;height:100%;border-radius:50%;background:${color};opacity:0.45;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;pointer-events:none;"></div>
+                        <div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 0 14px ${color};pointer-events:auto;"></div>
                     </div>
                 `,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
             });
 
-            const marker = L.marker([lat, lon], { icon: pulseIcon });
+            const marker = L.marker([lat, lon], {
+                icon: pulseIcon,
+                pane: 'disasterPane',
+                interactive: true
+            });
+
+            const gdacsJson = JSON.stringify(f).replace(/"/g, '&quot;');
+            const popupHtml = `
+                <div style="font-family:var(--font-mono);font-size:11px;min-width:250px;max-width:320px;color:#f8fafc;">
+                    <div style="font-weight:bold;color:${color};border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+                        <span>⚠️ ${p.name || p.eventname || 'UN GDACS KATASTROPHE'}</span>
+                        <span style="font-size:9px;background:${color}22;color:${color};padding:1px 5px;border-radius:3px;border:1px solid ${color}55;">${(p.alertlevel || 'ALERT').toUpperCase()}</span>
+                    </div>
+                    <div style="margin-bottom:2px;"><strong>EREIGNIS:</strong> <span style="color:#e2e8f0;">${p.eventtype || 'HAZARD'} // ${p.name || p.eventname || ''}</span></div>
+                    <div style="margin-bottom:2px;"><strong>REGION:</strong> <span style="color:#38bdf8;">${p.country || 'International'}</span></div>
+                    <div style="margin-bottom:4px;"><strong>DATUM:</strong> <span style="color:#94a3b8;">${(p.fromdate || '').replace('T', ' ').slice(0, 16) || 'Aktiv'}</span></div>
+                    <div style="font-size:10px;color:#cbd5e1;margin:6px 0;line-height:1.3;background:rgba(30,41,59,0.5);padding:4px 6px;border-radius:3px;border-left:2px solid ${color};">
+                        ${p.severitydata ? (p.severitydata.severitytext || p.severitydata.severity || 'Katastrophenwarnung') : (p.description || 'UN/EU GDACS Global Disaster Alert & Coordination System aktiv.')}
+                    </div>
+                    <button class="ops-btn" style="width:100%;margin-top:6px;padding:6px 8px;font-size:10px;background:rgba(249,115,22,0.22);border:1px solid #f97316;color:#f97316;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(249,115,22,0.3);" onclick="if(window.MainPlayer && window.MainPlayer.showGdacsDisasterDeepDive) window.MainPlayer.showGdacsDisasterDeepDive(${gdacsJson})">
+                        📊 UN-LAGEBERICHT IN MON-02 ANALYSIEREN
+                    </button>
+                </div>
+            `;
+            marker.bindPopup(popupHtml);
+
             marker.bindTooltip(`⚠️ <strong>${p.name || p.eventname || 'GDACS Disaster'}</strong><br><span style="color:${color};font-weight:bold;">Alert: ${p.alertlevel || 'Warning'}</span><br><span style="font-size:0.65rem;color:#cbd5e1;">Klick für MON-02 UN-Lagebericht</span>`, {
                 direction: 'top',
                 offset: [0, -10]
@@ -7495,6 +7559,7 @@ OperationsMap.prototype.fetchGdacsDisasters = async function() {
 
             marker.on('click', (ev) => {
                 this.notifyLayerClicked(ev);
+                marker.openPopup();
                 if (window.MainPlayer && window.MainPlayer.showGdacsDisasterDeepDive) {
                     window.MainPlayer.showGdacsDisasterDeepDive(f);
                 }
@@ -7814,12 +7879,41 @@ OperationsMap.prototype.fetchTorRelays = async function() {
                 color: '#fff',
                 weight: 1.2,
                 opacity: 0.95,
-                fillOpacity: 0.85
+                fillOpacity: 0.85,
+                interactive: true
             });
 
-            marker.bindTooltip(`🧅 <strong>TOR ${isExit ? 'EXIT NODE' : 'RELAY'}: ${r.nickname || 'TorNode'}</strong><br>ASN: ${r.as_name || 'AS'} | Bandbreite: ${Math.round((r.advertised_bandwidth || 0) / 1024 / 1024)} Mbps`, {
+            const bwMbps = Math.round(((r.advertised_bandwidth || 0) / 1024 / 1024) * 10) / 10;
+            const flagsList = (r.flags || []).join(', ') || 'Running, Valid';
+            const torJson = JSON.stringify(r).replace(/"/g, '&quot;');
+            const popupHtml = `
+                <div style="font-family:var(--font-mono);font-size:11px;min-width:240px;max-width:300px;color:#f8fafc;">
+                    <div style="font-weight:bold;color:${color};border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+                        <span>🧅 ${r.nickname || 'TorNode'}</span>
+                        <span style="font-size:9px;background:${color}22;color:${color};padding:1px 5px;border-radius:3px;border:1px solid ${color}55;">${isExit ? 'EXIT NODE' : 'GUARD/RELAY'}</span>
+                    </div>
+                    <div style="margin-bottom:2px;"><strong>FINGERPRINT:</strong> <span style="color:#94a3b8;font-size:9px;">${(r.fingerprint || '').slice(0, 16)}...</span></div>
+                    <div style="margin-bottom:2px;"><strong>ASN:</strong> <span style="color:#38bdf8;">${r.as_number || ''} ${r.as_name || 'Autonomous System'}</span></div>
+                    <div style="margin-bottom:2px;"><strong>BANDBREITE:</strong> <span style="color:#10b981;font-weight:bold;">${bwMbps} Mbps</span></div>
+                    <div style="margin-bottom:4px;"><strong>FLAGS:</strong> <span style="color:#c084fc;font-size:10px;">${flagsList}</span></div>
+                    <button class="ops-btn" style="width:100%;margin-top:6px;padding:6px 8px;font-size:10px;background:rgba(168,85,247,0.22);border:1px solid #a855f7;color:#c084fc;cursor:pointer;font-weight:900;letter-spacing:0.5px;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 0 10px rgba(168,85,247,0.3);" onclick="if(window.MainPlayer && window.MainPlayer.showTorRelayDeepDive) window.MainPlayer.showTorRelayDeepDive(${torJson})">
+                        🧅 MON-02 ECHTZEIT-STREAM (3s UPDATE)
+                    </button>
+                </div>
+            `;
+            marker.bindPopup(popupHtml);
+
+            marker.bindTooltip(`🧅 <strong>TOR ${isExit ? 'EXIT NODE' : 'RELAY'}: ${r.nickname || 'TorNode'}</strong><br>ASN: ${r.as_name || 'AS'} | Bandbreite: ${bwMbps} Mbps`, {
                 direction: 'top',
                 offset: [0, -5]
+            });
+
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                marker.openPopup();
+                if (window.MainPlayer && window.MainPlayer.showTorRelayDeepDive) {
+                    window.MainPlayer.showTorRelayDeepDive(r);
+                }
             });
 
             this.torLayer.addLayer(marker);
