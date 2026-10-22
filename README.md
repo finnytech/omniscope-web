@@ -2,7 +2,9 @@
 
 [![Official Original Project](https://img.shields.io/badge/OmniScope-OFFICIAL%20ORIGINAL-00ffcc?style=for-the-badge&logo=shield)](https://github.com/finnytech/omniscope-web)
 [![FinnyTech Original](https://img.shields.io/badge/Author-FinnyTech-ff0055?style=for-the-badge)](https://github.com/finnytech)
-[![Production Live](https://img.shields.io/badge/Live-omniscope--web.pages.dev-blue?style=for-the-badge)](https://omniscope-web.pages.dev)
+[![Production Live (Pages)](https://img.shields.io/badge/Live-omniscope--web.pages.dev-blue?style=for-the-badge)](https://omniscope-web.pages.dev)
+[![Production Live (Vercel)](https://img.shields.io/badge/Live-omniscope--web.vercel.app-black?style=for-the-badge&logo=vercel)](https://omniscope-web.vercel.app/)
+[![Edge Worker Live](https://img.shields.io/badge/Live-Cloudflare%20Worker-F38020?style=for-the-badge&logo=cloudflare)](https://omniscope-web.fuchsdany1984.workers.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg?style=for-the-badge)](CODE_OF_CONDUCT.md)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffinnytech%2Fomniscope-web)
