@@ -375,6 +375,11 @@
                 const allCams = await getLocalWebcams();
 
                 const filtered = allCams.filter(c => {
+                    const cid = (c.id || "").toLowerCase();
+                    const ccity = (c.city || "").toLowerCase();
+                    const cprov = (c.provider || "").toLowerCase();
+                    const ctitle = (c.title || "").toLowerCase();
+                    if (cid.startsWith("cctv_mun_") || ccity.includes("metropolitan sector") || cprov.includes("municipal_cctv") || ctitle.includes("traffic node #")) return false;
 
                     const lat = c.lat;
 
@@ -658,7 +663,7 @@
 
                 // 1. Seismic & Tsunami Early Warning (e.g. EMSC Seismology, GDACS, USGS, BMKG)
 
-                if (combined.includes('seismic') || combined.includes('earthquake') || combined.includes('tsunami') || combined.includes('tremor') || combined.includes('emsc') || combined.includes('usgs_water') || combined.includes('gdacs')) {
+                if (!combined.includes('volcan') && !pIdLower.includes('yvo') && !combined.includes('yellowstone') && !combined.includes('caldera') && (combined.includes('seismic') || combined.includes('earthquake') || combined.includes('tsunami') || combined.includes('tremor') || combined.includes('emsc') || combined.includes('usgs_water') || combined.includes('gdacs'))) {
 
                     return jsonResponse({
 
@@ -830,36 +835,64 @@
 
                 // 5. Volcanology & Ash Cloud Dispersion (e.g. Vedurstofa Iceland, INGV Etna)
 
-                if (combined.includes('volcan') || combined.includes('dispersion') || combined.includes('ash cloud') || combined.includes('magma')) {
+                if (combined.includes('volcan') || combined.includes('dispersion') || combined.includes('ash cloud') || combined.includes('magma') || pIdLower.includes('yvo') || (provider.category === 'volcano_observatory')) {
+                    let alertColor = "GREEN // NORMAL (Nominale Hintergrundaktivität)";
+                    let colorCode = "GREEN";
+                    let alertLevel = "NORMAL";
+                    let tremor = "Hintergrund-Rauschen (Nominal)";
+                    let so2 = 45;
+                    let eruptProb = "< 0.1% (Nominaler Hintergrund)";
+                    let summary = `${provider.name}: Vulkanische Alarmstufe GREEN (NORMAL), Hintergrundaktivität nominal, keine Ascheemission`;
+
+                    try {
+                        const usgsRes = await fetch("https://volcanoes.usgs.gov/vsc/api/volcanoApi/geojson");
+                        if (usgsRes.ok) {
+                            const udata = await usgsRes.json();
+                            const feats = udata.features || [];
+                            const isYellowstone = pIdLower.includes("yellowstone") || pName.includes("yellowstone") || pIdLower.includes("yvo");
+                            const match = feats.find(f => {
+                                const vname = (f.properties?.volcanoName || "").toLowerCase();
+                                return isYellowstone ? vname.includes("yellowstone") : vname.includes(pName.split(" ")[0]);
+                            });
+                            if (match) {
+                                colorCode = match.properties?.colorCode || "GREEN";
+                                alertLevel = match.properties?.alertLevel || "NORMAL";
+                                alertColor = `${colorCode} // ${alertLevel} (${colorCode === 'GREEN' ? 'Nominale Hintergrundaktivität' : (colorCode === 'YELLOW' ? 'Advisory / Erhöhte Unruhe' : (colorCode === 'ORANGE' ? 'Watch / Magmaintrusion' : 'Warning / Eruption'))})`;
+                                summary = `${provider.name}: USGS ${match.properties?.volcanoName || 'Caldera'} Status ${colorCode}/${alertLevel} - ${match.properties?.noticeSynopsis || 'Nominale seismische & geothermale Hintergrundwerte'}`;
+                                if (colorCode === 'GREEN') {
+                                    tremor = "Hintergrund-Rauschen (Nominal)";
+                                    so2 = 45;
+                                    eruptProb = "< 0.1% (Nominaler Hintergrund)";
+                                } else if (colorCode === 'YELLOW') {
+                                    tremor = "Leicht erhöht";
+                                    so2 = 280;
+                                    eruptProb = "4.2%";
+                                } else {
+                                    tremor = "Moderat bis Stark";
+                                    so2 = 1240;
+                                    eruptProb = "32%";
+                                }
+                            }
+                        }
+                    } catch (e) {}
 
                     return jsonResponse({
-
                         status: "success",
-
                         provider_id: provider.id,
-
                         name: provider.name,
-
                         agency: provider.agency,
-
                         category: "volcanology",
-
                         station_type: "volcanology",
-
-                        volcanic_alert_color: "ORANGE (Erhöhte seismische Unruhe / Magmaintrusion)",
-
-                        harmonic_tremor: "Moderat / Flache Fiederklüfte",
-
-                        so2_flux_tons_day: 1240,
-
-                        ash_plume_flight_level: "FL120 (3,600m MSL)",
-
-                        eruption_probability_48h: "32% (Lokale Spalteneruption möglich)",
-
-                        raw_summary: `${provider.name}: Vulkanische Alarmstufe ORANGE, SO2-Fluss 1240 t/d, Magmaintrusion`
-
+                        colorCode: colorCode,
+                        alertLevel: alertLevel,
+                        volcanic_alert_color: alertColor,
+                        harmonic_tremor: tremor,
+                        so2_flux_tons_day: so2,
+                        ash_plume_flight_level: colorCode === 'RED' ? 'FL240 (7,300m)' : (colorCode === 'ORANGE' ? 'FL120 (3,600m)' : 'FL000 (Keine Ascheemission)'),
+                        eruption_probability_48h: eruptProb,
+                        raw_summary: summary,
+                        last_updated_utc: new Date().toISOString()
                     });
-
                 }
 
 

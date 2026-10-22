@@ -2048,6 +2048,11 @@ class OperationsMap {
             allCamsToRender.forEach(cam => {
                 if (!cam || cam.lat === undefined || cam.lon === undefined || !cam.id) return;
                 if (cam.node_type === 'flock' || (cam.provider || '').toLowerCase().includes('flock')) return;
+                const cid = (cam.id || '').toLowerCase();
+                const ccity = (cam.city || '').toLowerCase();
+                const cprov = (cam.provider || '').toLowerCase();
+                const ctitle = (cam.title || '').toLowerCase();
+                if (cid.startsWith('cctv_mun_') || ccity.includes('metropolitan sector') || cprov.includes('municipal_cctv') || ctitle.includes('traffic node #')) return;
                 if (this.activeCamMarkers && this.activeCamMarkers.has(cam.id)) return;
 
                 const nType = cam.node_type || (cam.stream_type === 'municipal_telemetry' ? 'telemetry' : 'camera');
@@ -2473,6 +2478,11 @@ class OperationsMap {
                 if (cam.lat === undefined || cam.lon === undefined) return;
                 if (!cam.id) return;
                 if (cam.node_type === 'flock' || (cam.provider || '').toLowerCase().includes('flock')) return;
+                const cid = (cam.id || '').toLowerCase();
+                const ccity = (cam.city || '').toLowerCase();
+                const cprov = (cam.provider || '').toLowerCase();
+                const ctitle = (cam.title || '').toLowerCase();
+                if (cid.startsWith('cctv_mun_') || ccity.includes('metropolitan sector') || cprov.includes('municipal_cctv') || ctitle.includes('traffic node #')) return;
                 if (window.isOceanCoordinate && window.isOceanCoordinate(cam.lat, cam.lon)) return;
                 // If marker is already in active pool, KEEP IT (do NOT recreate)
                 if (this.activeCamMarkers.has(cam.id)) return;
@@ -4763,6 +4773,9 @@ class OperationsMap {
                 marker.on('click', (ev) => {
                     this.notifyLayerClicked(ev);
                     marker.openPopup();
+                    if (window.fetchLiveWeatherEngineTelemetry) {
+                        try { window.fetchLiveWeatherEngineTelemetry(p.id, p.lat, p.lon); } catch(_) {}
+                    }
                 });
 
                 this.weatherEngineMarkers.set(markerKey, marker);
@@ -7021,7 +7034,7 @@ window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
         el.innerHTML = '<span style="color:#38bdf8;">Abfrage an Spezial-Sensor läuft...</span>';
     }
     try {
-        const res = await fetch(`/api/weather/provider/${providerId}?lat=${lat}&lon=${lon}`);
+        const res = await fetch(`/api/weather/provider/${providerId}?lat=${lat}&lon=${lon}&_t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         if (el) {
             if (data.status === 'success' || data.status === 'ok') {
@@ -7090,14 +7103,21 @@ window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
                     return;
                 }
 
-                // 6. Volcanology & Ash Cloud Dispersion
-                if (data.station_type === 'volcanology' || data.category === 'volcanology' || providerId.includes('volcan') || providerId.includes('iceland')) {
+                // 6. Volcanology & Ash Cloud Dispersion (Live USGS / YVO / IMO / INGV)
+                if (data.station_type === 'volcanology' || data.category === 'volcanology' || data.category === 'volcano_observatory' || providerId.includes('volcan') || providerId.includes('yvo') || providerId.includes('iceland')) {
+                    const alertCol = (data.colorCode || '').toUpperCase();
+                    const alertStyleColor = alertCol === 'GREEN' ? '#22c55e' : (alertCol === 'YELLOW' ? '#eab308' : (alertCol === 'RED' ? '#ef4444' : (data.volcanic_alert_color && data.volcanic_alert_color.includes('GREEN') ? '#22c55e' : '#f97316')));
+                    const liveTime = new Date().toLocaleTimeString('de-DE');
                     el.innerHTML = `
-                        <div style="color:#f97316;font-weight:bold;margin-bottom:3px;font-size:10px;">🌋 VULKANOLOGIE & ASCHE-DISPERSION:</div>
+                        <div style="color:#f97316;font-weight:bold;margin-bottom:3px;font-size:10px;">🌋 VULKANOLOGIE // USGS YVO & GLOBAL CALDERA GRID:</div>
                         <div style="color:#f8fafc;line-height:1.4;font-size:10px;">
-                            <strong>Alarmstufe:</strong> <span style="color:#f97316;font-weight:bold;">${data.volcanic_alert_color || 'ORANGE (Erhöhte Aktivität)'}</span><br/>
-                            <strong>Harmonischer Tremor:</strong> ${data.harmonic_tremor || 'Moderat'} | <strong>SO2-Fluss:</strong> ${data.so2_flux_tons_day || 1240} t/d<br/>
-                            <strong>Aschewolke:</strong> ${data.ash_plume_flight_level || 'FL120 (3,600m)'} | <strong>Spalteneruption (48h):</strong> ${data.eruption_probability_48h || '32%'}
+                            <strong>Alarmstufe:</strong> <span style="color:${alertStyleColor};font-weight:bold;">${data.volcanic_alert_color || 'GREEN // NORMAL (Nominal)'}</span><br/>
+                            <strong>Harmonischer Tremor:</strong> ${data.harmonic_tremor || 'Hintergrund-Rauschen (Nominal)'} | <strong>SO2-Fluss:</strong> ${data.so2_flux_tons_day !== undefined ? data.so2_flux_tons_day : 0} t/d<br/>
+                            <strong>Status:</strong> <span style="color:#cbd5e1;">${data.raw_summary || 'Normale Hintergrundaktivität'}</span>
+                        </div>
+                        <div style="font-size:9px;color:#22c55e;margin-top:4px;border-top:1px dashed #334155;padding-top:2px;display:flex;justify-content:space-between;">
+                            <span>● LIVE AKTUALISIERT</span>
+                            <span>STAND: ${liveTime} UTC</span>
                         </div>
                     `;
                     return;

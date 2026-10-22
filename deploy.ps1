@@ -9,11 +9,7 @@ Write-Host " [OMNISCOPE OSINT] Cloudflare Pages Deployer" -ForegroundColor Yello
 Write-Host " Pfad: $projectDir" -ForegroundColor Gray
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. Resolve Cloudflare API Token (auto-refresh via cf CLI)
-try {
-    cf user get -q 2>$null | Out-Null
-} catch {}
-
+# 1. Resolve Cloudflare API Token
 $tokenFile = "$env:APPDATA\xdg.config\cloudflare\config\default.json"
 if (Test-Path $tokenFile) {
     try {
@@ -40,17 +36,19 @@ if (Test-Path "$projectDir\_worker.js") {
     Copy-Item "$projectDir\_worker.js" "$projectDir\worker.js" -Force
 }
 
+$wranglerJs = "D:\openclaw-state\npm-cache\_npx\32026684e21afda6\node_modules\wrangler\bin\wrangler.js"
+
 # 3. Deploy to Pages (Production Main)
 Write-Host "[INFO] Starte Deployment zu Cloudflare Pages (Production: omniscope-web.pages.dev)..." -ForegroundColor Cyan
-npx --yes wrangler pages deploy . --project-name=omniscope-web --branch=main --commit-dirty=true
+& node $wranglerJs pages deploy . --project-name=omniscope-web --branch=main --commit-dirty=true
 
 # 4. Deploy www Alias Preview Branch (auto-redirects to main)
 Write-Host "[INFO] Aktualisiere www-Alias Branch (www.omniscope-web.pages.dev -> 301 Redirect)..." -ForegroundColor Cyan
-npx --yes wrangler pages deploy . --project-name=omniscope-web --branch=www --commit-dirty=true
+& node $wranglerJs pages deploy . --project-name=omniscope-web --branch=www --commit-dirty=true
 
 # 5. Deploy Standalone Worker (omniscope-web.fuchsdany1984.workers.dev)
 Write-Host "[INFO] Aktualisiere Standalone Cloudflare Worker (omniscope-web)..." -ForegroundColor Cyan
-npx --yes wrangler deploy worker.js --name omniscope-web --compatibility-date 2026-10-14
+& node $wranglerJs deploy worker.js --name omniscope-web --compatibility-date 2026-10-14
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " [PAGES PROD]   Live unter: https://omniscope-web.pages.dev" -ForegroundColor Green
