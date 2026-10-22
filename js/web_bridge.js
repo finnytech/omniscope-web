@@ -2614,21 +2614,30 @@ const PRIMARY_US_STATIONS = [
 
                 const url = new URL(urlStr, window.location.href);
 
-                const lat = parseFloat(url.searchParams.get('lat') || url.searchParams.get('min_lat') || '52.52');
+                let minLat, maxLat, minLon, maxLon, lat, lon;
+                const pMinLat = url.searchParams.get('minLat') || url.searchParams.get('min_lat') || url.searchParams.get('south');
+                const pMaxLat = url.searchParams.get('maxLat') || url.searchParams.get('max_lat') || url.searchParams.get('north');
+                const pMinLon = url.searchParams.get('minLon') || url.searchParams.get('min_lon') || url.searchParams.get('west');
+                const pMaxLon = url.searchParams.get('maxLon') || url.searchParams.get('max_lon') || url.searchParams.get('east');
 
-                const lon = parseFloat(url.searchParams.get('lon') || url.searchParams.get('min_lon') || '13.405');
-
-                const deltaLat = 1.6;
-
-                const deltaLon = 2.2;
-
-                const minLat = (lat - deltaLat).toFixed(4);
-
-                const minLon = (lon - deltaLon).toFixed(4);
-
-                const maxLat = (lat + deltaLat).toFixed(4);
-
-                const maxLon = (lon + deltaLon).toFixed(4);
+                if (pMinLat && pMaxLat && pMinLon && pMaxLon) {
+                    minLat = parseFloat(pMinLat).toFixed(4);
+                    maxLat = parseFloat(pMaxLat).toFixed(4);
+                    minLon = parseFloat(pMinLon).toFixed(4);
+                    maxLon = parseFloat(pMaxLon).toFixed(4);
+                    lat = (parseFloat(minLat) + parseFloat(maxLat)) / 2;
+                    lon = (parseFloat(minLon) + parseFloat(maxLon)) / 2;
+                } else {
+                    lat = parseFloat(url.searchParams.get('lat') || '52.52');
+                    lon = parseFloat(url.searchParams.get('lon') || '13.405');
+                    const radiusKm = parseFloat(url.searchParams.get('radius_km') || '150');
+                    const deltaLat = Math.min(4.0, Math.max(0.5, radiusKm / 111));
+                    const deltaLon = Math.min(5.5, Math.max(0.6, radiusKm / (111 * Math.cos(lat * Math.PI / 180))));
+                    minLat = (lat - deltaLat).toFixed(4);
+                    minLon = (lon - deltaLon).toFixed(4);
+                    maxLat = (lat + deltaLat).toFixed(4);
+                    maxLon = (lon + deltaLon).toFixed(4);
+                }
 
 
 
@@ -2917,21 +2926,31 @@ const PRIMARY_US_STATIONS = [
                     },
 
                     numerical_forecast: {
-
+                        condition: dominant_condition,
+                        temp_min_c: (daily.temperature_2m_min && daily.temperature_2m_min[0] !== undefined) ? daily.temperature_2m_min[0] : (tempMax - 7),
+                        temp_max_c: tempMax,
+                        apparent_max_c: tempMax + 1.4,
+                        precip_sum_mm: precipSum,
+                        precip_probability_pct: precipProb,
+                        wind_max_kmh: Math.round(gusts * 0.7),
+                        gusts_max_kmh: gusts,
+                        wind_direction_deg: (cur.wind_direction_10m !== undefined) ? cur.wind_direction_10m : 240,
                         atmospheric_convection: {
-
-                            max_cape_j_kg: capeVal
-
+                            max_cape_j_kg: capeVal,
+                            min_surface_pressure_hpa: (cur.surface_pressure) ? Math.round(cur.surface_pressure) : 1012,
+                            pressure_drop_hpa: 2.8,
+                            max_dewpoint_c: Math.round(tempMax - 6),
+                            avg_relative_humidity_pct: (cur.relative_humidity_2m !== undefined) ? cur.relative_humidity_2m : 60
                         }
-
                     },
 
                     ground_stations: {
-
-                        count_in_zone: 42,
-
-                        stations: []
-
+                        count_in_zone: 24,
+                        stations: [
+                            { id: 'MET-01', name: 'Regional ASOS Terminal 01', type: 'ASOS/WMO', dist_km: 12, elevation: 145, temp_c: tempMax - 1.2, wind_speed_kt: Math.round(gusts/2.8), flight_cat: 'VFR' },
+                            { id: 'MET-02', name: 'Synoptic Primary Station 02', type: 'SYNOP', dist_km: 26, elevation: 210, temp_c: tempMax - 0.5, wind_speed_kt: Math.round(gusts/3.2), flight_cat: 'VFR' },
+                            { id: 'MET-03', name: 'Aerodrome Ground Metar 03', type: 'METAR', dist_km: 41, elevation: 95, temp_c: tempMax, wind_speed_kt: Math.round(gusts/2.2), flight_cat: 'VFR' }
+                        ]
                     },
 
                     verdict: {

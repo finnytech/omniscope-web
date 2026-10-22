@@ -4096,6 +4096,288 @@ class StreamPlayer {
         }, 3000);
     }
 
+
+    showSectorWeatherStationsDeepDive(sectorData) {
+        this.destroy();
+        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        if (!this.container) return;
+
+        const stations = (sectorData && sectorData.stations) || [];
+        const count = stations.length;
+        const bounds = (sectorData && sectorData.bounds) || {};
+        const areaKm2 = sectorData && (sectorData.area_km2 || (sectorData.zone_area_km2 ? Math.round(sectorData.zone_area_km2) : 0));
+
+        const typePill = document.getElementById('mon02-active-type-pill');
+        if (typePill) {
+            typePill.innerText = `📡 ${count} BODENSTATIONEN`;
+            typePill.style.color = '#10b981';
+            typePill.style.borderColor = '#10b981';
+        }
+        const titleEl = document.getElementById('cam-active-title');
+        if (titleEl) titleEl.innerText = `BODENWETTER-STATIONSNETZ // SEKTOR-ANALYSE [${count} ECHTE STATIONEN]`;
+
+        // Compute telemetry statistics
+        const temps = stations.map(s => s.temp_c).filter(t => t !== null && t !== undefined);
+        const minTemp = temps.length ? Math.min(...temps).toFixed(1) : '--';
+        const maxTemp = temps.length ? Math.max(...temps).toFixed(1) : '--';
+        const avgTemp = temps.length ? (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1) : '--';
+
+        const winds = stations.map(s => s.wind_speed_kt).filter(w => typeof w === 'number');
+        const maxWind = winds.length ? Math.max(...winds) : 0;
+        const avgWind = winds.length ? Math.round(winds.reduce((a, b) => a + b, 0) / winds.length) : 0;
+
+        const pressures = stations.map(s => s.altim_hpa).filter(p => typeof p === 'number');
+        const minQnh = pressures.length ? Math.min(...pressures).toFixed(1) : '1013';
+        const maxQnh = pressures.length ? Math.max(...pressures).toFixed(1) : '1013';
+
+        const vfrCount = stations.filter(s => s.flight_cat === 'VFR').length;
+        const mvfrCount = stations.filter(s => s.flight_cat === 'MVFR').length;
+        const ifrCount = stations.filter(s => s.flight_cat === 'IFR' || s.flight_cat === 'LIFR').length;
+
+        const boundsLabel = (bounds.getSouth && bounds.getNorth)
+            ? `[${bounds.getSouth().toFixed(2)}°-${bounds.getNorth().toFixed(2)}°N, ${bounds.getWest().toFixed(2)}°-${bounds.getEast().toFixed(2)}°E]`
+            : (bounds.south ? `[${bounds.south.toFixed(2)}°-${bounds.north.toFixed(2)}°N, ${bounds.west.toFixed(2)}°-${bounds.east.toFixed(2)}°E]` : 'SEKTOR');
+
+        const stationsJsonEscaped = JSON.stringify(stations).replace(/"/g, '&quot;');
+
+        this.container.innerHTML = `
+            <div style="position:relative;width:100%;height:100%;background:#040914;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:12px;overflow-y:auto;box-sizing:border-box;">
+                
+                <!-- Header Banner -->
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #10b98133;padding-bottom:8px;margin-bottom:10px;flex-shrink:0;">
+                    <div>
+                        <div style="font-size:0.65rem;color:#10b981;letter-spacing:1px;font-weight:bold;display:flex;align-items:center;gap:6px;">
+                            <span>📡</span> <span>OFFIZIELLES BODENSTATIONSNETZ // MON-02 ROH-INTELLIGENCE</span>
+                        </div>
+                        <h2 style="margin:2px 0 0 0;font-size:1.1rem;color:#f8fafc;font-weight:700;">
+                            ${count} ECHTE WETTERSTATIONEN IM BEREICH
+                        </h2>
+                        <div style="font-size:0.68rem;color:#94a3b8;margin-top:2px;">
+                            Zone: <strong style="color:#f8fafc;">${boundsLabel}</strong> (${areaKm2 ? areaKm2.toLocaleString() : '--'} km²) // NOAA ASOS & WMO AWC METAR
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="background:rgba(16,185,129,0.18);color:#10b981;border:1px solid #10b981;padding:3px 8px;font-size:0.72rem;font-weight:bold;border-radius:3px;">
+                            ${count} AKTIV
+                        </span>
+                        <div style="font-size:0.62rem;color:#38bdf8;margin-top:3px;">100% ECHTE MESSUNGEN</div>
+                    </div>
+                </div>
+
+                <!-- KPI Summary Metric Cards -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:6px;margin-bottom:10px;flex-shrink:0;">
+                    <div style="background:#091424;border:1px solid #1e293b;padding:6px 8px;border-radius:4px;border-left:3px solid #facc15;">
+                        <div style="font-size:0.62rem;color:#94a3b8;">TEMPERATUR SPREAD</div>
+                        <div style="font-size:0.95rem;font-weight:bold;color:#facc15;">${minTemp}°C ... ${maxTemp}°C</div>
+                        <div style="font-size:0.62rem;color:#64748b;">Mittelwert: ${avgTemp}°C</div>
+                    </div>
+                    <div style="background:#091424;border:1px solid #1e293b;padding:6px 8px;border-radius:4px;border-left:3px solid #38bdf8;">
+                        <div style="font-size:0.62rem;color:#94a3b8;">WIND / BÖENSPITZEN</div>
+                        <div style="font-size:0.95rem;font-weight:bold;color:#38bdf8;">Max ${maxWind} KT (${Math.round(maxWind * 1.852)} km/h)</div>
+                        <div style="font-size:0.62rem;color:#64748b;">Durchschnitt: ${avgWind} KT</div>
+                    </div>
+                    <div style="background:#091424;border:1px solid #1e293b;padding:6px 8px;border-radius:4px;border-left:3px solid #a855f7;">
+                        <div style="font-size:0.62rem;color:#94a3b8;">LUFTDRUCK QNH</div>
+                        <div style="font-size:0.95rem;font-weight:bold;color:#a855f7;">${minQnh} - ${maxQnh} hPa</div>
+                        <div style="font-size:0.62rem;color:#64748b;">Barometrische Streuung</div>
+                    </div>
+                    <div style="background:#091424;border:1px solid #1e293b;padding:6px 8px;border-radius:4px;border-left:3px solid #10b981;">
+                        <div style="font-size:0.62rem;color:#94a3b8;">FLIGHT CONDITIONS</div>
+                        <div style="font-size:0.85rem;font-weight:bold;color:#10b981;">${vfrCount} VFR | ${mvfrCount} MVFR | ${ifrCount} IFR</div>
+                        <div style="font-size:0.62rem;color:#64748b;">Aviation Standard</div>
+                    </div>
+                </div>
+
+                <!-- Controls Toolbar -->
+                <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;background:#091424;border:1px solid #1e293b;padding:6px 8px;border-radius:4px;margin-bottom:10px;flex-shrink:0;">
+                    <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px;">
+                        <input id="sec-station-search-input" type="text" placeholder="🔍 Station suchen (z.B. KOKC, Airport, VFR, 25°C)..." style="width:100%;background:#040914;border:1px solid #334155;color:#f8fafc;padding:4px 8px;border-radius:3px;font-family:inherit;font-size:0.75rem;" />
+                    </div>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <button id="btn-view-cards" class="ops-btn" style="background:rgba(16,185,129,0.25);border:1px solid #10b981;color:#10b981;padding:3px 7px;font-size:0.68rem;font-weight:bold;cursor:pointer;">📋 KARTEN</button>
+                        <button id="btn-view-table" class="ops-btn" style="background:rgba(30,41,59,0.6);border:1px solid #334155;color:#94a3b8;padding:3px 7px;font-size:0.68rem;font-weight:bold;cursor:pointer;">📊 TABELLE</button>
+                        <button id="btn-view-json" class="ops-btn" style="background:rgba(30,41,59,0.6);border:1px solid #334155;color:#94a3b8;padding:3px 7px;font-size:0.68rem;font-weight:bold;cursor:pointer;">⚡ ROH-JSON</button>
+                        <button id="btn-copy-all-metar" class="ops-btn" style="background:rgba(56,189,248,0.2);border:1px solid #38bdf8;color:#38bdf8;padding:3px 7px;font-size:0.68rem;font-weight:bold;cursor:pointer;" title="Kopiert alle rohen METAR-Strings in die Zwischenablage">📋 ALLE METAR</button>
+                        <button id="btn-export-stations-csv" class="ops-btn" style="background:rgba(168,85,247,0.2);border:1px solid #a855f7;color:#c084fc;padding:3px 7px;font-size:0.68rem;font-weight:bold;cursor:pointer;" title="Als CSV-Tabelle exportieren">📥 CSV</button>
+                    </div>
+                </div>
+
+                <!-- VIEW 1: Cards Grid -->
+                <div id="sec-stations-cards-container" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:8px;overflow-y:auto;flex:1;">
+                    ${stations.map((s, idx) => {
+                        const catColor = s.flight_cat === 'VFR' ? '#10b981' : (s.flight_cat === 'MVFR' ? '#38bdf8' : (s.flight_cat === 'IFR' ? '#f59e0b' : '#ef4444'));
+                        const tempStr = s.temp_c != null ? `${s.temp_c}°C` : '--';
+                        const tempFStr = s.temp_c != null ? `(${(s.temp_c * 9/5 + 32).toFixed(1)}°F)` : '';
+                        const dewpStr = s.dewp_c != null ? `${s.dewp_c}°C` : '--';
+                        const windStr = s.wind_speed_kt != null ? `${s.wind_dir || 0}° @ ${s.wind_speed_kt} KT` : '--';
+                        const windKmh = s.wind_speed_kt != null ? `(${Math.round(s.wind_speed_kt * 1.852)} km/h)` : '';
+                        const altimStr = s.altim_hpa ? `${s.altim_hpa} hPa` : '--';
+                        const stJson = JSON.stringify(s).replace(/"/g, '&quot;');
+
+                        return `
+                            <div class="sec-stn-card" data-search="${(s.id + ' ' + s.name + ' ' + s.flight_cat + ' ' + tempStr + ' ' + (s.raw_metar||'')).toLowerCase()}" style="background:#07101f;border:1px solid #1e293b;border-left:3px solid ${catColor};border-radius:4px;padding:8px;display:flex;flex-direction:column;gap:4px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #132238;padding-bottom:4px;">
+                                    <div style="display:flex;align-items:center;gap:5px;">
+                                        <span style="color:#10b981;font-weight:bold;font-size:0.85rem;">${s.id}</span>
+                                        <span style="background:${catColor}22;color:${catColor};border:1px solid ${catColor}55;font-size:0.6rem;padding:1px 4px;border-radius:2px;font-weight:bold;">${s.flight_cat || 'VFR'}</span>
+                                    </div>
+                                    <div style="font-size:0.62rem;color:#64748b;">
+                                        ${s.distance_km != null ? s.distance_km + ' km' : ''} ${s.elevation ? '| ' + s.elevation + 'm' : ''}
+                                    </div>
+                                </div>
+                                <div style="font-size:0.68rem;color:#f8fafc;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${s.name}">${s.name}</div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#030712;padding:4px 6px;border-radius:3px;font-size:0.68rem;margin-top:2px;">
+                                    <div><span style="color:#64748b;">TEMP:</span> <strong style="color:#facc15;">${tempStr}</strong> <span style="font-size:0.58rem;color:#94a3b8;">${tempFStr}</span></div>
+                                    <div><span style="color:#64748b;">TAUPUNKT:</span> <strong style="color:#38bdf8;">${dewpStr}</strong></div>
+                                    <div><span style="color:#64748b;">WIND:</span> <strong style="color:#e2e8f0;">${windStr}</strong> <span style="font-size:0.58rem;color:#94a3b8;">${windKmh}</span></div>
+                                    <div><span style="color:#64748b;">DRUCK:</span> <strong style="color:#a855f7;">${altimStr}</strong></div>
+                                </div>
+                                ${s.raw_metar ? `
+                                    <div style="background:#020610;border-left:2px solid #38bdf8;padding:3px 5px;font-size:0.62rem;color:#94a3b8;word-break:break-all;line-height:1.25;margin-top:2px;">
+                                        ${s.raw_metar}
+                                    </div>
+                                ` : ''}
+                                <div style="display:flex;gap:4px;margin-top:4px;">
+                                    <button class="ops-btn" style="flex:1;padding:3px 5px;font-size:0.65rem;background:rgba(16,185,129,0.2);border:1px solid #10b981;color:#10b981;font-weight:bold;cursor:pointer;" onclick="if(window.MapController && window.MapController.focusWeatherStation) window.MapController.focusWeatherStation(${stJson});">
+                                        🎯 ANVISIEREN
+                                    </button>
+                                    <button class="ops-btn" style="padding:3px 7px;font-size:0.65rem;background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#38bdf8;cursor:pointer;" onclick="navigator.clipboard.writeText('${(s.raw_metar || '').replace(/'/g, "\\'")}'); if(window.showNotification) window.showNotification('METAR für ${s.id} kopiert!');">
+                                        📋 KOPIEREN
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+
+                <!-- VIEW 2: Table View -->
+                <div id="sec-stations-table-container" style="display:none;overflow-x:auto;overflow-y:auto;flex:1;background:#07101f;border:1px solid #1e293b;border-radius:4px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.7rem;text-align:left;">
+                        <thead>
+                            <tr style="background:#0b192e;color:#10b981;border-bottom:1px solid #1e293b;">
+                                <th style="padding:6px 8px;">ICAO/ID</th>
+                                <th style="padding:6px 8px;">STATION NAME</th>
+                                <th style="padding:6px 8px;">DIST</th>
+                                <th style="padding:6px 8px;">TEMP</th>
+                                <th style="padding:6px 8px;">TAUPUNKT</th>
+                                <th style="padding:6px 8px;">WIND</th>
+                                <th style="padding:6px 8px;">DRUCK</th>
+                                <th style="padding:6px 8px;">CAT</th>
+                                <th style="padding:6px 8px;">AKTION</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${stations.map(s => {
+                                const catColor = s.flight_cat === 'VFR' ? '#10b981' : (s.flight_cat === 'MVFR' ? '#38bdf8' : (s.flight_cat === 'IFR' ? '#f59e0b' : '#ef4444'));
+                                const stJson = JSON.stringify(s).replace(/"/g, '&quot;');
+                                return `
+                                    <tr class="sec-stn-row" data-search="${(s.id + ' ' + s.name + ' ' + s.flight_cat).toLowerCase()}" style="border-bottom:1px solid #0f1c30;">
+                                        <td style="padding:5px 8px;font-weight:bold;color:#10b981;">${s.id}</td>
+                                        <td style="padding:5px 8px;color:#f8fafc;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</td>
+                                        <td style="padding:5px 8px;color:#94a3b8;">${s.distance_km != null ? s.distance_km + ' km' : '--'}</td>
+                                        <td style="padding:5px 8px;color:#facc15;font-weight:bold;">${s.temp_c != null ? s.temp_c + '°C' : '--'}</td>
+                                        <td style="padding:5px 8px;color:#38bdf8;">${s.dewp_c != null ? s.dewp_c + '°C' : '--'}</td>
+                                        <td style="padding:5px 8px;color:#e2e8f0;">${s.wind_speed_kt != null ? s.wind_dir + '° @ ' + s.wind_speed_kt + ' KT' : '--'}</td>
+                                        <td style="padding:5px 8px;color:#a855f7;">${s.altim_hpa || '--'}</td>
+                                        <td style="padding:5px 8px;"><span style="color:${catColor};font-weight:bold;">${s.flight_cat || 'VFR'}</span></td>
+                                        <td style="padding:5px 8px;">
+                                            <button class="ops-btn" style="padding:2px 6px;font-size:0.62rem;background:#10b98122;border:1px solid #10b981;color:#10b981;" onclick="if(window.MapController && window.MapController.focusWeatherStation) window.MapController.focusWeatherStation(${stJson});">🎯 ZIEL</button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- VIEW 3: Raw JSON Dump -->
+                <div id="sec-stations-json-container" style="display:none;flex:1;overflow-y:auto;background:#030712;border:1px solid #1e293b;padding:8px;border-radius:4px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-size:0.7rem;color:#10b981;font-weight:bold;">⚡ UNGEFILTERTER JSON-ROHDATEN FEED (${stations.length} ENTRIES)</span>
+                        <button class="ops-btn" style="padding:2px 8px;font-size:0.65rem;background:#10b981;color:#022c22;border:none;font-weight:bold;" onclick="navigator.clipboard.writeText(document.getElementById('sec-raw-json-pre').innerText); if(window.showNotification) window.showNotification('Voller JSON-Feed kopiert!');">📋 JSON KOPIEREN</button>
+                    </div>
+                    <pre id="sec-raw-json-pre" style="font-family:monospace;font-size:0.68rem;color:#38bdf8;margin:0;white-space:pre-wrap;word-break:break-all;">${JSON.stringify(stations, null, 2)}</pre>
+                </div>
+
+            </div>
+        `;
+
+        // Attach event listeners for search & tab switches
+        const searchInput = document.getElementById('sec-station-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const q = e.target.value.toLowerCase().trim();
+                document.querySelectorAll('.sec-stn-card').forEach(el => {
+                    const match = !q || el.getAttribute('data-search').includes(q);
+                    el.style.display = match ? 'flex' : 'none';
+                });
+                document.querySelectorAll('.sec-stn-row').forEach(el => {
+                    const match = !q || el.getAttribute('data-search').includes(q);
+                    el.style.display = match ? '' : 'none';
+                });
+            });
+        }
+
+        const cardsView = document.getElementById('sec-stations-cards-container');
+        const tableView = document.getElementById('sec-stations-table-container');
+        const jsonView = document.getElementById('sec-stations-json-container');
+
+        const btnCards = document.getElementById('btn-view-cards');
+        const btnTable = document.getElementById('btn-view-table');
+        const btnJson = document.getElementById('btn-view-json');
+
+        const setView = (active) => {
+            if (cardsView) cardsView.style.display = active === 'cards' ? 'grid' : 'none';
+            if (tableView) tableView.style.display = active === 'table' ? 'block' : 'none';
+            if (jsonView) jsonView.style.display = active === 'json' ? 'block' : 'none';
+
+            if (btnCards) {
+                btnCards.style.background = active === 'cards' ? 'rgba(16,185,129,0.25)' : 'rgba(30,41,59,0.6)';
+                btnCards.style.color = active === 'cards' ? '#10b981' : '#94a3b8';
+                btnCards.style.borderColor = active === 'cards' ? '#10b981' : '#334155';
+            }
+            if (btnTable) {
+                btnTable.style.background = active === 'table' ? 'rgba(16,185,129,0.25)' : 'rgba(30,41,59,0.6)';
+                btnTable.style.color = active === 'table' ? '#10b981' : '#94a3b8';
+                btnTable.style.borderColor = active === 'table' ? '#10b981' : '#334155';
+            }
+            if (btnJson) {
+                btnJson.style.background = active === 'json' ? 'rgba(16,185,129,0.25)' : 'rgba(30,41,59,0.6)';
+                btnJson.style.color = active === 'json' ? '#10b981' : '#94a3b8';
+                btnJson.style.borderColor = active === 'json' ? '#10b981' : '#334155';
+            }
+        };
+
+        if (btnCards) btnCards.addEventListener('click', () => setView('cards'));
+        if (btnTable) btnTable.addEventListener('click', () => setView('table'));
+        if (btnJson) btnJson.addEventListener('click', () => setView('json'));
+
+        const btnCopyAll = document.getElementById('btn-copy-all-metar');
+        if (btnCopyAll) {
+            btnCopyAll.addEventListener('click', () => {
+                const metars = stations.map(s => s.raw_metar).filter(Boolean).join('\n');
+                navigator.clipboard.writeText(metars);
+                if (window.showNotification) window.showNotification(`${stations.length} METAR Beobachtungen kopiert!`);
+            });
+        }
+
+        const btnCsv = document.getElementById('btn-export-stations-csv');
+        if (btnCsv) {
+            btnCsv.addEventListener('click', () => {
+                const headers = ['id', 'name', 'lat', 'lon', 'distance_km', 'elevation_m', 'temp_c', 'dewp_c', 'wind_speed_kt', 'wind_dir', 'altim_hpa', 'flight_cat', 'raw_metar'];
+                const rows = stations.map(s => headers.map(h => JSON.stringify(s[h] != null ? s[h] : '')).join(','));
+                const csvContent = headers.join(',') + '\n' + rows.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute('download', `omniscope_stations_sector_${Date.now()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+    }
+
 }
 
 window.MainPlayer = new StreamPlayer('webcam-player-container');

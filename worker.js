@@ -1747,21 +1747,30 @@ async function handleWeatherStations(url) {
 
   try {
 
-    const lat = parseFloat(url.searchParams.get("lat") || url.searchParams.get("min_lat") || "50.0");
+    let minLat, maxLat, minLon, maxLon, lat, lon;
+    const pMinLat = url.searchParams.get("minLat") || url.searchParams.get("min_lat") || url.searchParams.get("south");
+    const pMaxLat = url.searchParams.get("maxLat") || url.searchParams.get("max_lat") || url.searchParams.get("north");
+    const pMinLon = url.searchParams.get("minLon") || url.searchParams.get("min_lon") || url.searchParams.get("west");
+    const pMaxLon = url.searchParams.get("maxLon") || url.searchParams.get("max_lon") || url.searchParams.get("east");
 
-    const lon = parseFloat(url.searchParams.get("lon") || url.searchParams.get("min_lon") || "10.0");
-
-    const deltaLat = 1.6;
-
-    const deltaLon = 2.2;
-
-    const minLat = (lat - deltaLat).toFixed(4);
-
-    const minLon = (lon - deltaLon).toFixed(4);
-
-    const maxLat = (lat + deltaLat).toFixed(4);
-
-    const maxLon = (lon + deltaLon).toFixed(4);
+    if (pMinLat && pMaxLat && pMinLon && pMaxLon) {
+        minLat = parseFloat(pMinLat).toFixed(4);
+        maxLat = parseFloat(pMaxLat).toFixed(4);
+        minLon = parseFloat(pMinLon).toFixed(4);
+        maxLon = parseFloat(pMaxLon).toFixed(4);
+        lat = (parseFloat(minLat) + parseFloat(maxLat)) / 2;
+        lon = (parseFloat(minLon) + parseFloat(maxLon)) / 2;
+    } else {
+        lat = parseFloat(url.searchParams.get("lat") || "50.0");
+        lon = parseFloat(url.searchParams.get("lon") || "10.0");
+        const radiusKm = parseFloat(url.searchParams.get("radius_km") || "150");
+        const deltaLat = Math.min(4.0, Math.max(0.5, radiusKm / 111));
+        const deltaLon = Math.min(5.5, Math.max(0.6, radiusKm / (111 * Math.cos(lat * Math.PI / 180))));
+        minLat = (lat - deltaLat).toFixed(4);
+        minLon = (lon - deltaLon).toFixed(4);
+        maxLat = (lat + deltaLat).toFixed(4);
+        maxLon = (lon + deltaLon).toFixed(4);
+    }
 
 
 
