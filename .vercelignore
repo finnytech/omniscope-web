@@ -1,0 +1,16 @@
+# Vercel Deployment Ignore Rules
+# Exclude standalone desktop and mobile binaries (hosted via GitHub Releases)
+releases/
+*.exe
+*.apk
+*.zip
+
+# Cloudflare & Wrangler artifacts
+.wrangler/
+.cloudflare/
+deploy.ps1
+deploy.bat
+
+# Development & Planning docs
+plan.md
+mcp-server/
