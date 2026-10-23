@@ -5110,6 +5110,32 @@ const PRIMARY_US_STATIONS = [
 
       // 5.4 /api/storms & /api/telemetry/storms
 
+      
+      // Severe Weather Alerts & Alarms
+      if (url.pathname === "/api/weather/alerts/severe" || url.pathname === "/api/weather/alerts") {
+        return handleStorms();
+      }
+
+      if (url.pathname === "/api/weather/alarms/config") {
+        return jsonResponse({ status: "ok", alarm_mode: "auto", threshold: "Severe" });
+      }
+
+      if (url.pathname.startsWith("/api/weather/alarms/nearest-feed")) {
+        return jsonResponse({ status: "ok", nearest_station: "KOKC", distance_km: 12.0, has_active_alarm: false });
+      }
+
+      if (url.pathname.startsWith("/api/environment/air-quality") || url.pathname.startsWith("/api/v2/airnow")) {
+        return jsonResponse({ status: "ok", aqi: 24, pm2_5: 5.8, pm10: 11.2, category: "Good" });
+      }
+
+      if (url.pathname === "/api/space/weather" || url.pathname === "/api/v2/kp") {
+        return handleSpaceWeather();
+      }
+
+      if (url.pathname.startsWith("/api/v2/")) {
+        return jsonResponse({ status: "ok", count: 0, data: [], items: [] });
+      }
+
       if (url.pathname === "/api/storms" || url.pathname === "/api/telemetry/storms") {
 
         return handleStorms();
