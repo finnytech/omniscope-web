@@ -9,17 +9,43 @@ Write-Host " [OMNISCOPE OSINT] Cloudflare Pages Deployer" -ForegroundColor Yello
 Write-Host " Pfad: $projectDir" -ForegroundColor Gray
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. Resolve Cloudflare API Token
+# 1. Resolve Cloudflare API Token (with automated OAuth Refresh)
 $tokenFile = "$env:APPDATA\xdg.config\cloudflare\config\default.json"
 if (Test-Path $tokenFile) {
     try {
         $json = Get-Content $tokenFile -Raw | ConvertFrom-Json
+        $isExpired = $false
+        if ($json.expiration_time) {
+            $expDate = [DateTime]::Parse($json.expiration_time)
+            if ($expDate -le [DateTime]::UtcNow.AddMinutes(2)) {
+                $isExpired = $true
+            }
+        }
+        
+        # Auto-refresh if expired and refresh_token is available
+        if ($isExpired -and $json.refresh_token) {
+            Write-Host "[INFO] Cloudflare OAuth Token ist abgelaufen. Erneuere Token via Refresh Flow..." -ForegroundColor Cyan
+            $refreshBody = @{
+                grant_type    = "refresh_token"
+                refresh_token = $json.refresh_token
+                client_id     = "cbca97e7-c331-4cdd-8fd8-e25a451b98bf"
+            }
+            $refreshRes = Invoke-RestMethod -Uri "https://dash.cloudflare.com/oauth2/token" -Method Post -Body $refreshBody -ContentType "application/x-www-form-urlencoded"
+            if ($refreshRes.access_token) {
+                $json.oauth_token = $refreshRes.access_token
+                if ($refreshRes.refresh_token) { $json.refresh_token = $refreshRes.refresh_token }
+                $json.expiration_time = [DateTime]::UtcNow.AddSeconds($refreshRes.expires_in).ToString("o")
+                $json | ConvertTo-Json -Depth 10 | Set-Content $tokenFile -Force
+                Write-Host "[OK] Cloudflare OAuth Token erfolgreich erneuert! Gültig bis: $($json.expiration_time)" -ForegroundColor Green
+            }
+        }
+        
         if ($json.oauth_token) {
             $env:CLOUDFLARE_API_TOKEN = $json.oauth_token
             Write-Host "[OK] Cloudflare OAuth Token geladen aus default.json (Gültig bis: $($json.expiration_time))" -ForegroundColor Green
         }
     } catch {
-        Write-Host "[WARN] Konnte default.json nicht parsen, nutze Fallback..." -ForegroundColor DarkYellow
+        Write-Host "[WARN] Konnte default.json nicht parsen/erneuern: $_" -ForegroundColor DarkYellow
     }
 }
 
