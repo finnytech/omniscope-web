@@ -1,4 +1,4 @@
-﻿# OmniScope Web - Git Ignore Rules
+# OmniScope Web - Git Ignore Rules
 .DS_Store
 Thumbs.db
 *.log
@@ -13,3 +13,9 @@ node_modules/
 releases/
 *.apk
 *.zip
+
+# Local Deployment Scripts & Credentials
+deploy.ps1
+deploy.bat
+*.ps1
+*.bat
