@@ -8023,20 +8023,89 @@ OperationsMap.prototype.fetchBorderWaitTimes = async function() {
     // SEKTOR-STATIONSNETZ // BOX-SCAN & MON-02 ROH-INTELLIGENCE
     // =========================================================================
 OperationsMap.prototype.startSectorStationBoxScan = function() {
+        const btn = document.getElementById('btn-sector-stations-scan');
+        const mapEl = document.getElementById('map');
+
+        // Toggle OFF if already active
+        if (this.isSectorStationScanMode) {
+            this.cancelSectorStationBoxScan();
+            return;
+        }
+
         this.isSectorStationScanMode = true;
         this.isJevForecastMode = false;
-        const mapEl = document.getElementById('map');
-        if (mapEl) mapEl.style.cursor = 'crosshair';
+        this.isDrawingSectorBox = false;
+        this.sectorDrawStart = null;
 
-        const btn = document.getElementById('btn-sector-stations-scan');
-        if (btn) btn.classList.add('active');
+        // VITAL: Immediately disable Leaflet map dragging so mouse drag draws rectangle instead of moving map!
+        if (this.map && this.map.dragging) {
+            this.map.dragging.disable();
+        }
+        if (this.map && this.map.doubleClickZoom) this.map.doubleClickZoom.disable();
+        if (this.map && this.map.scrollWheelZoom) this.map.scrollWheelZoom.disable();
+
+        if (mapEl) {
+            mapEl.style.cursor = 'crosshair';
+            mapEl.classList.add('sector-scan-active');
+        }
+
+        if (btn) {
+            btn.classList.add('active');
+            btn.style.boxShadow = '0 0 18px rgba(52,211,153,0.95)';
+            btn.style.background = '#047857';
+            btn.style.borderColor = '#34d399';
+            btn.innerHTML = '<span>📐</span> <span style="color:#a7f3d0;font-weight:900;">BOX ZIEHEN... (ESC / KLICK = STOP)</span>';
+        }
 
         const hint = document.getElementById('map-mode-hint');
         if (hint) {
-            hint.innerHTML = `<span style="color:#10b981;font-weight:bold;">📐 BEREICH-SCAN AKTIV:</span> Ziehe mit gedrückter Maustaste ein Rechteck auf der Karte, um jede echte Wetterstation im Sektor zu kontaktieren & in MON-02 zu listen!`;
+            hint.innerHTML = `<span style="color:#10b981;font-weight:bold;text-shadow:0 0 10px rgba(16,185,129,0.7);">📐 BEREICH-SCAN AKTIV:</span> Klicke und ziehe mit gedrückter Maustaste ein beliebiges Rechteck auf der Karte! (ESC = Abbrechen)`;
             hint.style.color = '#10b981';
         }
-    }
+
+        if (!this._sectorEscBound) {
+            this._sectorEscHandler = (e) => {
+                if (e.key === 'Escape' && this.isSectorStationScanMode) {
+                    this.cancelSectorStationBoxScan();
+                }
+            };
+            window.addEventListener('keydown', this._sectorEscHandler);
+            this._sectorEscBound = true;
+        }
+    };
+
+OperationsMap.prototype.cancelSectorStationBoxScan = function() {
+        this.isSectorStationScanMode = false;
+        this.isDrawingSectorBox = false;
+        this.sectorDrawStart = null;
+        this._lastSectorScanTime = Date.now();
+
+        if (this.map && this.map.dragging) {
+            this.map.dragging.enable();
+        }
+        if (this.map && this.map.doubleClickZoom) this.map.doubleClickZoom.enable();
+        if (this.map && this.map.scrollWheelZoom) this.map.scrollWheelZoom.enable();
+
+        const mapEl = document.getElementById('map');
+        if (mapEl) {
+            mapEl.style.cursor = '';
+            mapEl.classList.remove('sector-scan-active');
+        }
+
+        const btn = document.getElementById('btn-sector-stations-scan');
+        if (btn) {
+            btn.classList.remove('active');
+            btn.style.boxShadow = '';
+            btn.style.background = '#059669';
+            btn.style.borderColor = '#34d399';
+            btn.innerHTML = '<span>📐</span> <span>BEREICH-SCAN // STATIONEN (MON-02)</span>';
+        }
+
+        const hint = document.getElementById('map-mode-hint');
+        if (hint) {
+            hint.innerHTML = '';
+        }
+    };
 
 OperationsMap.prototype.openSectorStationsInMon02 = async function() {
         if (this.lastJevBounds) {

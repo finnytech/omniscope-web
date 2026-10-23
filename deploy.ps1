@@ -16,7 +16,7 @@ if (Test-Path $tokenFile) {
         $json = Get-Content $tokenFile -Raw | ConvertFrom-Json
         $isExpired = $false
         if ($json.expiration_time) {
-            $expDate = [DateTime]::Parse($json.expiration_time)
+            $expDate = [DateTime]::Parse($json.expiration_time).ToUniversalTime()
             if ($expDate -le [DateTime]::UtcNow.AddMinutes(2)) {
                 $isExpired = $true
             }
