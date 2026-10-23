@@ -1323,13 +1323,16 @@ class OperationsMap {
         // Initialize dedicated Real Cams & Telemetry Nodes synchronization
         this.initCameraAndTelemetryControls();
 
-        // Sector Stations Box Scan button in MON-01
-        const btnSectorScan = document.getElementById('btn-sector-stations-scan');
-        if (btnSectorScan) {
-            btnSectorScan.addEventListener('click', () => {
-                this.startSectorStationBoxScan();
-            });
-        }
+        // Sector Stations Box Scan button in MON-01 (Header, Floating on Map, & Sidebar)
+        ['btn-sector-stations-scan', 'floating-btn-sector-scan', 'side-btn-sector-scan'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.startSectorStationBoxScan();
+                });
+            }
+        });
 
         // Master ALL ON / ALL OFF Buttons
         const btnAllOn = document.getElementById('btn-layers-all-on');
@@ -8344,37 +8347,35 @@ OperationsMap.prototype.fetchTsunamiBuoys = async function() {
 
 OperationsMap.prototype.fetchBlitzortungClusters = async function() {
     try {
-        const res = await fetch('/api/weather/provider/blitzortung');
+        const res = await fetch('/api/weather/blitzortung/stations');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        const stations = data.stations || [];
         this.blitzortungLayer.clearLayers();
 
-        const baseStations = [
-            { name: 'Blitzortung Station Berlin', lat: 52.520, lon: 13.405, strikes: 48, current_ka: -24.2 },
-            { name: 'Blitzortung Station München', lat: 48.137, lon: 11.576, strikes: 82, current_ka: 31.8 },
-            { name: 'Blitzortung Station Frankfurt', lat: 50.110, lon: 8.682, strikes: 65, current_ka: -19.4 },
-            { name: 'Blitzortung Station Paris', lat: 48.856, lon: 2.352, strikes: 120, current_ka: -42.1 },
-            { name: 'Blitzortung Station London', lat: 51.507, lon: -0.127, strikes: 35, current_ka: 18.0 },
-            { name: 'Blitzortung Station Rom', lat: 41.902, lon: 12.496, strikes: 190, current_ka: -55.0 },
-            { name: 'Blitzortung Station Wien', lat: 48.208, lon: 16.373, strikes: 74, current_ka: 28.3 },
-            { name: 'Blitzortung Station Zürich', lat: 47.376, lon: 8.541, strikes: 91, current_ka: -36.5 }
-        ];
-
-        baseStations.forEach(s => {
+        stations.forEach(s => {
+            const hasStorm = Boolean(s.is_thunderstorm || (s.strikes && s.strikes > 0));
             const marker = L.circleMarker([s.lat, s.lon], {
                 renderer: this.canvasRenderer,
-                radius: 5.5,
-                fillColor: '#facc15',
-                color: '#fff',
-                weight: 1.2,
+                radius: hasStorm ? 6.5 : 4.5,
+                fillColor: hasStorm ? '#facc15' : '#475569',
+                color: hasStorm ? '#ffffff' : '#94a3b8',
+                weight: hasStorm ? 1.5 : 1.0,
                 opacity: 0.95,
-                fillOpacity: 0.85
+                fillOpacity: hasStorm ? 0.9 : 0.65
             });
 
-            marker.bindTooltip(`⚡ <strong>${s.name}</strong><br>Entladungen: ${s.strikes}/min | Spitzenstrom: ${s.current_ka} kA | TOA-Präzision: <1.0 µs`, {
-                direction: 'top',
-                offset: [0, -5]
-            });
+            if (hasStorm) {
+                marker.bindTooltip(`⚡ <strong>${s.name}</strong><br><span style="color:#ef4444;font-weight:bold;">🚨 GEWITTER AKTIV:</span> ${s.strikes} Blitze/min | Peak ${s.current_ka} kA | TOA <1µs`, {
+                    direction: 'top',
+                    offset: [0, -5]
+                });
+            } else {
+                marker.bindTooltip(`⚡ <strong>${s.name}</strong><br><span style="color:#10b981;font-weight:bold;">✅ STANDBY:</span> 0 Blitze/min (Kein Gewitter) | VLF TOA Überwachung aktiv`, {
+                    direction: 'top',
+                    offset: [0, -5]
+                });
+            }
 
             marker.on('click', (ev) => {
                 this.notifyLayerClicked(ev);

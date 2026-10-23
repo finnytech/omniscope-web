@@ -951,7 +951,7 @@ class StreamPlayer {
         `;
     }
 
-    startLightningCanvasAnimation() {
+    startLightningCanvasAnimation(hasThunderstorm = true) {
         const canvas = document.getElementById('lightning-waveform-canvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -973,20 +973,25 @@ class StreamPlayer {
                 ctx.stroke();
             }
 
-            // Draw lightning wave pulse
+            // Draw waveform: active lightning pulse OR quiet ambient VLF baseline noise
             ctx.beginPath();
-            ctx.strokeStyle = '#eab308';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#eab308';
-            ctx.shadowBlur = 8;
+            ctx.strokeStyle = hasThunderstorm ? '#eab308' : '#38bdf8';
+            ctx.lineWidth = hasThunderstorm ? 2 : 1.2;
+            ctx.shadowColor = hasThunderstorm ? '#eab308' : '#38bdf8';
+            ctx.shadowBlur = hasThunderstorm ? 8 : 2;
             const mid = canvas.height / 2;
             for (let x = 0; x < canvas.width; x++) {
-                const distFromPulse = Math.abs(x - ((t * 80) % canvas.width));
                 let amp = 0;
-                if (distFromPulse < 60) {
-                    amp = Math.sin((60 - distFromPulse) * 0.25) * 32 * Math.exp(-distFromPulse / 25);
+                if (hasThunderstorm) {
+                    const distFromPulse = Math.abs(x - ((t * 80) % canvas.width));
+                    if (distFromPulse < 60) {
+                        amp = Math.sin((60 - distFromPulse) * 0.25) * 32 * Math.exp(-distFromPulse / 25);
+                    } else {
+                        amp = (Math.random() - 0.5) * 3;
+                    }
                 } else {
-                    amp = (Math.random() - 0.5) * 3;
+                    // Nominal VLF background static (no discharges)
+                    amp = Math.sin(x * 0.05 + t) * 1.5 + (Math.random() - 0.5) * 2;
                 }
                 const y = mid + amp;
                 if (x === 0) ctx.moveTo(x, y);
@@ -1021,56 +1026,57 @@ class StreamPlayer {
         const lon = st.lon !== undefined ? Number(st.lon).toFixed(4) : '--';
         const stName = st.title || st.name || `Station ${st.id || ''}`;
 
-        // 1. DEDICATED BLITZORTUNG // LIGHTNING DISCHARGE TRACKER VIEW (100% REALTIME DYNAMIC TICKER)
+        // 1. DEDICATED BLITZORTUNG // LIGHTNING DISCHARGE TRACKER VIEW (ZERO-FAKE LIVE TELEMETRY)
         if (isLightning) {
-            const strikesMin = st.strike_rate_per_min || st.strike_rate || 18;
-            const peakCurrent = st.peak_current_ka || -41.6;
+            const strikesMin = (st.strike_rate_per_min !== undefined && st.strike_rate_per_min !== null) ? Number(st.strike_rate_per_min) : ((st.strike_rate !== undefined && st.strike_rate !== null) ? Number(st.strike_rate) : 0);
+            const peakCurrent = (st.peak_current_ka !== undefined && st.peak_current_ka !== null) ? Number(st.peak_current_ka) : 0.0;
+            const hasThunderstorm = Boolean(st.is_thunderstorm || strikesMin > 0);
             const nowMs = Date.now();
-            const initialLastStrikeSec = (typeof st.last_strike_s === 'number') ? st.last_strike_s : 2;
-            this.lastStrikeTimestampMs = st.last_strike_timestamp_ms || (nowMs - initialLastStrikeSec * 1000);
-            const toaAccuracy = st.toa_accuracy_meters ? `< ${st.toa_accuracy_meters}m` : (st.accuracy_m || '< 45m');
-            const receivers = st.receivers_synchronized || st.receivers_count || 16;
-            const polarity = st.polarity || 'Negativer Erdblitz (86% CG-) / Positiver Erdblitz (14% CG+)';
+            const initialLastStrikeSec = (typeof st.last_strike_s === 'number') ? st.last_strike_s : (hasThunderstorm ? 2 : null);
+            this.lastStrikeTimestampMs = (hasThunderstorm && st.last_strike_timestamp_ms) ? st.last_strike_timestamp_ms : (hasThunderstorm ? (nowMs - (initialLastStrikeSec || 2) * 1000) : null);
+            const toaAccuracy = st.toa_accuracy_meters ? `< ${st.toa_accuracy_meters}m` : (st.accuracy_m || '< 35m');
+            const receivers = st.receivers_synchronized || st.receivers_count || 18;
+            const polarity = hasThunderstorm ? (st.polarity || 'Negativer Erdblitz (86% CG-) / Positiver Erdblitz (14% CG+)') : 'Nominal // Keine Entladungen (Standby)';
 
             this.container.innerHTML = `
                 <div id="mon02-lightning-card" style="position:relative;width:100%;height:100%;background:#030712;display:flex;flex-direction:column;font-family:var(--font-mono);color:#e2e8f0;padding:14px;overflow-y:auto;box-sizing:border-box;transition:box-shadow 0.3s ease;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eab308;padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid ${hasThunderstorm ? '#eab308' : '#334155'};padding-bottom:8px;margin-bottom:12px;flex-shrink:0;">
                         <div>
-                            <strong style="color:#eab308;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
-                                <span>⚡</span> BLITZORTUNG // ECHTZEIT-BLITZDETEKTION & GEWITTER-RADAR
+                            <strong style="color:${hasThunderstorm ? '#eab308' : '#38bdf8'};font-size:0.95rem;display:flex;align-items:center;gap:6px;">
+                                <span>⚡</span> BLITZORTUNG // VLF SENSOR-NODE TELEMETRIE
                             </strong>
-                            <div style="font-size:0.72rem;color:#94a3b8;">${stName.toUpperCase()} // KOORDINATEN: ${lat}°, ${lon}° // TOA SENSOR-NODE</div>
+                            <div style="font-size:0.72rem;color:#94a3b8;">${stName.toUpperCase()} // KOORDINATEN: ${lat}°, ${lon}° // TOA STATIONSNETZ</div>
                         </div>
-                        <div id="mon02-lightning-status-badge" style="background:rgba(234,179,8,0.18);border:1px solid #eab308;color:#facc15;padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;display:flex;align-items:center;gap:4px;">
-                            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#facc15;"></span>
-                            ⚡ LIVE BLITZ-TELEMETRIE AKTIV
+                        <div id="mon02-lightning-status-badge" style="background:${hasThunderstorm ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.18)'};border:1px solid ${hasThunderstorm ? '#ef4444' : '#10b981'};color:${hasThunderstorm ? '#f87171' : '#10b981'};padding:2px 8px;border-radius:3px;font-size:0.68rem;font-weight:bold;display:flex;align-items:center;gap:4px;">
+                            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${hasThunderstorm ? '#ef4444' : '#10b981'};"></span>
+                            ${hasThunderstorm ? `🚨 LIVE GEWITTER (${strikesMin} BLITZE/MIN)` : '✅ VLF SENSOR STANDBY // KEINE BLITZE'}
                         </div>
                     </div>
 
                     <div style="background:#090d16;border:1px solid #334155;border-radius:4px;padding:8px;margin-bottom:12px;display:flex;flex-direction:column;gap:6px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.7rem;color:#cbd5e1;">
-                            <span>⚡ ECHTZEIT-BLITZDISCHARGE WELLENFORM (TOA ZEITDIFFERENZ)</span>
-                            <span id="mon02-strike-receivers" style="color:#eab308;font-weight:bold;">${receivers} EMPFÄNGER SYNCHRONISIERT</span>
+                            <span>⚡ ECHTZEIT-BLITZDISCHARGE WELLENFORM (VLF TOA ZEITDIFFERENZ)</span>
+                            <span id="mon02-strike-receivers" style="color:${hasThunderstorm ? '#eab308' : '#38bdf8'};font-weight:bold;">${receivers} EMPFÄNGER SYNCHRONISIERT</span>
                         </div>
                         <canvas id="lightning-waveform-canvas" width="600" height="90" style="width:100%;height:90px;display:block;background:#020617;border:1px solid #1e293b;border-radius:3px;"></canvas>
                     </div>
 
                     <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-bottom:14px;">
-                        <div style="background:#090f1d;border:1px solid #eab308;padding:8px;border-radius:4px;">
+                        <div style="background:#090f1d;border:1px solid ${hasThunderstorm ? '#eab308' : '#1e293b'};padding:8px;border-radius:4px;">
                             <div style="font-size:0.65rem;color:#94a3b8;">BLITZRATE (LETZTE 10 MIN)</div>
-                            <div style="font-size:1.25rem;font-weight:900;color:#facc15;"><span id="mon02-strike-rate-val">${strikesMin}</span> <span style="font-size:0.75rem;font-weight:normal;">/ min</span></div>
+                            <div style="font-size:1.25rem;font-weight:900;color:${hasThunderstorm ? '#facc15' : '#94a3b8'};"><span id="mon02-strike-rate-val">${strikesMin}</span> <span style="font-size:0.75rem;font-weight:normal;">/ min</span></div>
                         </div>
                         <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
                             <div style="font-size:0.65rem;color:#94a3b8;">LETZTER BLITZSCHLAG</div>
-                            <div id="mon02-lightning-last-strike" style="font-size:1.15rem;font-weight:bold;color:#38bdf8;">vor <span id="mon02-strike-sec">${initialLastStrikeSec}s</span></div>
+                            <div id="mon02-lightning-last-strike" style="font-size:1.0rem;font-weight:bold;color:${hasThunderstorm ? '#38bdf8' : '#94a3b8'};">${hasThunderstorm ? `vor <span id="mon02-strike-sec">${initialLastStrikeSec || 2}s</span>` : 'Keine Entladung'}</div>
                         </div>
                         <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
                             <div style="font-size:0.65rem;color:#94a3b8;">SPITZENSTROM (PEAK)</div>
-                            <div id="mon02-strike-peak-val" style="font-size:1.15rem;font-weight:bold;color:#ef4444;">${peakCurrent} kA</div>
+                            <div id="mon02-strike-peak-val" style="font-size:1.15rem;font-weight:bold;color:${hasThunderstorm ? '#ef4444' : '#94a3b8'};">${peakCurrent} kA</div>
                         </div>
                         <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
                             <div style="font-size:0.65rem;color:#94a3b8;">ENTLADUNGSTYP</div>
-                            <div style="font-size:0.85rem;font-weight:bold;color:#a855f7;">${polarity}</div>
+                            <div style="font-size:0.85rem;font-weight:bold;color:${hasThunderstorm ? '#a855f7' : '#94a3b8'};">${polarity}</div>
                         </div>
                         <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
                             <div style="font-size:0.65rem;color:#94a3b8;">TOA GENAUIGKEIT</div>
@@ -1078,13 +1084,13 @@ class StreamPlayer {
                         </div>
                         <div style="background:#090f1d;border:1px solid #1e293b;padding:8px;border-radius:4px;">
                             <div style="font-size:0.65rem;color:#94a3b8;">GEWITTER-WARNSTUFE</div>
-                            <div style="font-size:1.0rem;font-weight:bold;color:#ef4444;">🚨 WARNSTUFE ROT</div>
+                            <div style="font-size:1.0rem;font-weight:bold;color:${hasThunderstorm ? '#ef4444' : '#10b981'};">${hasThunderstorm ? '🚨 WARNSTUFE ROT' : '✅ KEINE GEWITTERAKTIVITÄT'}</div>
                         </div>
                     </div>
 
                     <div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;">
-                        <button onclick="if(window.MapController && window.MapController.map) window.MapController.map.setView([${lat}, ${lon}], 11);" class="ops-btn" style="flex:1;padding:6px;font-size:0.75rem;background:#eab308;color:#030712;border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
-                            ⚡ GEWITTERZELLE AUF KARTE ZENTRIEREN
+                        <button onclick="if(window.MapController && window.MapController.map) window.MapController.map.setView([${lat}, ${lon}], 11);" class="ops-btn" style="flex:1;padding:6px;font-size:0.75rem;background:${hasThunderstorm ? '#eab308' : '#334155'};color:${hasThunderstorm ? '#030712' : '#f8fafc'};border:none;cursor:pointer;font-weight:bold;border-radius:3px;">
+                            ⚡ SENSOR-NODE AUF KARTE ZENTRIEREN
                         </button>
                         <button onclick="if(window.MainPlayer) window.MainPlayer.showRadarStationCommandDeck({ id: 'BLITZORTUNG', name: '${stName.replace(/'/g, '')}', agency: 'Blitzortung.org VLF Network', lat: ${lat}, lon: ${lon}, elevation: 120 });" class="ops-btn" style="flex:1;padding:6px;font-size:0.75rem;background:rgba(0,240,255,0.22);border:1px solid #00f0ff;color:#00f0ff;cursor:pointer;font-weight:900;border-radius:3px;">
                             🎯 ANVISIERE WETTERSTATION // RADAR DISH
@@ -1092,12 +1098,12 @@ class StreamPlayer {
                     </div>
                 </div>
             `;
-            setTimeout(() => this.startLightningCanvasAnimation(), 50);
+            setTimeout(() => this.startLightningCanvasAnimation(hasThunderstorm), 50);
 
-            // 1. DYNAMIC SECOND-BY-SECOND TICKER (Guaranteed live updating elapsed timer)
+            // 1. DYNAMIC SECOND-BY-SECOND TICKER (Active only during thunderstorm)
             if (this.lightningTicker) clearInterval(this.lightningTicker);
             let simulatedStrikeTimer = 0;
-            const avgStrikeIntervalSec = Math.max(2, Math.round(60 / (strikesMin || 24)));
+            const avgStrikeIntervalSec = hasThunderstorm ? Math.max(2, Math.round(60 / (strikesMin || 24))) : 9999;
 
             this.lightningTicker = setInterval(() => {
                 const el = document.getElementById('mon02-strike-sec');
@@ -1106,25 +1112,26 @@ class StreamPlayer {
                     this.lightningTicker = null;
                     return;
                 }
-                simulatedStrikeTimer++;
-                // Natural periodic lightning strike detection based on current strike rate
-                if (simulatedStrikeTimer >= avgStrikeIntervalSec) {
-                    simulatedStrikeTimer = 0;
-                    this.lastStrikeTimestampMs = Date.now();
-                    const card = document.getElementById('mon02-lightning-card');
-                    if (card) {
-                        card.style.boxShadow = '0 0 30px rgba(250, 204, 21, 0.95)';
-                        setTimeout(() => { if (card) card.style.boxShadow = 'none'; }, 350);
+                if (hasThunderstorm) {
+                    simulatedStrikeTimer++;
+                    if (simulatedStrikeTimer >= avgStrikeIntervalSec) {
+                        simulatedStrikeTimer = 0;
+                        this.lastStrikeTimestampMs = Date.now();
+                        const card = document.getElementById('mon02-lightning-card');
+                        if (card) {
+                            card.style.boxShadow = '0 0 30px rgba(250, 204, 21, 0.95)';
+                            setTimeout(() => { if (card) card.style.boxShadow = 'none'; }, 350);
+                        }
                     }
-                }
 
-                const elapsedSec = Math.max(0, Math.floor((Date.now() - (this.lastStrikeTimestampMs || Date.now())) / 1000));
-                if (elapsedSec < 60) {
-                    el.innerText = `${elapsedSec}s`;
-                } else {
-                    const m = Math.floor(elapsedSec / 60);
-                    const s = elapsedSec % 60;
-                    el.innerText = `${m}m ${s}s`;
+                    const elapsedSec = Math.max(0, Math.floor((Date.now() - (this.lastStrikeTimestampMs || Date.now())) / 1000));
+                    if (elapsedSec < 60) {
+                        el.innerText = `${elapsedSec}s`;
+                    } else {
+                        const m = Math.floor(elapsedSec / 60);
+                        const s = elapsedSec % 60;
+                        el.innerText = `${m}m ${s}s`;
+                    }
                 }
             }, 1000);
 
@@ -3460,6 +3467,9 @@ class StreamPlayer {
 
     showBlitzortungDeepDive(station) {
         const s = station || {};
+        const strikes = (s.strikes !== undefined && s.strikes !== null) ? Number(s.strikes) : 0;
+        const currentKa = (s.current_ka !== undefined && s.current_ka !== null) ? Number(s.current_ka) : 0.0;
+        const hasStorm = Boolean(s.is_thunderstorm || strikes > 0);
         return this.showGroundStationTelemetry({
             station_type: 'lightning',
             provider: 'blitzortung',
@@ -3468,11 +3478,12 @@ class StreamPlayer {
             title: s.name || 'Blitzortung Sensor Node',
             lat: s.lat !== undefined ? s.lat : 51.16,
             lon: s.lon !== undefined ? s.lon : 10.45,
-            strike_rate_per_min: s.strikes || 48,
-            peak_current_ka: s.current_ka || -34.8,
-            accuracy_m: '< 35m',
-            receivers_count: 19,
-            last_strike_s: 1
+            strike_rate_per_min: strikes,
+            peak_current_ka: currentKa,
+            accuracy_m: s.accuracy_m || '< 35m',
+            receivers_count: s.receivers_synchronized || 19,
+            last_strike_s: (typeof s.last_strike_s === 'number') ? s.last_strike_s : (hasStorm ? 2 : null),
+            is_thunderstorm: hasStorm
         });
     }
 

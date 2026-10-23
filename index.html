@@ -331,7 +331,7 @@
                         <span>🇺🇸</span>
                         <span>NOAA USA RADAR</span>
                     </button>
-                    <button id="btn-sector-stations-scan" class="ops-btn" style="background:rgba(16,185,129,0.22);color:#10b981;border:1px solid #10b981;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Bereich / Box auf der Karte ziehen: Kontaktiert alle echten Wetterstationen im Sektor und öffnet die Rohdaten-Liste in MON-02">
+                    <button id="btn-sector-stations-scan" class="ops-btn" style="background:#059669;color:#ffffff;border:1.5px solid #34d399;box-shadow:0 0 10px rgba(16,185,129,0.5);padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Bereich / Box auf der Karte ziehen: Kontaktiert alle echten Wetterstationen im Sektor und öffnet die Rohdaten-Liste in MON-02">
                         <span>📐</span>
                         <span>BEREICH-SCAN // STATIONEN (MON-02)</span>
                     </button>
@@ -441,6 +441,11 @@
             </div>
 
             <div class="monitor-body" style="position:relative;">
+                <!-- FLOATING SECTOR SCAN TRIGGER BUTTON (DIRECTLY VISIBLE ON MAP) -->
+                <button id="floating-btn-sector-scan" class="ops-btn" style="position:absolute;top:12px;left:56px;z-index:999;background:rgba(5,150,105,0.92);color:#ffffff;border:1.5px solid #34d399;box-shadow:0 0 14px rgba(16,185,129,0.6);font-size:0.75rem;font-weight:900;padding:6px 14px;border-radius:4px;display:flex;align-items:center;gap:6px;cursor:pointer;backdrop-filter:blur(6px);letter-spacing:0.5px;" title="Klicke hier und ziehe dann mit der Maus ein beliebiges Rechteck auf der Karte, um jede echte Wetterstation im Sektor abzufragen">
+                    <span>📐</span>
+                    <span>BEREICH-SCAN (BOX ZIEHEN)</span>
+                </button>
                 <div id="map"></div>
 
                 <!-- OSINT FIELD TOOLS DRAWER (SLIDE-OVER TACTICAL WORKBENCH) -->
@@ -621,6 +626,10 @@
                             <button id="btn-layers-all-on" class="sidebar-mini-btn" title="Alle Layer aktivieren">ALL ON</button>
                             <button id="btn-layers-all-off" class="sidebar-mini-btn" title="Alle Layer deaktivieren">ALL OFF</button>
                         </div>
+                        <button id="side-btn-sector-scan" class="ops-btn" style="width:calc(100% - 16px);margin:6px 8px 8px 8px;background:rgba(16,185,129,0.22);border:1px solid #10b981;color:#10b981;font-weight:900;font-size:0.72rem;padding:6px;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;" title="Rechteck auf Karte ziehen & alle echten Wetterstationen im Sektor abfragen">
+                            <span>📐</span>
+                            <span>BEREICH-SCAN (BOX)</span>
+                        </button>
                     </div>
 
                     <div class="map-sidebar-scroll">
