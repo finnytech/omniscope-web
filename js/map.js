@@ -1024,51 +1024,65 @@ class OperationsMap {
             await this.onMapLocationClicked(lat, lng);
         });
 
-        // Interactive Drag-to-Select Box Selection (Sector Stations Scan & Jev Mode)
-        this.map.on('mousedown', (e) => {
+        // Interactive Drag-to-Select Box Selection (Capture-Phase DOM Handler for 100% Reliability over all markers/layers)
+        const mapDomContainer = this.map.getContainer();
+        mapDomContainer.addEventListener('mousedown', (domEv) => {
+            if (domEv.button !== 0) return;
+            if (domEv.target && domEv.target.closest && domEv.target.closest('.leaflet-control, .leaflet-popup')) return;
+
             if (this.isSectorStationScanMode) {
+                domEv.stopPropagation();
+                domEv.preventDefault();
+                if (this.map.dragging) this.map.dragging.disable();
+                const latlng = this.map.mouseEventToLatLng(domEv);
                 this.isDrawingSectorBox = true;
-                this.sectorDrawStart = e.latlng;
-                this.map.dragging.disable();
+                this.sectorDrawStart = latlng;
                 if (!this.sectorScanStationsLayer) this.sectorScanStationsLayer = L.layerGroup().addTo(this.map);
                 this.sectorScanStationsLayer.clearLayers();
-                this.currentSectorRect = L.rectangle(L.latLngBounds(e.latlng, e.latlng), {
+                this.currentSectorRect = L.rectangle(L.latLngBounds(latlng, latlng), {
                     color: '#10b981',
                     weight: 3,
                     dashArray: '6, 6',
                     fillColor: '#059669',
-                    fillOpacity: 0.2,
+                    fillOpacity: 0.22,
+                    interactive: false,
                     className: 'sector-drag-emerald-box'
                 }).addTo(this.sectorScanStationsLayer);
                 return;
             }
-            if (!this.isJevForecastMode) return;
-            // Check if clicking inside map container
-            this.isDrawingJevBox = true;
-            this.jevDrawStart = e.latlng;
-            this.map.dragging.disable();
-            this.jevForecastLayer.clearLayers();
 
-            this.currentJevRect = L.rectangle(L.latLngBounds(e.latlng, e.latlng), {
-                color: '#ec4899',       // Neon Pink outline
-                weight: 3,
-                dashArray: '6, 6',
-                fillColor: '#f43f5e',   // Translucent Neon Pink fill
-                fillOpacity: 0.22,
-                className: 'jev-drag-pink-box'
-            }).addTo(this.jevForecastLayer);
+            if (this.isJevForecastMode) {
+                domEv.stopPropagation();
+                domEv.preventDefault();
+                if (this.map.dragging) this.map.dragging.disable();
+                const latlng = this.map.mouseEventToLatLng(domEv);
+                this.isDrawingJevBox = true;
+                this.jevDrawStart = latlng;
+                this.jevForecastLayer.clearLayers();
+                this.currentJevRect = L.rectangle(L.latLngBounds(latlng, latlng), {
+                    color: '#ec4899',
+                    weight: 3,
+                    dashArray: '6, 6',
+                    fillColor: '#f43f5e',
+                    fillOpacity: 0.22,
+                    interactive: false,
+                    className: 'jev-drag-pink-box'
+                }).addTo(this.jevForecastLayer);
 
-            const selBadge = document.getElementById('jev-selection-badge');
-            const selText = document.getElementById('jev-selection-badge-text');
-            if (selBadge && selText) {
-                selBadge.style.display = 'inline-flex';
-                selText.innerHTML = '📐 <b style="color:#ec4899;">ZONE WIRD GEZOGEN...</b>';
+                const selBadge = document.getElementById('jev-selection-badge');
+                const selText = document.getElementById('jev-selection-badge-text');
+                if (selBadge && selText) {
+                    selBadge.style.display = 'inline-flex';
+                    selText.innerHTML = '📐 <b style="color:#ec4899;">ZONE WIRD GEZOGEN...</b>';
+                }
             }
-        });
+        }, true);
 
-        this.map.on('mousemove', (e) => {
+        window.addEventListener('mousemove', (domEv) => {
+            if (!this.map) return;
             if (this.isSectorStationScanMode && this.isDrawingSectorBox && this.currentSectorRect && this.sectorDrawStart) {
-                const bounds = L.latLngBounds(this.sectorDrawStart, e.latlng);
+                const latlng = this.map.mouseEventToLatLng(domEv);
+                const bounds = L.latLngBounds(this.sectorDrawStart, latlng);
                 this.currentSectorRect.setBounds(bounds);
                 const dlat = Math.abs(bounds.getNorth() - bounds.getSouth()) * 111;
                 const dlon = Math.abs(bounds.getEast() - bounds.getWest()) * 111 * Math.cos(bounds.getCenter().lat * Math.PI / 180);
@@ -1086,34 +1100,23 @@ class OperationsMap {
                 return;
             }
             if (this.isJevForecastMode && this.isDrawingJevBox && this.currentJevRect && this.jevDrawStart) {
-                const bounds = L.latLngBounds(this.jevDrawStart, e.latlng);
+                const latlng = this.map.mouseEventToLatLng(domEv);
+                const bounds = L.latLngBounds(this.jevDrawStart, latlng);
                 this.currentJevRect.setBounds(bounds);
-
                 const dlat = Math.abs(bounds.getNorth() - bounds.getSouth()) * 111;
                 const dlon = Math.abs(bounds.getEast() - bounds.getWest()) * 111 * Math.cos(bounds.getCenter().lat * Math.PI / 180);
                 const areaKm2 = Math.round(dlat * dlon);
-
-                // 1. On-map floating Leaflet tooltip in luminous NEON PINK attached directly to the rectangle
                 const tooltipHtml = `<div class="jev-drag-pink-label">📐 <b>GEWÄHLTE ZONE</b>: ${Math.round(dlat)} km × ${Math.round(dlon)} km <span class="jev-area-badge">(${areaKm2.toLocaleString()} km²)</span></div>`;
                 if (!this.currentJevRect.getTooltip()) {
-                    this.currentJevRect.bindTooltip(tooltipHtml, {
-                        permanent: true,
-                        direction: 'center',
-                        className: 'jev-drag-pink-tooltip',
-                        interactive: false
-                    }).openTooltip();
+                    this.currentJevRect.bindTooltip(tooltipHtml, { permanent: true, direction: 'center', className: 'jev-drag-pink-tooltip', interactive: false }).openTooltip();
                 } else {
                     this.currentJevRect.setTooltipContent(tooltipHtml);
                 }
-
-                // 2. Top status hint in vibrant NEON PINK
                 const hint = document.getElementById('map-mode-hint');
                 if (hint) {
                     hint.innerHTML = `<span style="color:#ec4899;font-weight:bold;text-shadow:0 0 10px rgba(236,72,153,0.7);">📐 BOX WIRD GEZOGEN: ${Math.round(dlat)} km × ${Math.round(dlon)} km (${areaKm2.toLocaleString()} km²)</span> // MAUSTASTE LOSLASSEN ZUM SCANNEN`;
                     hint.style.color = '#ec4899';
                 }
-
-                // 3. JEV Top Bar Live Pink Badge
                 const selBadge = document.getElementById('jev-selection-badge');
                 const selText = document.getElementById('jev-selection-badge-text');
                 if (selBadge && selText) {
@@ -1123,22 +1126,35 @@ class OperationsMap {
             }
         });
 
-        this.map.on('mouseup', async (e) => {
+        window.addEventListener('mouseup', async (domEv) => {
+            if (!this.map) return;
             if (this.isSectorStationScanMode && this.isDrawingSectorBox) {
                 this.isDrawingSectorBox = false;
                 this.isSectorStationScanMode = false;
+                this.hasActiveSectorScan = true;
+                this._lastLayerClickTime = Date.now();
                 this.map.dragging.enable();
+                if (this.map.doubleClickZoom) this.map.doubleClickZoom.enable();
+                if (this.map.scrollWheelZoom) this.map.scrollWheelZoom.enable();
                 const mapEl = document.getElementById('map');
-                if (mapEl) mapEl.style.cursor = '';
+                if (mapEl) {
+                    mapEl.style.cursor = '';
+                    mapEl.classList.remove('sector-scan-active');
+                }
                 const btn = document.getElementById('btn-sector-stations-scan');
-                if (btn) btn.classList.remove('active');
+                if (btn) {
+                    btn.classList.add('active');
+                    btn.style.background = '#b91c1c';
+                    btn.style.borderColor = '#f87171';
+                    btn.innerHTML = '<span>✕</span> <span>BEREICH-SCAN AUSBLENDEN</span>';
+                }
 
                 if (this.currentSectorRect && this.sectorDrawStart) {
                     let bounds = this.currentSectorRect.getBounds();
                     const dlat = Math.abs(bounds.getNorth() - bounds.getSouth());
                     const dlon = Math.abs(bounds.getEast() - bounds.getWest());
                     if (dlat < 0.005 && dlon < 0.005) {
-                        const p = e.latlng;
+                        const p = this.map.mouseEventToLatLng(domEv);
                         const r = 0.55;
                         bounds = L.latLngBounds([p.lat - r, p.lng - r * 1.3], [p.lat + r, p.lng + r * 1.3]);
                         this.currentSectorRect.setBounds(bounds);
@@ -1149,7 +1165,7 @@ class OperationsMap {
             }
             if (!this.isJevForecastMode || !this.isDrawingJevBox) return;
             this.isDrawingJevBox = false;
-            this.map.dragging.enable();
+            this._lastLayerClickTime = Date.now();
 
             if (!this.currentJevRect || !this.jevDrawStart) return;
 
@@ -1157,9 +1173,8 @@ class OperationsMap {
             const dlat = Math.abs(bounds.getNorth() - bounds.getSouth());
             const dlon = Math.abs(bounds.getEast() - bounds.getWest());
 
-            // If user just clicked without dragging, create a default ~100km box around the clicked point
             if (dlat < 0.005 && dlon < 0.005) {
-                const p = e.latlng;
+                const p = this.map.mouseEventToLatLng(domEv);
                 const r = 0.55;
                 bounds = L.latLngBounds([p.lat - r, p.lng - r * 1.3], [p.lat + r, p.lng + r * 1.3]);
                 this.currentJevRect.setBounds(bounds);
@@ -1169,7 +1184,6 @@ class OperationsMap {
             const dlonKm = Math.abs(bounds.getEast() - bounds.getWest()) * 111 * Math.cos(bounds.getCenter().lat * Math.PI / 180);
             const areaKm2 = Math.round(dlatKm * dlonKm);
 
-            // Update tooltip on mouseup in glowing pink
             const tooltipHtml = `<div class="jev-drag-pink-label">📐 <b>ZONE FIXIERT</b>: ${Math.round(dlatKm)} km × ${Math.round(dlonKm)} km <span class="jev-area-badge">(${areaKm2.toLocaleString()} km²)</span> // <span style="color:#10b981;">SCANNE ECHTE BODENSTATIONEN...</span></div>`;
             if (this.currentJevRect.getTooltip()) {
                 this.currentJevRect.setTooltipContent(tooltipHtml);
@@ -5768,6 +5782,7 @@ class OperationsMap {
                 hint.style.color = '#c084fc';
             }
             if (mapContainer) mapContainer.classList.add('jev-cursor-crosshair');
+            if (this.map && this.map.dragging) this.map.dragging.disable();
 
             const modeSelect = document.getElementById('jev-ai-mode-select');
             const aiMode = modeSelect ? modeSelect.value : (localStorage.getItem('csn_jev_ai_mode') || 'visual');
@@ -5819,6 +5834,7 @@ class OperationsMap {
                 hint.style.color = 'var(--text-muted)';
             }
             if (mapContainer) mapContainer.classList.remove('jev-cursor-crosshair');
+            if (this.map && this.map.dragging) this.map.dragging.enable();
             if (hud) hud.classList.add('hidden');
             const selBadge = document.getElementById('jev-selection-badge');
             if (selBadge) selBadge.style.display = 'none';
@@ -8026,8 +8042,9 @@ OperationsMap.prototype.startSectorStationBoxScan = function() {
         const btn = document.getElementById('btn-sector-stations-scan');
         const mapEl = document.getElementById('map');
 
-        // Toggle OFF if already active
-        if (this.isSectorStationScanMode) {
+        // Toggle OFF if already active OR if scanned station box is currently displayed on the map
+        const hasVisibleScan = this.hasActiveSectorScan || (this.sectorScanStationsLayer && this.sectorScanStationsLayer.getLayers().length > 0);
+        if (this.isSectorStationScanMode || hasVisibleScan) {
             this.cancelSectorStationBoxScan();
             return;
         }
@@ -8077,8 +8094,17 @@ OperationsMap.prototype.startSectorStationBoxScan = function() {
 OperationsMap.prototype.cancelSectorStationBoxScan = function() {
         this.isSectorStationScanMode = false;
         this.isDrawingSectorBox = false;
+        this.hasActiveSectorScan = false;
         this.sectorDrawStart = null;
         this._lastSectorScanTime = Date.now();
+
+        if (this.sectorScanStationsLayer) {
+            this.sectorScanStationsLayer.clearLayers();
+        }
+        if (this.currentSectorRect && this.map) {
+            this.map.removeLayer(this.currentSectorRect);
+            this.currentSectorRect = null;
+        }
 
         if (this.map && this.map.dragging) {
             this.map.dragging.enable();
