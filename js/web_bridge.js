@@ -535,7 +535,7 @@
 
         // On HTTP/HTTPS, delegate /api calls directly to the Cloudflare Edge Worker first
 
-        if (window.location.protocol.startsWith('http')) {
+        if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
 
             try {
 
@@ -2058,80 +2058,86 @@ const PRIMARY_US_STATIONS = [
 
 
                 const noaaRes = await window._originalFetch('https://api.weather.gov/alerts/active?status=actual&message_type=alert', {
-
-                    headers: { 'User-Agent': 'OmniScopeWeb/1.0 (info@omniscope.app)', 'Accept': 'application/geo+json' }
-
+                    headers: { 'Accept': 'application/geo+json' }
                 });
-
                 if (!noaaRes.ok) {
-
                     throw new Error('NOAA API returned status ' + noaaRes.status);
-
                 }
-
                 const geojson = await noaaRes.json();
-
                 const features = geojson.features || [];
-
                 const alerts = [];
-
                 const tornadoGroundAlerts = [];
 
+                const UGC_STATE_CENTROIDS = {
+                    AL:[32.80,-86.79], AK:[61.37,-152.40], AZ:[33.72,-111.43], AR:[34.96,-92.37], CA:[36.11,-119.68],
+                    CO:[39.05,-105.31], CT:[41.59,-72.75], DE:[39.31,-75.50], DC:[38.90,-77.03], FL:[27.76,-81.68],
+                    GA:[33.04,-83.64], HI:[21.09,-157.49], ID:[44.24,-114.47], IL:[40.34,-88.98], IN:[39.84,-86.25],
+                    IA:[42.01,-93.21], KS:[38.52,-96.72], KY:[37.66,-84.67], LA:[31.16,-91.86], ME:[44.69,-69.38],
+                    MD:[39.06,-76.80], MA:[42.23,-71.53], MI:[43.32,-84.53], MN:[45.69,-93.90], MS:[32.74,-89.67],
+                    MO:[38.45,-92.28], MT:[46.92,-110.45], NE:[41.12,-98.26], NV:[38.31,-117.05], NH:[43.45,-71.56],
+                    NJ:[40.29,-74.52], NM:[34.84,-106.24], NY:[42.16,-74.94], NC:[35.63,-79.80], ND:[47.52,-99.78],
+                    OH:[40.38,-82.76], OK:[35.56,-96.92], OR:[44.57,-122.07], PA:[40.59,-77.20], RI:[41.68,-71.51],
+                    SC:[33.85,-80.94], SD:[44.29,-99.43], TN:[35.74,-86.69], TX:[31.05,-97.56], UT:[40.15,-111.86],
+                    VT:[44.04,-72.70], VA:[37.76,-78.16], WA:[47.40,-121.49], WV:[38.49,-80.95], WI:[44.26,-89.61],
+                    WY:[42.75,-107.30], PR:[18.22,-66.59], VI:[18.33,-64.89], GU:[13.44,144.79], AS:[-14.27,-170.13],
+                    PK:[56.50,-164.00], PZ:[37.80,-123.00], GM:[27.50,-90.00], AN:[38.50,-74.00], AM:[22.00,-68.00],
+                    PH:[21.20,-157.80], LM:[44.00,-87.00], LS:[47.50,-87.50], LH:[44.80,-82.40], LE:[42.20,-81.20],
+                    LO:[43.70,-77.80], LC:[42.45,-82.70], SL:[44.50,-75.80]
+                };
 
-
-                features.forEach(f => {
-
+                features.forEach((f, fIdx) => {
                     const props = f.properties || {};
-
-                    const geom = f.geometry;
-
+                    let geom = f.geometry;
                     const evt = props.event || 'Severe Alert';
-
                     const sev = props.severity || 'Unknown';
-
                     const area = props.areaDesc || 'US Sector';
-
                     const desc = props.description || '';
-
                     const headline = props.headline || '';
-
                     const params = props.parameters || {};
 
-
-
-                    // Extract centroid from geometry coordinates
-
                     let sumLat = 0, sumLon = 0, ptCount = 0;
-
                     function extractPts(coords) {
-
                         if (!coords) return;
-
                         if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
-
                             sumLon += coords[0];
-
                             sumLat += coords[1];
-
                             ptCount++;
-
                         } else if (Array.isArray(coords)) {
-
                             coords.forEach(extractPts);
-
                         }
-
                     }
 
                     if (geom && geom.coordinates) {
-
                         extractPts(geom.coordinates);
-
                     }
 
-                    const alertLat = ptCount > 0 ? (sumLat / ptCount) : 38.0;
-
-                    const alertLon = ptCount > 0 ? (sumLon / ptCount) : -97.0;
+                    let alertLat = 35.56;
+                    let alertLon = -96.92;
+                    if (ptCount > 0) {
+                        alertLat = sumLat / ptCount;
+                        alertLon = sumLon / ptCount;
+                    } else {
+                        const ugcList = (props.geocode && Array.isArray(props.geocode.UGC)) ? props.geocode.UGC : [];
+                        const firstUgc = ugcList[0] || '';
+                        const prefix = firstUgc.slice(0, 2).toUpperCase();
+                        const zoneNum = parseInt(firstUgc.slice(3), 10) || (fIdx + 1);
+                        const base = UGC_STATE_CENTROIDS[prefix] || [35.56, -96.92];
+                        const dLat = (((zoneNum * 37) % 100) - 50) * 0.035;
+                        const dLon = (((zoneNum * 73) % 100) - 50) * 0.045;
+                        alertLat = parseFloat((base[0] + dLat).toFixed(4));
+                        alertLon = parseFloat((base[1] + dLon).toFixed(4));
+                        const r = 0.22;
+                        geom = {
+                            type: 'Polygon',
+                            coordinates: [[
+                                [alertLon - r, alertLat - r],
+                                [alertLon + r, alertLat - r],
+                                [alertLon + r, alertLat + r],
+                                [alertLon - r, alertLat + r],
+                                [alertLon - r, alertLat - r]
+                            ]]
+                        };
+                    }
 
 
 

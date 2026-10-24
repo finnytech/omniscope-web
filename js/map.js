@@ -3687,8 +3687,8 @@ class OperationsMap {
             this.rawAlerts.forEach(alert => {
                 const evt = (alert.event || '').toLowerCase();
                 const isTornado = evt.includes('tornado');
-                const isTropical = evt.includes('tropical') || evt.includes('hurricane') || evt.includes('cyclone');
-                const isSevere = evt.includes('thunderstorm') || evt.includes('hail') || evt.includes('wind') || evt.includes('flood') || evt.includes('marine') || evt.includes('gale') || evt.includes('special weather');
+                const isTropical = evt.includes('tropical') || evt.includes('hurricane') || evt.includes('cyclone') || evt.includes('typhoon');
+                const isSevere = evt.includes('thunderstorm') || evt.includes('hail') || evt.includes('wind') || evt.includes('flood') || evt.includes('marine') || evt.includes('gale') || evt.includes('special weather') || evt.includes('storm') || evt.includes('squall') || evt.includes('surf') || evt.includes('seas') || evt.includes('warning') || evt.includes('watch') || evt.includes('advisory');
                 if (!isTornado && !isTropical && !isSevere) return;
 
                 let stormLat = alert.lat || (alert.centroid && alert.centroid.lat);
@@ -3762,6 +3762,8 @@ class OperationsMap {
             return;
         }
 
+        const priorityRank = { tornado_ground: 1, tornado_radar: 2, tornado: 3, hurricane: 4, supercell: 5, severe: 6 };
+        storms.sort((a, b) => (priorityRank[a.type] || 9) - (priorityRank[b.type] || 9));
         this.activeStormsList = storms;
 
         // Auto-pin top threat if no pinned storm yet or previous pinned storm no longer exists
