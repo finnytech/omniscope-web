@@ -2819,8 +2819,9 @@ class StreamPlayer {
                     const data = await res.json();
                     const strikes = data.strikes || data.recent_strikes || [];
                     strikes.forEach(s => {
-                        const sLat = s.lat !== undefined ? s.lat : (lat + (Math.random() - 0.5) * 1.5);
-                        const sLon = s.lon !== undefined ? s.lon : (lon + (Math.random() - 0.5) * 1.5);
+                        if (s.lat == null || s.lon == null) return;
+                        const sLat = Number(s.lat);
+                        const sLon = Number(s.lon);
                         const crossIcon = L.divIcon({
                             className: 'lightning-cross-marker',
                             html: `<div style="color:#facc15;font-weight:900;font-size:14px;text-shadow:0 0 6px #facc15, 0 0 10px #eab308;transform:translate(-50%,-50%);cursor:pointer;" title="BLITZORTUNG SFERIC // ${s.current_ka || '32'} kA">✚</div>`,
@@ -3037,6 +3038,102 @@ class StreamPlayer {
         } catch (e) {
             console.warn("loadNextTelemetryNode error:", e);
         }
+    }
+
+    resolveActiveContainer() {
+        if (typeof window !== 'undefined' && window.OmniMultiView && window.OmniMultiView.viewportCount > 1) {
+            const activeIdx = window.OmniMultiView.activeSlotIndex !== undefined ? window.OmniMultiView.activeSlotIndex : 0;
+            const slotBody = document.getElementById(`mv-cell-body-${activeIdx}`);
+            if (slotBody) return slotBody;
+        }
+        return document.getElementById(this.containerId) || this.container || document.getElementById('webcam-player-container');
+    }
+
+    isAllowedPureStreamEmbed(url) {
+        if (!url || typeof url !== 'string') return false;
+        const uLower = url.toLowerCase();
+        const isBlocked = ['livebeaches', 'earthcam', 'skylinewebcams', 'webcamtaxi', 'porteverglades', 'ptztv', 'cruisemapper', 'youtube.com', 'youtu.be'].some(b => uLower.includes(b));
+        return !isBlocked && (
+            uLower.includes('panomax.') ||
+            uLower.includes('roundshot.') ||
+            uLower.includes('feratel.') ||
+            uLower.includes('foto-webcam.eu') ||
+            uLower.includes('/embed/player/') ||
+            uLower.includes('embed.windy.com') ||
+            uLower.includes('ustream.tv/embed')
+        );
+    }
+
+    appendSandboxedLockedIframe(container, url, title = 'Live 360° Panorama') {
+        const target = container || this.container || this.resolveActiveContainer();
+        if (!target) return;
+        target.innerHTML = `
+            <div class="mon02-sandbox-wrap" style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;background:#000;">
+                <div class="mon02-sandbox-topbar" style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:rgba(2,6,23,0.9);font-family:var(--font-mono);font-size:0.65rem;border-bottom:1px solid #1e293b;z-index:10;">
+                    <div style="display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;">
+                        <span>🔒</span>
+                        <strong style="color:#34d399;white-space:nowrap;">SANDBOX LOCKED // VIEW-ONLY</strong>
+                        <span style="color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">· ${title.slice(0, 32)}</span>
+                    </div>
+                    <button type="button" class="mv-hdr-btn" id="mon02-shield-btn" style="padding:2px 6px;font-size:0.6rem;cursor:pointer;background:rgba(30,41,59,0.7);color:#34d399;border:1px solid #334155;border-radius:2px;" title="Klick-Sperre umschalten">🔒 SPERRE AN</button>
+                </div>
+                <iframe src="${url}" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" style="flex:1;width:100%;height:100%;border:none;background:#000;" allow="autoplay; fullscreen"></iframe>
+                <div class="mon02-sandbox-shield" id="mon02-shield-layer" title="Sandbox-Schutz aktiv: Verhindert Navigation und Popups"></div>
+            </div>
+        `;
+        const shieldBtn = target.querySelector('#mon02-shield-btn');
+        const shieldLayer = target.querySelector('#mon02-shield-layer');
+        if (shieldBtn && shieldLayer) {
+            shieldBtn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const unlocked = shieldLayer.classList.toggle('unlocked');
+                shieldBtn.textContent = unlocked ? '🔓 INTERAKTIV (SANDBOX)' : '🔒 SPERRE AN';
+                shieldBtn.style.color = unlocked ? '#facc15' : '#34d399';
+            });
+        }
+    }
+
+    showCameraSensorTelemetryCard(cam) {
+        const target = this.container || this.resolveActiveContainer();
+        if (!target) return;
+        const c = cam || {};
+        const lat = Number(c.lat != null ? c.lat : 50.1109);
+        const lon = Number(c.lon != null ? c.lon : 8.6821);
+        const city = c.city || c.title || 'Sector Sensor';
+        const country = c.country || 'Global';
+        const prov = c.provider || 'Optical Telemetry';
+
+        target.innerHTML = `
+            <div class="mv-node-subcard" style="height:100%;width:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;padding:12px;background:#030712;border:1px solid #1e293b;color:#f8fafc;font-family:var(--font-mono);">
+                <div class="mv-node-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span class="mv-node-badge" style="border:1px solid #10b981;padding:2px 6px;border-radius:3px;font-size:0.62rem;color:#34d399;background:rgba(16,185,129,0.18);">🔒 SANDBOXED SENSOR TELEMETRY</span>
+                    <span class="mv-node-coords" style="font-size:0.65rem;color:#94a3b8;">📍 ${lat.toFixed(3)}°, ${lon.toFixed(3)}°</span>
+                </div>
+                <div class="mv-node-title" style="font-size:0.85rem;font-weight:bold;color:#38bdf8;margin:8px 0;">📷 ${c.title || city} (${country})</div>
+                <div class="mv-node-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0;">
+                    <div class="mv-node-metric" style="background:#090d16;padding:6px;border:1px solid #1e293b;border-radius:2px;font-size:0.62rem;display:flex;flex-direction:column;"><span style="color:#64748b;">PROVIDER</span><strong style="color:#e2e8f0;">${prov.toUpperCase()}</strong></div>
+                    <div class="mv-node-metric" style="background:#090d16;padding:6px;border:1px solid #1e293b;border-radius:2px;font-size:0.62rem;display:flex;flex-direction:column;"><span style="color:#64748b;">TEMPERATUR</span><strong id="player-telem-temp" style="color:#e2e8f0;">Lade...</strong></div>
+                    <div class="mv-node-metric" style="background:#090d16;padding:6px;border:1px solid #1e293b;border-radius:2px;font-size:0.62rem;display:flex;flex-direction:column;"><span style="color:#64748b;">WIND / BÖEN</span><strong id="player-telem-wind" style="color:#e2e8f0;">Lade...</strong></div>
+                    <div class="mv-node-metric" style="background:#090d16;padding:6px;border:1px solid #1e293b;border-radius:2px;font-size:0.62rem;display:flex;flex-direction:column;"><span style="color:#64748b;">LUFTDRUCK</span><strong id="player-telem-baro" style="color:#e2e8f0;">Lade...</strong></div>
+                </div>
+                <div style="font-size:0.6rem;color:#94a3b8;line-height:1.3;margin-top:4px;">
+                    🛡️ Externe Website-Webcams sind in MON-02 aus Sicherheitsgründen gesperrt (Zero Browser-Hijacking). Live Open-Meteo Sensordaten aktiv.
+                </div>
+            </div>
+        `;
+
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,surface_pressure`)
+            .then(r => r.json())
+            .then(d => {
+                const cur = d.current || {};
+                const tEl = document.getElementById('player-telem-temp');
+                const wEl = document.getElementById('player-telem-wind');
+                const bEl = document.getElementById('player-telem-baro');
+                if (tEl && cur.temperature_2m != null) tEl.textContent = `${cur.temperature_2m}°C`;
+                if (wEl && cur.wind_speed_10m != null) wEl.textContent = `${cur.wind_speed_10m} km/h`;
+                if (bEl && cur.surface_pressure != null) bEl.textContent = `${cur.surface_pressure} hPa`;
+            })
+            .catch(() => {});
     }
 
     play(url, type = 'panomax_archive') {

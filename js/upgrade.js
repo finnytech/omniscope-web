@@ -549,11 +549,13 @@
         if (filterSelect) {
             filterSelect.onchange = () => {
                 const f = filterSelect.value;
-                if (!camContainer) return;
-                camContainer.classList.remove('filter-nvg', 'filter-flir', 'filter-mono');
-                if (f === 'nvg') camContainer.classList.add('filter-nvg');
-                else if (f === 'flir') camContainer.classList.add('filter-flir');
-                else if (f === 'mono') camContainer.classList.add('filter-mono');
+                const targets = [camContainer, document.getElementById('mon02-multiview-root')].filter(Boolean);
+                targets.forEach(tEl => {
+                    tEl.classList.remove('filter-nvg', 'filter-flir', 'filter-mono');
+                    if (f === 'nvg') tEl.classList.add('filter-nvg');
+                    else if (f === 'flir') tEl.classList.add('filter-flir');
+                    else if (f === 'mono') tEl.classList.add('filter-mono');
+                });
                 audit('cam_shader_filter', f);
             };
         }
@@ -603,7 +605,7 @@
                 const streamUrl = `/api/cameras/stream-proxy?id=${encodeURIComponent(c.id)}&t=${Date.now()}`;
                 img.src = streamUrl;
                 img.alt = c.title || `Cam #${idx + 1}`;
-                img.onerror = () => { img.src = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80'; };
+                img.onerror = () => { img.style.display = 'none'; };
                 const timer = setInterval(() => {
                     if (!cell.isConnected) return clearInterval(timer);
                     img.src = `/api/cameras/stream-proxy?id=${encodeURIComponent(c.id)}&t=${Date.now()}`;

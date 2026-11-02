@@ -118,8 +118,6 @@
         }
 
         async init() {
-            // Remove any legacy bottom-left legend box if present
-            document.getElementById('mon01-dynamic-radar-legend')?.remove();
 
             await this.loadTvCatalog();
             this.injectMon02Controls();
@@ -132,14 +130,14 @@
 
         async loadTvCatalog() {
             try {
-                const res = await fetch('data/tv_channels.json?v=2.7.1');
+                const res = await fetch('data/tv_channels.json?v=2.7.3');
                 if (res.ok) {
                     const raw = await res.json();
                     const list = Array.isArray(raw) ? raw : (raw.channels || []);
-                    this.tvChannels = list.map((ch, idx) => ({
+                    this.tvChannels = list.map((ch) => ({
                         ...ch,
                         online: true,
-                        latency_ms: 42 + ((idx * 17) % 95),
+                        latency_ms: null,
                         last_checked: new Date().toLocaleTimeString()
                     }));
                     this.onlineChannels = [...this.tvChannels];
@@ -393,23 +391,26 @@
             if (pollBtn && manualTrigger) pollBtn.textContent = '⏳...';
 
             const nowStr = new Date().toLocaleTimeString();
-            const sampleSize = Math.min(14, this.tvChannels.length);
-            const startIdx = Math.floor(Math.random() * Math.max(1, this.tvChannels.length - sampleSize));
-            const batch = this.tvChannels.slice(startIdx, startIdx + sampleSize);
+            const sampleSize = Math.min(18, this.tvChannels.length);
+            this._pollCursor = ((this._pollCursor || 0) % Math.max(1, this.tvChannels.length));
+            const batch = [];
+            for (let k = 0; k < sampleSize; k++) {
+                batch.push(this.tvChannels[(this._pollCursor + k) % this.tvChannels.length]);
+            }
+            this._pollCursor = (this._pollCursor + sampleSize) % this.tvChannels.length;
 
             await Promise.allSettled(batch.map(async (ch) => {
                 const t0 = performance.now();
                 const ctrl = new AbortController();
-                const timer = setTimeout(() => ctrl.abort(), 3500);
+                const timer = setTimeout(() => ctrl.abort(), 4000);
                 try {
                     const res = await (window._originalFetch || window.fetch)(ch.url, {
                         method: 'GET',
                         signal: ctrl.signal
                     });
                     clearTimeout(timer);
-                    // Keep channel listed unless server explicitly returns 404/410
-                    ch.online = (res.status !== 404 && res.status !== 410);
-                    ch.latency_ms = Math.max(18, Math.round(performance.now() - t0));
+                    ch.online = (res.ok || res.status === 206);
+                    ch.latency_ms = Math.max(12, Math.round(performance.now() - t0));
                     ch.last_checked = nowStr;
                 } catch (_) {
                     clearTimeout(timer);
@@ -473,19 +474,22 @@
                                 <div class="tv-row-meta">
                                     <span class="tv-cat-tag">${(ch.category || 'LIVE').toUpperCase()}</span>
                                     <span>· ${ch.country} (${ch.lang})</span>
-                                    <span class="tv-live-pill">🟢 ${ch.latency_ms || 55}ms</span>
+                                    <span class="tv-live-pill">🟢 ${ch.latency_ms != null ? `${ch.latency_ms}ms` : 'LIVE'}</span>
                                 </div>
                             </div>
                         </div>
-                        <button class="tv-row-play-btn" type="button">
+                        <button class="tv-row-play-btn" type="button" data-tv-play-id="${ch.id}">
                             ${isPlayingInActive ? '🔊 LÄUFT' : `▶ MON 2.${this.activeSlotIndex + 1}`}
                         </button>
                     </div>
                 `;
             }).join('');
 
-            grid.querySelectorAll('.tv-channel-row').forEach(row => {
-                row.addEventListener('click', (e) => {
+            if (!grid._delegatedTvClick) {
+                grid._delegatedTvClick = true;
+                grid.addEventListener('click', (e) => {
+                    const row = e.target.closest('.tv-channel-row[data-tv-id]');
+                    if (!row) return;
                     e.stopPropagation();
                     const id = row.getAttribute('data-tv-id');
                     const ch = this.tvChannels.find(c => c.id === id);
@@ -494,7 +498,7 @@
                         this.renderTvChannelGrid();
                     }
                 });
-            });
+            }
         }
 
         // =====================================================================
@@ -528,11 +532,21 @@
                 btn.classList.toggle('active', parseInt(btn.getAttribute('data-mv'), 10) === this.viewportCount);
             });
 
+            const topRow = document.getElementById('top-monitors-row');
+            if (topRow) {
+                topRow.setAttribute('data-mv-layout', `${this.viewportCount}x`);
+            }
+
             if (this.activeSlotIndex >= this.viewportCount) {
                 this.setActiveSlot(0);
             }
 
             this.ensureMultiViewportDom();
+            setTimeout(() => {
+                if (window.MapController && window.MapController.map) {
+                    window.MapController.map.invalidateSize();
+                }
+            }, 310);
         }
 
         restoreSingleWebcamMode() {
@@ -540,9 +554,13 @@
             for (let i = 0; i < 4; i++) {
                 this.cleanupSlotMedia(i);
             }
+            const mon02Card = document.getElementById('card-webcam');
+            const topRow = document.getElementById('top-monitors-row');
             const mvRoot = document.getElementById('mon02-multiview-root');
             const playerContainer = document.getElementById('player-container');
             const origContainer = document.getElementById('webcam-player-container');
+            if (mon02Card) mon02Card.classList.remove('multiview-mode');
+            if (topRow) topRow.setAttribute('data-mv-layout', '1x');
             if (mvRoot) mvRoot.style.display = 'none';
             if (playerContainer) playerContainer.style.display = 'flex';
             if (origContainer) origContainer.style.display = 'flex';
@@ -574,6 +592,8 @@
             }
             mvRoot.style.display = 'grid';
             mvRoot.setAttribute('data-layout', `${this.viewportCount}x`);
+            const topRow = document.getElementById('top-monitors-row');
+            if (topRow) topRow.setAttribute('data-mv-layout', `${this.viewportCount}x`);
 
             // Step 1: Ensure all 4 sub-monitor DOM cells exist FIRST (no recursion!)
             for (let i = 0; i < 4; i++) {
@@ -748,9 +768,33 @@
         cleanupSlotMedia(slotIdx) {
             const s = this.slots[slotIdx];
             if (!s) return;
+            s.loadToken = (s.loadToken || 0) + 1;
+
+            // Stop any MainPlayer background timers so they never overwrite this sub-monitor
+            if (window.MainPlayer && slotIdx === this.activeSlotIndex) {
+                try {
+                    if (window.MainPlayer.refreshInterval) { clearInterval(window.MainPlayer.refreshInterval); window.MainPlayer.refreshInterval = null; }
+                    if (window.MainPlayer.timelapseTimer) { clearInterval(window.MainPlayer.timelapseTimer); window.MainPlayer.timelapseTimer = null; }
+                    if (window.MainPlayer.hlsSafetyTimeout) { clearTimeout(window.MainPlayer.hlsSafetyTimeout); window.MainPlayer.hlsSafetyTimeout = null; }
+                    if (window.MainPlayer.hls) { window.MainPlayer.hls.destroy(); window.MainPlayer.hls = null; }
+                } catch (_) {}
+            }
+
             if (s.hls) {
-                try { s.hls.destroy(); } catch (_) {}
+                try {
+                    s.hls.stopLoad();
+                    s.hls.detachMedia();
+                    s.hls.destroy();
+                } catch (_) {}
                 s.hls = null;
+            }
+            if (s.videoEl) {
+                try {
+                    s.videoEl.pause();
+                    s.videoEl.removeAttribute('src');
+                    s.videoEl.load();
+                } catch (_) {}
+                s.videoEl = null;
             }
             if (s.audioEl) {
                 try { s.audioEl.pause(); s.audioEl.src = ''; } catch (_) {}
@@ -764,15 +808,19 @@
                 cancelAnimationFrame(s.animFrame);
                 s.animFrame = null;
             }
-            s.videoEl = null;
         }
 
         // Assign Live TV Channel (.m3u8) with Full DVR Controls to Slot
         assignTvChannelToSlot(slotIdx, channel) {
+            if (!channel) return;
+            if (slotIdx >= this.viewportCount) {
+                this.setViewportCount(slotIdx + 1);
+            }
             this.ensureMultiViewportDom(true);
             this.cleanupSlotMedia(slotIdx);
 
             const s = this.slots[slotIdx];
+            const token = s.loadToken;
             s.type = 'tv';
             s.data = channel;
             s.title = `${channel.flag || '📺'} ${channel.name}`;
@@ -783,22 +831,28 @@
             const statusEl = document.getElementById(`mv-dvr-status-${slotIdx}`);
             if (titleEl) titleEl.textContent = s.title;
             if (dvrEl) dvrEl.style.display = 'flex';
+            if (statusEl) statusEl.textContent = '⏳ VERBINDE...';
             if (!bodyEl) return;
 
+            const vidId = `mv-video-${slotIdx}-${token}`;
             bodyEl.innerHTML = `
-                <video id="mv-video-${slotIdx}" class="mv-video-player" playsinline autoplay ${s.muted ? 'muted' : ''}></video>
+                <video id="${vidId}" class="mv-video-player" playsinline autoplay ${s.muted ? 'muted' : ''}></video>
                 <div class="mv-stream-overlay-badge">
                     <span class="mv-live-dot"></span>
-                    <span>${channel.flag || '📺'} ${channel.name}</span>
+                    <span>${channel.flag || '📺'} ${channel.name} (${channel.country || 'LIVE'})</span>
                 </div>
             `;
 
-            const video = document.getElementById(`mv-video-${slotIdx}`);
+            const video = document.getElementById(vidId);
+            if (!video) return;
             s.videoEl = video;
             video.volume = s.volume;
             video.muted = s.muted;
 
             const streamUrl = channel.url;
+            const tStart = performance.now();
+            let retriedNet = false;
+
             if (window.Hls && Hls.isSupported()) {
                 const hls = new Hls({
                     enableWorker: true,
@@ -806,24 +860,49 @@
                     backBufferLength: 90
                 });
                 s.hls = hls;
-                hls.loadSource(streamUrl);
                 hls.attachMedia(video);
+                hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                    if (this.slots[slotIdx].loadToken !== token) return;
+                    hls.loadSource(streamUrl);
+                });
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    if (this.slots[slotIdx].loadToken !== token) return;
+                    const latMs = Math.max(12, Math.round(performance.now() - tStart));
+                    channel.latency_ms = latMs;
+                    channel.online = true;
+                    hls.startLoad();
                     video.play().catch(() => {
                         video.muted = true;
                         s.muted = true;
                         this.updateMuteBtnUI(slotIdx);
                         video.play().catch(() => {});
                     });
-                    if (statusEl) statusEl.textContent = '🔴 LIVE HLS';
+                    if (statusEl) statusEl.textContent = `🔴 LIVE HLS (${latMs}ms)`;
                 });
                 hls.on(Hls.Events.ERROR, (_, data) => {
+                    if (this.slots[slotIdx].loadToken !== token) return;
                     if (data && data.fatal) {
-                        if (statusEl) statusEl.textContent = '🔄 FALLBACK STREAM';
-                        const fallbackUrl = 'https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8';
-                        if (streamUrl !== fallbackUrl) {
-                            hls.loadSource(fallbackUrl);
+                        if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                            hls.recoverMediaError();
+                        } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR && !retriedNet) {
+                            retriedNet = true;
                             hls.startLoad();
+                        } else {
+                            // Mark channel offline and switch ONLY to another verified channel in the SAME category
+                            channel.online = false;
+                            this.onlineChannels = this.tvChannels.filter(c => c.online !== false);
+                            const sameCatNext = this.onlineChannels.find(c => c.category === channel.category && c.id !== channel.id);
+                            if (sameCatNext) {
+                                if (statusEl) statusEl.textContent = `⏭ WECHSEL ZU ${sameCatNext.name.slice(0, 16)}...`;
+                                setTimeout(() => {
+                                    if (this.slots[slotIdx].loadToken === token) {
+                                        this.assignTvChannelToSlot(slotIdx, sameCatNext);
+                                        if (this.isTvDrawerOpen) this.renderTvChannelGrid();
+                                    }
+                                }, 400);
+                            } else if (statusEl) {
+                                statusEl.textContent = '⚠️ STREAM OFFLINE';
+                            }
                         }
                     }
                 });
@@ -994,17 +1073,16 @@
                 }
             });
 
-            fetch(`/api/weather/live?lat=${lat}&lon=${lon}`)
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,surface_pressure`)
                 .then(r => r.json())
                 .then(d => {
-                    const om = d.open_meteo || {};
-                    const ow = d.open_weather || {};
+                    const cur = d.current || {};
                     const tEl = document.getElementById(`mv-ct-temp-${slotIdx}`);
                     const wEl = document.getElementById(`mv-ct-wind-${slotIdx}`);
                     const bEl = document.getElementById(`mv-ct-baro-${slotIdx}`);
-                    if (tEl) tEl.textContent = om.temperature_c != null ? `${om.temperature_c}°C` : (ow.temp != null ? `${ow.temp}°C` : '18.0°C');
-                    if (wEl) wEl.textContent = om.wind_speed_kmh != null ? `${om.wind_speed_kmh} km/h` : '12 km/h';
-                    if (bEl) bEl.textContent = om.surface_pressure_hpa != null ? `${om.surface_pressure_hpa} hPa` : '1015 hPa';
+                    if (tEl && cur.temperature_2m != null) tEl.textContent = `${cur.temperature_2m}°C`;
+                    if (wEl && cur.wind_speed_10m != null) wEl.textContent = `${cur.wind_speed_10m} km/h`;
+                    if (bEl && cur.surface_pressure != null) bEl.textContent = `${cur.surface_pressure} hPa`;
                 })
                 .catch(() => {});
         }
@@ -1268,27 +1346,27 @@
             // 2. Add NEXRAD Level-II, Level-III & TDWR to #select-radar-provider
             if (radarProvSelect && !radarProvSelect.querySelector('option[value="nexrad_l2"]')) {
                 radarProvSelect.innerHTML = `
-                    <option value="rainviewer" selected>🌍 RainViewer Global Doppler</option>
-                    <option value="nexrad_l2">🇺🇸 NOAA NEXRAD Level-II Super-Res (N0B/N0Q)</option>
-                    <option value="nexrad_l3">🌪️ NOAA NEXRAD Level-III Dual-Pol Suite</option>
-                    <option value="tdwr">✈️ NOAA TDWR Airport Terminal Doppler (45 Sites)</option>
-                    <option value="goes_sat">🛰️ NOAA GOES-16/18 Live Satellite IR/Vis (3m Poll)</option>
-                    <option value="dwd">🇩🇪 DWD (Deutschland 1km Native)</option>
-                    <option value="satellite">🛰️ NASA GIBS Global Infrared</option>
+                    <option value="rainviewer" selected>🌍 RainViewer Global</option>
+                    <option value="nexrad_l2">🇺🇸 NOAA NEXRAD L2</option>
+                    <option value="nexrad_l3">🌪️ NEXRAD L3 Dual-Pol</option>
+                    <option value="tdwr">✈️ NOAA TDWR (45 Sites)</option>
+                    <option value="goes_sat">🛰️ NOAA GOES-16/18 Live</option>
+                    <option value="dwd">🇩🇪 DWD 1km Radar</option>
+                    <option value="satellite">🛰️ NASA GIBS IR</option>
                 `;
             }
 
             // 3. Add NEXRAD Level-II / Level-III Dual-Pol & Satellite modes to #select-radar-mode
             if (radarModeSelect && !radarModeSelect.querySelector('option[value="l3_cc"]')) {
                 radarModeSelect.innerHTML = `
-                    <option value="composite" selected>📡 Base Reflectivity (dBZ N0B/N0Q)</option>
-                    <option value="velocity">🌪️ Radial Velocity (N0U Mesocyclone/TVS)</option>
-                    <option value="l3_cc">🚨 Tornado Debris Ball (L3 Correlation Coeff N0C)</option>
-                    <option value="l3_zdr">🧊 Hail Core & Updraft (L3 Diff. Reflectivity N0X)</option>
-                    <option value="echo_tops">⛈️ Echo Tops Altitude (L3 EET 70k ft)</option>
-                    <option value="tdwr_tr0">✈️ TDWR 1-Min Terminal Wind-Shear (TR0/TZ0)</option>
-                    <option value="goes_ir">🌡️ GOES Clean IR 10.3µm Cloud-Top Temp</option>
-                    <option value="goes_wv">💧 GOES Water Vapor 6.2µm Upper-Level Jet</option>
+                    <option value="composite" selected>📡 Base Reflectivity (dBZ)</option>
+                    <option value="velocity">🌪️ Radial Velocity (N0U)</option>
+                    <option value="l3_cc">🚨 Tornado Debris (N0C)</option>
+                    <option value="l3_zdr">🧊 Hail Core ZDR (N0X)</option>
+                    <option value="echo_tops">⛈️ Echo Tops (EET 70k ft)</option>
+                    <option value="tdwr_tr0">✈️ TDWR Wind-Shear</option>
+                    <option value="goes_ir">🌡️ GOES Clean IR 10.3µm</option>
+                    <option value="goes_wv">💧 GOES Water Vapor</option>
                 `;
             }
 

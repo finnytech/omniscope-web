@@ -338,7 +338,7 @@ class ExtremeRamCleaner {
         const allIframes = document.querySelectorAll('iframe');
         allIframes.forEach(f => {
             const isKnown = Array.from(this.streams.values()).some(s => s.iframe === f);
-            const isWebcam = f.closest('#webcam-player-container');
+            const isWebcam = f.closest('#webcam-player-container') || f.closest('#mon02-multiview-root') || f.closest('#card-webcam');
             const isMap = f.closest('#card-map');
             if (!isKnown && !isWebcam && !isMap) {
                 ExtremeRamCleaner.purgeIframe(f);

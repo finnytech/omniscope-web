@@ -1,14 +1,5 @@
 [
   {
-    "id": "tv_wx_nation",
-    "name": "WeatherNation TV Live",
-    "category": "weather",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg00627-weathernation-weathernation-samsungus-7862m/playlist.m3u8"
-  },
-  {
     "id": "tv_fox_wx",
     "name": "FOX Weather Live Radar & Storm Center",
     "category": "weather",
@@ -18,49 +9,40 @@
     "url": "https://247wlive.foxweather.com/stream/index.m3u8"
   },
   {
-    "id": "tv_accuweather",
-    "name": "AccuWeather NOW Live Broadcast",
+    "id": "tv_sky_wx",
+    "name": "Sky News Weather Live Forecast",
+    "category": "weather",
+    "country": "GB",
+    "flag": "🇬🇧",
+    "lang": "EN",
+    "url": "https://distro001-gb-hls1-prd.delivery.skycdp.com/easel_cdn/ngrp:weather_loop.stream_all/playlist.m3u8"
+  },
+  {
+    "id": "tv_wx_spy_us",
+    "name": "WeatherSpy Extreme Storm TV (US)",
     "category": "weather",
     "country": "US",
     "flag": "🇺🇸",
     "lang": "EN",
-    "url": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg00684-accuweather-accuweather-plex/playlist.m3u8"
+    "url": "https://d12gab6t5iutxf.cloudfront.net/playlist.m3u8"
   },
   {
-    "id": "tv_weather_spy",
-    "name": "WeatherSpy Extreme Storm TV",
+    "id": "tv_weathernews_jp",
+    "name": "Weathernews LiVE 24h Earthquake & Typhoon",
     "category": "weather",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://jukin-weatherspy-2-us.plex.wurl.tv/playlist.m3u8"
+    "country": "JP",
+    "flag": "🇯🇵",
+    "lang": "JA",
+    "url": "https://rch01e-alive-hls.akamaized.net/38fb45b25cdb05a1/out/v1/4e907bfabc684a1dae10df8431a84d21/index.m3u8"
   },
   {
-    "id": "tv_more_than_wx",
-    "name": "More U.S. Severe Weather Network",
-    "category": "weather",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg00627-weathernation-weathernation-lgus/playlist.m3u8"
-  },
-  {
-    "id": "tv_nasa_public",
-    "name": "NASA TV Public (NTV-1 HD)",
-    "category": "science",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8"
-  },
-  {
-    "id": "tv_nasa_media",
-    "name": "NASA TV Media Channel (NTV-2)",
-    "category": "science",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://ntv2.akamaized.net/hls/live/2013923/NASA-NTV2-HLS/master.m3u8"
+    "id": "tv_tagesschau24",
+    "name": "ARD Tagesschau24 HD Live",
+    "category": "news",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8"
   },
   {
     "id": "tv_dw_en",
@@ -90,117 +72,9 @@
     "url": "https://dwamdstream103.akamaized.net/hls/live/2015526/dwstream103/index.m3u8"
   },
   {
-    "id": "tv_dw_ar",
-    "name": "DW Arabic (عربية) Live",
-    "category": "news",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "AR",
-    "url": "https://dwamdstream103.akamaized.net/hls/live/2015526/dwstream103/index.m3u8"
-  },
-  {
-    "id": "tv_tagesschau24",
-    "name": "ARD Tagesschau24 HD Live",
-    "category": "news",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8"
-  },
-  {
-    "id": "tv_ard_das_erste",
-    "name": "ARD Das Erste HD Live",
-    "category": "public",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://mcdn.daserste.de/daserste/de/master.m3u8"
-  },
-  {
-    "id": "tv_zdf_live",
-    "name": "ZDF HD Hauptprogramm Live",
-    "category": "public",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://zdf-hls-15.akamaized.net/hls/live/2016498/de/high/master.m3u8"
-  },
-  {
-    "id": "tv_zdf_info",
-    "name": "ZDFinfo HD Dokumentation & OSINT",
-    "category": "documentary",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://zdf-hls-17.akamaized.net/hls/live/2016500/de/high/master.m3u8"
-  },
-  {
-    "id": "tv_zdf_neo",
-    "name": "ZDFneo HD Live",
-    "category": "public",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://zdf-hls-16.akamaized.net/hls/live/2016499/de/high/master.m3u8"
-  },
-  {
-    "id": "tv_phoenix",
-    "name": "PHOENIX Ereignis- & Politikkanal HD",
-    "category": "news",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://zdf-hls-19.akamaized.net/hls/live/2016502/de/high/master.m3u8"
-  },
-  {
-    "id": "tv_3sat",
-    "name": "3sat HD Kultur & Wissenschaft",
-    "category": "science",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://zdf-hls-18.akamaized.net/hls/live/2016501/de/high/master.m3u8"
-  },
-  {
-    "id": "tv_arte_de",
-    "name": "ARTE HD Deutsch Live",
-    "category": "documentary",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://artesimulcast.akamaized.net/hls/live/2031003/artelive_de/index.m3u8"
-  },
-  {
-    "id": "tv_arte_fr",
-    "name": "ARTE HD Français Live",
-    "category": "documentary",
-    "country": "FR",
-    "flag": "🇫🇷",
-    "lang": "FR",
-    "url": "https://artesimulcast.akamaized.net/hls/live/2030993/artelive_fr/index.m3u8"
-  },
-  {
-    "id": "tv_ard_alpha",
-    "name": "ARD-alpha Bildungs- & Weltraumkanal",
-    "category": "science",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://brlive-lh.akamaihd.net/i/bralpha_germany@119899/master.m3u8"
-  },
-  {
-    "id": "tv_ndr_fs",
-    "name": "NDR Fernsehen Norddeutschland HD",
-    "category": "regional",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://ndrfs-lh.akamaihd.net/i/ndrfs_hh@430231/master.m3u8"
-  },
-  {
     "id": "tv_wdr_fs",
     "name": "WDR Fernsehen Köln HD",
-    "category": "regional",
+    "category": "public",
     "country": "DE",
     "flag": "🇩🇪",
     "lang": "DE",
@@ -209,735 +83,213 @@
   {
     "id": "tv_br_fs",
     "name": "BR Fernsehen Süd HD",
-    "category": "regional",
+    "category": "public",
     "country": "DE",
     "flag": "🇩🇪",
     "lang": "DE",
     "url": "https://mcdn.br.de/br/fs/bfs_sued/hls/de/master.m3u8"
   },
   {
-    "id": "tv_swr_fs",
-    "name": "SWR Fernsehen BW HD",
-    "category": "regional",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://swrbwd-lh.akamaihd.net/i/swrbwd_live@196738/master.m3u8"
-  },
-  {
-    "id": "tv_mdr_fs",
-    "name": "MDR Fernsehen Sachsen HD",
-    "category": "regional",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://mdrtvsnhls.akamaized.net/hls/live/2016928/mdrtvsn/master.m3u8"
-  },
-  {
-    "id": "tv_hr_fs",
-    "name": "hr-fernsehen Hessen HD",
-    "category": "regional",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://hrhls.akamaized.net/hls/live/2024525/hrhls/master.m3u8"
-  },
-  {
-    "id": "tv_rbb_fs",
-    "name": "rbb24 Berlin-Brandenburg HD",
-    "category": "regional",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://rbb-hls-berlin.akamaized.net/hls/live/2017824/rbb_berlin/master.m3u8"
-  },
-  {
-    "id": "tv_france24_en",
-    "name": "France 24 English Global News",
-    "category": "news",
-    "country": "FR",
-    "flag": "🇫🇷",
-    "lang": "EN",
-    "url": "https://f24hls-i.akamaihd.net/hls/live/221193/F24_EN_LO_HLS/master_900.m3u8"
-  },
-  {
-    "id": "tv_france24_fr",
-    "name": "France 24 Français En Direct",
-    "category": "news",
-    "country": "FR",
-    "flag": "🇫🇷",
-    "lang": "FR",
-    "url": "https://f24hls-i.akamaihd.net/hls/live/221192/F24_FR_LO_HLS/master_900.m3u8"
-  },
-  {
-    "id": "tv_france24_es",
-    "name": "France 24 Español En Vivo",
-    "category": "news",
-    "country": "FR",
-    "flag": "🇫🇷",
-    "lang": "ES",
-    "url": "https://f24hls-i.akamaihd.net/hls/live/221147/F24_ES_LO_HLS/master_900.m3u8"
-  },
-  {
-    "id": "tv_france24_ar",
-    "name": "France 24 Arabic (فرانس 24)",
-    "category": "news",
-    "country": "FR",
-    "flag": "🇫🇷",
-    "lang": "AR",
-    "url": "https://f24hls-i.akamaihd.net/hls/live/221196/F24_AR_LO_HLS/master_900.m3u8"
-  },
-  {
-    "id": "tv_aljazeera_en",
-    "name": "Al Jazeera English HD Live",
-    "category": "news",
-    "country": "QA",
-    "flag": "🇶🇦",
-    "lang": "EN",
-    "url": "https://live-hls-web-aje.getaj.net/AJE/index.m3u8"
-  },
-  {
-    "id": "tv_aljazeera_ar",
-    "name": "Al Jazeera Arabic (الجزيرة) Live",
-    "category": "news",
-    "country": "QA",
-    "flag": "🇶🇦",
-    "lang": "AR",
-    "url": "https://live-hls-web-aja.getaj.net/AJA/index.m3u8"
-  },
-  {
-    "id": "tv_aljazeera_balkans",
-    "name": "Al Jazeera Balkans Live",
-    "category": "news",
-    "country": "BA",
-    "flag": "🇧🇦",
-    "lang": "BS",
-    "url": "https://live-hls-web-ajb.getaj.net/AJB/index.m3u8"
-  },
-  {
-    "id": "tv_cbs_news",
-    "name": "CBS News 24/7 National Live",
-    "category": "news",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8"
-  },
-  {
-    "id": "tv_abc_news",
-    "name": "ABC News Live 24/7 Breaking",
-    "category": "news",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/3324f2467c414329b3b0cc5cd987b6be.m3u8"
-  },
-  {
-    "id": "tv_nbc_news",
-    "name": "NBC News NOW Live Stream",
-    "category": "news",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://nbcnews2.akamaized.net/hls/live/723426/NBCNewsPlaymaker24x7Linear99a3a827-ua/master.m3u8"
-  },
-  {
-    "id": "tv_scripps_news",
-    "name": "Scripps News U.S. Live",
-    "category": "news",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/4bb4901b934c4e029f4c19c5f6c30a0a.m3u8"
-  },
-  {
-    "id": "tv_sky_news",
-    "name": "Sky News UK International HD",
-    "category": "news",
-    "country": "GB",
-    "flag": "🇬🇧",
-    "lang": "EN",
-    "url": "https://siloh-pluto.akamaized.net/250105_skynews/master.m3u8"
-  },
-  {
-    "id": "tv_gb_news",
-    "name": "GB News Live UK Broadcast",
-    "category": "news",
-    "country": "GB",
-    "flag": "🇬🇧",
-    "lang": "EN",
-    "url": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-gbnews-samsunguk/playlist.m3u8"
-  },
-  {
-    "id": "tv_euronews_en",
-    "name": "Euronews English Live",
-    "category": "news",
-    "country": "EU",
-    "flag": "🇪🇺",
-    "lang": "EN",
-    "url": "https://euronews-euronews-world-1-au.samsung.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_euronews_de",
-    "name": "Euronews Deutsch Live",
-    "category": "news",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://euronews-euronews-german-1-de.samsung.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_euronews_fr",
-    "name": "Euronews Français Live",
-    "category": "news",
-    "country": "FR",
-    "flag": "🇫🇷",
-    "lang": "FR",
-    "url": "https://euronews-euronews-french-1-fr.samsung.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_euronews_es",
-    "name": "Euronews Español Live",
-    "category": "news",
+    "id": "tv_3cat_cameres_del_temps_21",
+    "name": "3Cat Cameres del temps",
+    "category": "weather",
     "country": "ES",
     "flag": "🇪🇸",
     "lang": "ES",
-    "url": "https://euronews-euronews-spanish-1-es.samsung.wurl.tv/playlist.m3u8"
+    "url": "https://directes-tv-int.3catdirectes.cat/live-content/beauties-hls/master.m3u8"
   },
   {
-    "id": "tv_euronews_it",
-    "name": "Euronews Italiano Live",
-    "category": "news",
-    "country": "IT",
-    "flag": "🇮🇹",
-    "lang": "IT",
-    "url": "https://euronews-euronews-italian-1-it.samsung.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_euronews_pt",
-    "name": "Euronews Português Live",
-    "category": "news",
-    "country": "PT",
-    "flag": "🇵🇹",
-    "lang": "PT",
-    "url": "https://euronews-euronews-portuguese-1-pt.samsung.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_nhk_world",
-    "name": "NHK WORLD-JAPAN HD Global",
-    "category": "news",
-    "country": "JP",
-    "flag": "🇯🇵",
+    "id": "tv_news24_weather_24",
+    "name": "News24 Weather",
+    "category": "weather",
+    "country": "AU",
+    "flag": "🇦🇺",
     "lang": "EN",
-    "url": "https://nhkwlive-ojp.akamaized.net/hls/live/2003459/nhkwlive-ojp-en/index.m3u8"
+    "url": "https://skynewsau-live-premium.akamaized.net/hls/live/2105305/skynewsweather/live_540p.m3u8"
   },
   {
-    "id": "tv_arirang",
-    "name": "Arirang TV Korea World News",
-    "category": "news",
-    "country": "KR",
-    "flag": "🇰🇷",
+    "id": "tv_weatherspy_australia_28",
+    "name": "WeatherSpy (Australia)",
+    "category": "weather",
+    "country": "AU",
+    "flag": "🇦🇺",
     "lang": "EN",
-    "url": "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8"
+    "url": "https://jukin-weatherspy-2-au.samsung.wurl.tv/playlist.m3u8"
   },
   {
-    "id": "tv_cgtn_en",
-    "name": "CGTN Global News English",
-    "category": "news",
-    "country": "CN",
-    "flag": "🇨🇳",
-    "lang": "EN",
-    "url": "https://news.cgtn.com/resource/live/english/cgtn-news.m3u8"
-  },
-  {
-    "id": "tv_cgtn_doc",
-    "name": "CGTN Documentary HD",
-    "category": "documentary",
-    "country": "CN",
-    "flag": "🇨🇳",
-    "lang": "EN",
-    "url": "https://news.cgtn.com/resource/live/document/cgtn-doc.m3u8"
-  },
-  {
-    "id": "tv_cna_sg",
-    "name": "CNA (Channel NewsAsia) 24/7",
-    "category": "news",
-    "country": "SG",
-    "flag": "🇸🇬",
-    "lang": "EN",
-    "url": "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8"
-  },
-  {
-    "id": "tv_trt_world",
-    "name": "TRT World English HD",
-    "category": "news",
-    "country": "TR",
-    "flag": "🇹🇷",
-    "lang": "EN",
-    "url": "https://tv-trtworld.medya.trt.com.tr/master.m3u8"
-  },
-  {
-    "id": "tv_trt_haber",
-    "name": "TRT Haber Live",
-    "category": "news",
-    "country": "TR",
-    "flag": "🇹🇷",
-    "lang": "TR",
-    "url": "https://tv-trthaber.medya.trt.com.tr/master.m3u8"
-  },
-  {
-    "id": "tv_ndtv_24x7",
-    "name": "NDTV India News Live",
-    "category": "news",
+    "id": "tv_weatherspy_india_29",
+    "name": "WeatherSpy (India)",
+    "category": "weather",
     "country": "IN",
     "flag": "🇮🇳",
     "lang": "EN",
-    "url": "https://ndtv24x7elemarchana.akamaized.net/hls/live/2003678/ndtv24x7/master.m3u8"
+    "url": "https://jukin-weatherspy-2-in.samsung.wurl.tv/playlist.m3u8"
   },
   {
-    "id": "tv_india_today",
-    "name": "India Today 24x7 Breaking News",
-    "category": "news",
+    "id": "tv_weatherspy_mexico_30",
+    "name": "WeatherSpy (Mexico)",
+    "category": "weather",
+    "country": "MX",
+    "flag": "🇲🇽",
+    "lang": "ES",
+    "url": "https://jukin-weatherspy-2-mx.samsung.wurl.tv/playlist.m3u8"
+  },
+  {
+    "id": "tv_can_tho_tv_2_32",
+    "name": "Can Tho TV 2",
+    "category": "science",
+    "country": "VN",
+    "flag": "📺",
+    "lang": "EN",
+    "url": "https://live.canthotv.vn/cs2/live.stream/playlist.m3u8"
+  },
+  {
+    "id": "tv_cosmos_tv_33",
+    "name": "Cosmos TV",
+    "category": "science",
+    "country": "PY",
+    "flag": "📺",
+    "lang": "EN",
+    "url": "https://video.hostingcaaguazu.com:19360/cosmostv/cosmostv.m3u8"
+  },
+  {
+    "id": "tv_discovery_science_34",
+    "name": "Discovery Science",
+    "category": "science",
     "country": "IN",
     "flag": "🇮🇳",
     "lang": "EN",
-    "url": "https://indiatodaylive.akamaized.net/hls/live/2014320/indiatoday/indiatodaylive/playlist.m3u8"
+    "url": "https://drk6xq0vhn.gpcdn.net/live/discovery_science_abr/index.m3u8"
   },
   {
-    "id": "tv_rtve_24h",
-    "name": "RTVE Canal 24 Horas España",
-    "category": "news",
-    "country": "ES",
-    "flag": "🇪🇸",
-    "lang": "ES",
-    "url": "https://rtvelivestream.akamaized.net/rtvesec/24h/24h_main.m3u8"
-  },
-  {
-    "id": "tv_rtve_la1",
-    "name": "RTVE La 1 España HD",
-    "category": "public",
-    "country": "ES",
-    "flag": "🇪🇸",
-    "lang": "ES",
-    "url": "https://rtvelivestream.akamaized.net/rtvesec/la1/la1_main.m3u8"
-  },
-  {
-    "id": "tv_rai_news24",
-    "name": "Rai News 24 Italia Live",
-    "category": "news",
-    "country": "IT",
-    "flag": "🇮🇹",
-    "lang": "IT",
-    "url": "https://rainews1-live.akamaized.net/hls/live/598326/rainews1/rainews1/playlist.m3u8"
-  },
-  {
-    "id": "tv_tgcom24",
-    "name": "Mediaset TGCOM24 Italia",
-    "category": "news",
-    "country": "IT",
-    "flag": "🇮🇹",
-    "lang": "IT",
-    "url": "https://live3-mediaset-it.akamaized.net/Content/hls_h0_clr_vos/live/channel(kf)/index.m3u8"
-  },
-  {
-    "id": "tv_rtp3",
-    "name": "RTP 3 Portugal Notícias",
-    "category": "news",
-    "country": "PT",
-    "flag": "🇵🇹",
-    "lang": "PT",
-    "url": "https://streaming-live.rtp.pt/liverepeater/smil:rtp3.smil/playlist.m3u8"
-  },
-  {
-    "id": "tv_bloomberg_us",
-    "name": "Bloomberg Television Global Finance",
-    "category": "business",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://bloomberg.com/media-manifest/streams/us.m3u8"
-  },
-  {
-    "id": "tv_bloomberg_eu",
-    "name": "Bloomberg TV Europe Markets",
-    "category": "business",
-    "country": "EU",
-    "flag": "🇪🇺",
-    "lang": "EN",
-    "url": "https://bloomberg.com/media-manifest/streams/eu.m3u8"
-  },
-  {
-    "id": "tv_bloomberg_asia",
-    "name": "Bloomberg TV Asia-Pacific",
-    "category": "business",
-    "country": "SG",
-    "flag": "🇸🇬",
-    "lang": "EN",
-    "url": "https://bloomberg.com/media-manifest/streams/asia.m3u8"
-  },
-  {
-    "id": "tv_bloomberg_orig",
-    "name": "Bloomberg Originals & Tech",
-    "category": "business",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://bloomberg.com/media-manifest/streams/qt.m3u8"
-  },
-  {
-    "id": "tv_yahoo_finance",
-    "name": "Yahoo Finance Live Market Ticker",
-    "category": "business",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://d1ewctnvcwvvvu.cloudfront.net/playlist.m3u8"
-  },
-  {
-    "id": "tv_reuters_tv",
-    "name": "Reuters Live World Wire",
-    "category": "news",
-    "country": "GB",
-    "flag": "🇬🇧",
-    "lang": "EN",
-    "url": "https://reuters-reutersnow-1-eu.rakuten.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_ap_archive",
-    "name": "Associated Press (AP) Live Feed",
-    "category": "news",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg00353-associatedpress-apnews-plex/playlist.m3u8"
-  },
-  {
-    "id": "tv_usa_today",
-    "name": "USA TODAY News Channel",
-    "category": "news",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg00715-gannettcoinc-usatoday-plex/playlist.m3u8"
-  },
-  {
-    "id": "tv_newsmax",
-    "name": "Newsmax TV Live HD",
-    "category": "news",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://nmx1.akamaized.net/hls/live/2016908/newsmax/master.m3u8"
-  },
-  {
-    "id": "tv_cheddar",
-    "name": "Cheddar News Tech & Innovation",
-    "category": "business",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cheddar-cheddarnews-1-us.plex.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_redbull_tv",
-    "name": "Red Bull TV Global Expeditions",
-    "category": "documentary",
-    "country": "AT",
-    "flag": "🇦🇹",
-    "lang": "EN",
-    "url": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8"
-  },
-  {
-    "id": "tv_love_nature",
-    "name": "WildEarth Live Safari & Nature",
-    "category": "documentary",
-    "country": "ZA",
-    "flag": "🇿🇦",
-    "lang": "EN",
-    "url": "https://wildearth-wildearth-1-gb.samsung.wurl.tv/playlist.m3u8"
-  },
-  {
-    "id": "tv_space_channel",
-    "name": "Space & Astronomy Live Network",
+    "id": "tv_medibiztv_40",
+    "name": "MediBizTV",
     "category": "science",
-    "country": "US",
-    "flag": "🇺🇸",
+    "country": "IN",
+    "flag": "🇮🇳",
     "lang": "EN",
-    "url": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01448-magellantv-magellantvspace-plex/playlist.m3u8"
+    "url": "https://43wrzjnpqoxe-hls-live.wmncdn.net/marinebiztvlive/marinebiztvlive/playlist.m3u8"
   },
   {
-    "id": "tv_magellan_doc",
-    "name": "MagellanTV History & OSINT Docs",
-    "category": "documentary",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg01448-magellantv-magellantvnow-plex/playlist.m3u8"
-  },
-  {
-    "id": "tv_smithsonian",
-    "name": "Smithsonian Earth & Aerial Docs",
-    "category": "documentary",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_ny",
-    "name": "CBS News New York Metro Live",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-ny.cbsnstream.cbsnews.com/out/v1/f9eb6f0526f24921a090529e65301f07/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_la",
-    "name": "CBS News Los Angeles Southern CA",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-la.cbsnstream.cbsnews.com/out/v1/57b6c4534a1647089500a085b7b6e39d/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_chicago",
-    "name": "CBS News Chicago Midwest Live",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-chi.cbsnstream.cbsnews.com/out/v1/09f0c7a5f08b4986931f5117d136b150/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_dfw",
-    "name": "CBS News Texas (Dallas / Fort Worth)",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-dfw.cbsnstream.cbsnews.com/out/v1/2be38910e4a04e0da24c6862141b4081/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_miami",
-    "name": "CBS News Miami Hurricane Corridor",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-mia.cbsnstream.cbsnews.com/out/v1/ac374f1f8e764d06b95c4e244323f358/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_bayarea",
-    "name": "CBS News Bay Area (San Francisco)",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-sf.cbsnstream.cbsnews.com/out/v1/66b479e65a31404580c2f4c3f4c84514/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_colorado",
-    "name": "CBS News Colorado (Denver Rockies)",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-den.cbsnstream.cbsnews.com/out/v1/74c3d3f3c4a24a8ea39e8d2081b6f62f/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_minnesota",
-    "name": "CBS News Minnesota (Twin Cities)",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-min.cbsnstream.cbsnews.com/out/v1/4628d18a913b4682b27b69028c105992/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_philly",
-    "name": "CBS News Philadelphia Delaware Valley",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-phi.cbsnstream.cbsnews.com/out/v1/2d88585b18c043529c2734d762988078/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_boston",
-    "name": "CBS News Boston New England",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-bos.cbsnstream.cbsnews.com/out/v1/936781f94b6d41c9b7960d74a1c1765f/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_pittsburgh",
-    "name": "CBS News Pittsburgh Live",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-pit.cbsnstream.cbsnews.com/out/v1/385f9937e58d4d2c86b5c4902b621c56/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_baltimore",
-    "name": "CBS News Baltimore Chesapeake",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-bal.cbsnstream.cbsnews.com/out/v1/ae2c4f6923c04f1899a279a5cf813537/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_sacramento",
-    "name": "CBS News Sacramento Northern CA",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-sac.cbsnstream.cbsnews.com/out/v1/68ff38aa0287410085d220278349d204/master.m3u8"
-  },
-  {
-    "id": "tv_cbs_detroit",
-    "name": "CBS News Detroit Great Lakes",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://cbsn-det.cbsnstream.cbsnews.com/out/v1/b3ef5e7688a84664a5b1184cf65f97e4/master.m3u8"
-  },
-  {
-    "id": "tv_abc7_ny",
-    "name": "ABC7 Eyewitness News New York",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/ef918298e0b2416f99f62411229a05d6.m3u8"
-  },
-  {
-    "id": "tv_abc7_la",
-    "name": "ABC7 Eyewitness News Los Angeles",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/35d4283a2b7141f29d108c9d03e4d08c.m3u8"
-  },
-  {
-    "id": "tv_abc7_chicago",
-    "name": "ABC7 Eyewitness News Chicago",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/55a60b07b5d14820b2762b215207b82f.m3u8"
-  },
-  {
-    "id": "tv_abc7_sf",
-    "name": "ABC7 News San Francisco Bay Area",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/4c960a1e8f9a43d9b120e12d6c8f68f7.m3u8"
-  },
-  {
-    "id": "tv_abc13_houston",
-    "name": "ABC13 Houston Gulf Coast Radar",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/f03a520b880944089e5a6381c74262f2.m3u8"
-  },
-  {
-    "id": "tv_abc11_raleigh",
-    "name": "ABC11 Raleigh-Durham North Carolina",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/d8d8131d984c451487b0519627762a3d.m3u8"
-  },
-  {
-    "id": "tv_abc30_fresno",
-    "name": "ABC30 Action News Central California",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/f0b97fb95e8b4752910b0e78f3c6942a.m3u8"
-  },
-  {
-    "id": "tv_6abc_philly",
-    "name": "6abc Action News Philadelphia",
-    "category": "regional",
-    "country": "US",
-    "flag": "🇺🇸",
-    "lang": "EN",
-    "url": "https://content.uplynk.com/channel/925c537e6362436c98987d5279d86e56.m3u8"
-  },
-  {
-    "id": "tv_telesur",
-    "name": "teleSUR Latinoamérica En Vivo",
-    "category": "news",
-    "country": "VE",
-    "flag": "🇻🇪",
-    "lang": "ES",
-    "url": "https://mblesmain01.telesur.ultrabase.net/mbliveMain/hd/playlist.m3u8"
-  },
-  {
-    "id": "tv_franceinfo",
-    "name": "franceinfo: TV Continue 24/7",
-    "category": "news",
-    "country": "FR",
-    "flag": "🇫🇷",
-    "lang": "FR",
-    "url": "https://f24hls-i.akamaihd.net/hls/live/221192/F24_FR_LO_HLS/master_900.m3u8"
-  },
-  {
-    "id": "tv_srf_info",
-    "name": "SRF info Schweiz / Alpenraum",
-    "category": "news",
-    "country": "CH",
-    "flag": "🇨🇭",
-    "lang": "DE",
-    "url": "https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8"
-  },
-  {
-    "id": "tv_orf_w24",
-    "name": "W24 Wien Live Stadtfernsehen",
-    "category": "regional",
-    "country": "AT",
-    "flag": "🇦🇹",
-    "lang": "DE",
-    "url": "https://ms01.w24.at/W24Live/smil:live.smil/playlist.m3u8"
-  },
-  {
-    "id": "tv_welt_der_wunder",
-    "name": "Welt der Wunder TV Wissenschaft",
+    "id": "tv_umsa_tvu_internacional_43",
+    "name": "UMSA TVU Internacional",
     "category": "science",
-    "country": "DE",
-    "flag": "🇩🇪",
-    "lang": "DE",
-    "url": "https://wdw-wdw-1-de.samsung.wurl.tv/playlist.m3u8"
+    "country": "BO",
+    "flag": "📺",
+    "lang": "EN",
+    "url": "https://edge.enhdtv.com/8026/index.m3u8"
   },
   {
-    "id": "tv_more_than_sports",
-    "name": "More Than Sports TV Deutschland",
+    "id": "tv_3sat_46",
+    "name": "3sat",
     "category": "public",
     "country": "DE",
     "flag": "🇩🇪",
     "lang": "DE",
-    "url": "https://mts1.iptv-playoutcenter.de/mts/mts-web/playlist.m3u8"
+    "url": "https://dash4.antik.sk/live/test_drei_sat_tizen/playlist.m3u8"
   },
   {
-    "id": "tv_deluxe_music",
-    "name": "DELUXE MUSIC TV Germany Live",
+    "id": "tv_adria_music_television_48",
+    "name": "Adria Music Television",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://adriaapp.b-cdn.net/1080p/index.m3u8"
+  },
+  {
+    "id": "tv_alex_berlin_50",
+    "name": "Alex Berlin",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://alex-stream.rosebud-media.de/bounce/alexlivetv50.smil/index.m3u8"
+  },
+  {
+    "id": "tv_allgau_tv_52",
+    "name": "Allgau TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://stream01.welocal.stream/stream/fhd-allgaeutv_25679/ngrp:stream_all/playlist.m3u8"
+  },
+  {
+    "id": "tv_ard_alpha_57",
+    "name": "ARD-alpha",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://mcdn.br.de/br/fs/ard_alpha/hls/de/master.m3u8"
+  },
+  {
+    "id": "tv_arte_germany_hd_60",
+    "name": "arte (Germany) HD",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_arte_avc_25p/playlist.m3u8"
+  },
+  {
+    "id": "tv_augsburg_tv_62",
+    "name": "Augsburg TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://stream02.welocal.stream/stream/fhd-augsburgtv_104951/ngrp:stream_all/playlist.m3u8"
+  },
+  {
+    "id": "tv_br_fernsehen_70",
+    "name": "BR Fernsehen",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://mcdn.br.de/br/fs/bfs_nord/hls/de/master.m3u8"
+  },
+  {
+    "id": "tv_cira_tv_73",
+    "name": "Cira TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://hlspackager.akamaized.net/live/DB/CIRA_TV/HLS/CIRA_TV.m3u8"
+  },
+  {
+    "id": "tv_das_erste_hd_75",
+    "name": "Das Erste HD",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://daserste-live.ard-mcdn.de/daserste/live/hls/int/master.m3u8"
+  },
+  {
+    "id": "tv_dasding_90_8_76",
+    "name": "DASDING 90.8",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://swrdasdingvr-hls.akamaized.net/hls/live/2018681/dasdingvr/master.m3u8"
+  },
+  {
+    "id": "tv_deluxe_dance_79",
+    "name": "Deluxe Dance",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/64733/64733_264_live.m3u8"
+  },
+  {
+    "id": "tv_deluxe_music_80",
+    "name": "Deluxe Music",
     "category": "public",
     "country": "DE",
     "flag": "🇩🇪",
@@ -945,30 +297,678 @@
     "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/13456/13456_264_live.m3u8"
   },
   {
-    "id": "tv_kika_de",
-    "name": "KiKA HD Öffentlich-Rechtlich",
+    "id": "tv_deluxe_rap_81",
+    "name": "Deluxe Rap",
     "category": "public",
     "country": "DE",
     "flag": "🇩🇪",
     "lang": "DE",
-    "url": "https://kikageohls.akamaized.net/hls/live/2022693/livetvkika_de/master.m3u8"
+    "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/65183/65183_264_live.m3u8"
   },
   {
-    "id": "tv_one_ard",
-    "name": "ONE HD (ARD) Live",
+    "id": "tv_die_neue_zeit_tv_82",
+    "name": "Die Neue Zeit TV",
+    "category": "public",
+    "country": "CH",
+    "flag": "🇨🇭",
+    "lang": "DE",
+    "url": "https://bild-und-ton.stream/die-neue-zeit-tv-live/smil:dnz-de.smil/playlist.m3u8"
+  },
+  {
+    "id": "tv_disney_channel_germany_83",
+    "name": "Disney Channel (Germany)",
     "category": "public",
     "country": "DE",
     "flag": "🇩🇪",
     "lang": "DE",
-    "url": "https://mcdn.one.ard.de/ardone/hls/master.m3u8"
+    "url": "https://s6.hopslan.com/disneyX/index.m3u8"
   },
   {
-    "id": "tv_tagesschau_2",
-    "name": "ARD Eilmeldungen & Sonderbericht",
-    "category": "news",
+    "id": "tv_dmf_84",
+    "name": "DMF",
+    "category": "public",
     "country": "DE",
     "flag": "🇩🇪",
     "lang": "DE",
-    "url": "https://tagesschau.akamaized.net/hls/live/2020115/tagesschau/tagesschau_1/master.m3u8"
+    "url": "https://d-m-f.iptv-playoutcenter.de/dmf/dmf1/playlist.m3u8"
+  },
+  {
+    "id": "tv_dokusat_85",
+    "name": "Dokusat",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://muc3.iptv-playoutcenter.de/dokusat/dokusat1/playlist.m3u8"
+  },
+  {
+    "id": "tv_dw_russian_87",
+    "name": "DW Russian",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dwamdstream110.akamaized.net/hls/live/2017971/dwstream110/master.m3u8"
+  },
+  {
+    "id": "tv_echtjetzt_tv_88",
+    "name": "EchtJetzt TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://bibeltv03.iptv-playoutcenter.de/bibeltv03/bibeltv03.stream_all/playlist.m3u8"
+  },
+  {
+    "id": "tv_erz_tv_stollberg_89",
+    "name": "Erz-TV Stollberg",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://5acade5fc0c29.streamlock.net/kabeljournal/live2020.stream/playlist.m3u8"
+  },
+  {
+    "id": "tv_ewtn_germany_90",
+    "name": "EWTN (Germany)",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://cdn3.wowza.com/1/ZUkxSDBrZHlMbjVn/ZkhNRFNZ/hls/live/playlist.m3u8"
+  },
+  {
+    "id": "tv_fifa_german_91",
+    "name": "FIFA+ German",
+    "category": "public",
+    "country": "UK",
+    "flag": "🇬🇧",
+    "lang": "EN",
+    "url": "https://4397879b.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWRlX0ZJRkFQbHVzR2VybWFuX0hMUw/playlist.m3u8"
+  },
+  {
+    "id": "tv_filstalwelle_92",
+    "name": "Filstalwelle",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://h055.video-stream-hosting.de/filstalwelle-live/_definst_/mp4:livestream/playlist.m3u8"
+  },
+  {
+    "id": "tv_finest_tv_93",
+    "name": "Finest TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://media.finest.tv/hls/live.m3u8"
+  },
+  {
+    "id": "tv_folx_music_television_94",
+    "name": "Folx Music Television",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://folxapp.b-cdn.net/1080p/index.m3u8"
+  },
+  {
+    "id": "tv_franken_fernsehen_95",
+    "name": "Franken Fernsehen",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://frankentv.iptv-playoutcenter.de/frankentv/frankentv.stream_1/playlist.m3u8"
+  },
+  {
+    "id": "tv_grjngo_western_movies_98",
+    "name": "Grjngo Western Movies",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://amogonetworx-grjngo-3-dk.samsung.wurl.tv/playlist.m3u8"
+  },
+  {
+    "id": "tv_handystar_100",
+    "name": "Handystar",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://sparhandytv.cdn.ses-ps.com/live/channel01/hls/index.m3u8"
+  },
+  {
+    "id": "tv_horse_country_tv_102",
+    "name": "Horse & Country TV",
+    "category": "public",
+    "country": "UK",
+    "flag": "🇬🇧",
+    "lang": "EN",
+    "url": "https://hnc-free-viewlift.amagi.tv/HNC_AUSTRALIA.m3u8"
+  },
+  {
+    "id": "tv_hr_fernsehen_hd_104",
+    "name": "hr-fernsehen HD",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_hr_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_istuff_106",
+    "name": "iSTUFF",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://relay2.cdn.fem-net.de/hls/loop/istuff_live/istuff_live-720p.m3u8"
+  },
+  {
+    "id": "tv_juwelo_germany_107",
+    "name": "Juwelo (Germany)",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://sdn-global-live-streaming-packager-cache.3qsdn.com/7441/7441_264_live.m3u8"
+  },
+  {
+    "id": "tv_kabel_eins_108",
+    "name": "kabel eins",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_kabel_eins_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_kabel_eins_doku_109",
+    "name": "kabel eins Doku",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s6.hopslan.com/dokuX/index.m3u8"
+  },
+  {
+    "id": "tv_kika_hd_113",
+    "name": "KiKA HD",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_kika_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_lausitzwelle_115",
+    "name": "Lausitzwelle",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://h056.video-stream-hosting.de/easycast11-live/_definst_/mp4:livestreamhd2/playlist.m3u8?ref="
+  },
+  {
+    "id": "tv_love_the_planet_de_116",
+    "name": "Love The Planet DE",
+    "category": "public",
+    "country": "ES",
+    "flag": "🇪🇸",
+    "lang": "ES",
+    "url": "https://amg01821-amg01821c12-rlaxx-gb-10461.playouts.now.amagi.tv/playlist.m3u8"
+  },
+  {
+    "id": "tv_mc_tv_118",
+    "name": "MC TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://rrr.sz.xlcdn.com/?account=mceutv&file=mc2&output=playlist.m3u8&protocol=https&service=wowza&type=live"
+  },
+  {
+    "id": "tv_mdr_fernsehen_thuringen_121",
+    "name": "MDR Fernsehen Thuringen",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_mdr_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_more_than_sports_tv_122",
+    "name": "More Than Sports TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://mts1.iptv-playoutcenter.de/mts/mts-web/playlist.m3u8"
+  },
+  {
+    "id": "tv_munchen_tv_124",
+    "name": "Munchen TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://muenchentv.iptv-playoutcenter.de/muenchentv/muenchentv.stream_1/playlist.m3u8"
+  },
+  {
+    "id": "tv_n_tv_126",
+    "name": "n-tv",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_ntv_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_ndr_fernsehen_129",
+    "name": "NDR Fernsehen",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_hh/master.m3u8"
+  },
+  {
+    "id": "tv_ndr_fernsehen_mecklenbur_130",
+    "name": "NDR Fernsehen Mecklenburg Vorpommern",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_mv/master.m3u8"
+  },
+  {
+    "id": "tv_ndr_fernsehen_schleswig__131",
+    "name": "NDR Fernsehen Schleswig Holstein",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://mcdn.ndr.de/ndr/hls/ndr_fs/ndr_sh/master.m3u8"
+  },
+  {
+    "id": "tv_niederbayern_tv_134",
+    "name": "Niederbayern TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://stream03.welocal.stream/stream/sat-nby/ngrp:sat-nby.stream_all/index.m3u8"
+  },
+  {
+    "id": "tv_niederbayern_tv_deggendo_135",
+    "name": "Niederbayern TV Deggendorf & Straubing",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://stream03.welocal.stream/stream/fhd-nbydeggendorf_99148/ngrp:stream_all/index.m3u8"
+  },
+  {
+    "id": "tv_niederbayern_tv_landshut_136",
+    "name": "Niederbayern TV Landshut",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://stream03.welocal.stream/stream/fhd-nbylandshut_75262/ngrp:stream_all/index.m3u8"
+  },
+  {
+    "id": "tv_niederbayern_tv_passau_137",
+    "name": "Niederbayern TV Passau",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://stream03.welocal.stream/stream/fhd-nbypassau_49171/ngrp:stream_all/index.m3u8"
+  },
+  {
+    "id": "tv_nitro_138",
+    "name": "Nitro",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_rtl_nitro_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_noa4_hamburg_139",
+    "name": "noa4 Hamburg",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://hls1.wtnet.de/noa4hh/apple/wifi6500.m3u8"
+  },
+  {
+    "id": "tv_noa4_norderstedt_140",
+    "name": "noa4 Norderstedt",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://hls1.wtnet.de/noa4/apple/wifi6500.m3u8"
+  },
+  {
+    "id": "tv_nrwision_141",
+    "name": "NRWision",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://fms.nrwision.de/live/ngrp:livestreamHD.stream/playlist.m3u8"
+  },
+  {
+    "id": "tv_oberpfalz_tv_142",
+    "name": "Oberpfalz TV",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://oberpfalztv.iptv-playoutcenter.de/oberpfalztv/oberpfalztv.stream_1/playlist.m3u8"
+  },
+  {
+    "id": "tv_ok4_144",
+    "name": "OK4",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s.ok54.de/abr_ok4/live/playlist.m3u8"
+  },
+  {
+    "id": "tv_ok54_145",
+    "name": "OK54",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s.ok54.de/ott/webstream/tv/webstream_720p/playlist.m3u8"
+  },
+  {
+    "id": "tv_ok_flensburg_146",
+    "name": "OK Flensburg",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://live-cdn.oksh.de/play/hls/flensburgtv/index.m3u8"
+  },
+  {
+    "id": "tv_ok_kaiserslautern_147",
+    "name": "OK Kaiserslautern",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s.ok54.de/abr_okkl/webstream/playlist.m3u8"
+  },
+  {
+    "id": "tv_ok_kassel_148",
+    "name": "OK Kassel",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s.ok54.de/mok-ks/kassel/playlist.m3u8"
+  },
+  {
+    "id": "tv_ok_kiel_149",
+    "name": "OK Kiel",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://live-cdn.oksh.de/play/hls/kieltv/index.m3u8"
+  },
+  {
+    "id": "tv_ok_rhein_main_150",
+    "name": "OK Rhein-Main",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s.ok54.de/mok-rm/mok-rm/playlist.m3u8"
+  },
+  {
+    "id": "tv_ok_trier_151",
+    "name": "OK Trier",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s.ok54.de/ott/webstream/playlist.m3u8"
+  },
+  {
+    "id": "tv_one_adria_154",
+    "name": "One Adria",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://oneadriaapp.b-cdn.net/1080p/index.m3u8"
+  },
+  {
+    "id": "tv_one_music_television_155",
+    "name": "One Music Television",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://oneapp.b-cdn.net/1080p/index.m3u8"
+  },
+  {
+    "id": "tv_parlamentsfernsehen_1_156",
+    "name": "Parlamentsfernsehen 1",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://cldf-hlsgw.r53.cdn.tv1.eu/1000153copo/hk1.m3u8"
+  },
+  {
+    "id": "tv_prosieben_191",
+    "name": "ProSieben",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_pro_sieben_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_prosieben_maxx_192",
+    "name": "ProSieben Maxx",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s6.hopslan.com/pro7maxxX/index.m3u8"
+  },
+  {
+    "id": "tv_rbb_fernsehen_202",
+    "name": "rbb Fernsehen",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash2.antik.sk/live/test_rbb_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_regio_tv_bodensee_206",
+    "name": "Regio TV Bodensee",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://regiotv-b.iptv-playoutcenter.de/regiotv-b/regiotv-b.stream_1/playlist.m3u8"
+  },
+  {
+    "id": "tv_regio_tv_stuttgart_207",
+    "name": "Regio TV Stuttgart",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://regiotv-s.iptv-playoutcenter.de/regiotv-s/regiotv-s.stream_1/playlist.m3u8"
+  },
+  {
+    "id": "tv_ric_209",
+    "name": "RiC",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://rictv.iptv-playoutcenter.de/rictv/rictv-web/playlist.m3u8"
+  },
+  {
+    "id": "tv_rt_de_211",
+    "name": "RT DE",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://rt-ger.rttv.com/dvr/rtdeutsch/playlist.m3u8"
+  },
+  {
+    "id": "tv_rtl_germany_212",
+    "name": "RTL (Germany)",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_rtl_ger_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_rtl_super_213",
+    "name": "RTL Super",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_super_rtl_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_rtl_super_hd_214",
+    "name": "RTL Super HD",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s6.hopslan.com/superX/index.m3u8"
+  },
+  {
+    "id": "tv_rtl_zwei_215",
+    "name": "RTL Zwei",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_rtl_zwei_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_rtl_zwei_hd_216",
+    "name": "RTL Zwei HD",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://s6.hopslan.com/rtl2q/index.m3u8"
+  },
+  {
+    "id": "tv_saarland_fernsehen_1_217",
+    "name": "Saarland Fernsehen 1",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://saarland1.iptv-playoutcenter.de/saarland1/saarland1.stream_1/playlist.m3u8"
+  },
+  {
+    "id": "tv_saarland_fernsehen_2_218",
+    "name": "Saarland Fernsehen 2",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://saarland2.iptv-playoutcenter.de/saarland2/saarland2.stream_2/playlist.m3u8"
+  },
+  {
+    "id": "tv_sat_1_gold_221",
+    "name": "SAT.1 Gold",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_sat_eins_gold_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_seenluft24_222",
+    "name": "Seenluft24",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://h056.video-stream-hosting.de/easycast7-live/_definst_/mp4:livestreamhd20/playlist.m3u8?ref="
+  },
+  {
+    "id": "tv_sender_neu_jerusalem_223",
+    "name": "Sender Neu Jerusalem",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://bild-und-ton.stream/snj-de/snj-de.smil/.m3u8"
+  },
+  {
+    "id": "tv_sixx_224",
+    "name": "sixx",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://dash4.antik.sk/live/test_sixx_tizen/playlist.m3u8"
+  },
+  {
+    "id": "tv_sophia_tv_germany_225",
+    "name": "Sophia TV (Germany)",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://bild-und-ton.stream/sophiatv-en/smil:sophia-tv-en.smil/playlist.m3u8"
+  },
+  {
+    "id": "tv_sophia_tv_espanol_226",
+    "name": "Sophia TV Espanol",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://bild-und-ton.stream/sophiatv-es/smil:sophia-tv-es.smil/playlist.m3u8"
+  },
+  {
+    "id": "tv_sophia_tv_francais_227",
+    "name": "Sophia TV Francais",
+    "category": "public",
+    "country": "DE",
+    "flag": "🇩🇪",
+    "lang": "DE",
+    "url": "https://bild-und-ton.stream/sophiatv-fr/smil:sophia-tv-fr.smil/playlist.m3u8"
+  },
+  {
+    "id": "tv_strongman_239",
+    "name": "Strongman",
+    "category": "public",
+    "country": "US",
+    "flag": "🇺🇸",
+    "lang": "EN",
+    "url": "https://rightsboosterltd-scl-2-eu.rakuten.wurl.tv/playlist.m3u8"
   }
 ]

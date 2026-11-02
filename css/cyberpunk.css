@@ -4594,3 +4594,163 @@ path.subsea-cable-path {
     background: rgba(56, 189, 248, 0.15);
 }
 
+/* ========================================================================= */
+/* v2.7.3 LAYOUT PERFECTION: MON-01 HEADER BOX & MON-02 1x-4x EXPANSION      */
+/* ========================================================================= */
+
+.top-monitors-row {
+    transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.top-monitors-row[data-mv-layout="1x"] {
+    height: 590px;
+    min-height: 590px;
+}
+
+.top-monitors-row[data-mv-layout="2x"] {
+    height: 660px;
+    min-height: 660px;
+}
+
+.top-monitors-row[data-mv-layout="3x"] {
+    height: 710px;
+    min-height: 710px;
+}
+
+.top-monitors-row[data-mv-layout="4x"] {
+    height: 745px;
+    min-height: 745px;
+}
+
+#card-map > .monitor-header {
+    align-items: flex-start !important;
+    gap: 8px !important;
+}
+
+.mon01-header-controls-col {
+    flex: 1 1 400px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+.radar-viewmode-toolbar {
+    display: inline-flex !important;
+    flex-wrap: wrap !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#select-radar-provider,
+#select-radar-mode {
+    max-width: 168px !important;
+    min-width: 105px !important;
+    text-overflow: ellipsis !important;
+}
+
+.mon01-header-radar-box {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-self: flex-start !important;
+    height: auto !important;
+    gap: 3px !important;
+    background: rgba(6, 12, 24, 0.98) !important;
+    border: 1px solid #0284c7 !important;
+    border-left: 3px solid #00f0ff !important;
+    border-radius: 5px !important;
+    padding: 6px 9px !important;
+    width: 256px !important;
+    min-width: 235px !important;
+    max-width: 265px !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.75), 0 0 10px rgba(0, 240, 255, 0.16) !important;
+    font-family: var(--font-mono) !important;
+    flex-shrink: 0 !important;
+    z-index: 20 !important;
+}
+
+.mon02-multiview-root {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    display: grid !important;
+    gap: 5px !important;
+    padding: 4px !important;
+    box-sizing: border-box !important;
+    background: #030712 !important;
+    overflow: hidden !important;
+}
+
+.mon02-multiview-root[data-layout="1x"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+}
+
+.mon02-multiview-root[data-layout="2x"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+}
+
+.mon02-multiview-root[data-layout="3x"] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1.08fr) minmax(0, 0.92fr) !important;
+}
+
+.mon02-multiview-root[data-layout="3x"] #mv-slot-cell-0 {
+    grid-column: 1 / -1 !important;
+}
+
+.mon02-multiview-root[data-layout="4x"] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
+}
+
+.mv-submonitor-cell {
+    min-height: 0 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.mv-cell-header {
+    padding: 2px 6px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    flex-shrink: 0 !important;
+}
+
+.mv-cell-body {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.mv-cell-dvr-bar {
+    padding: 2px 5px !important;
+    height: 23px !important;
+    min-height: 23px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    flex-shrink: 0 !important;
+}
+
+/* Position TV Side-Tab at bottom-right above DVR bar so it NEVER overlaps .mv-cell-header buttons */
+.mon02-tv-side-tab-btn {
+    top: auto !important;
+    bottom: 28px !important;
+    right: 8px !important;
+    z-index: 2450 !important;
+    padding: 3px 8px !important;
+    font-size: 0.65rem !important;
+}
+
+/* Keep TV Side Panel compact (52% width) so live video stays visible on the left while switching channels */
+.mon02-tv-sidepanel {
+    width: 285px !important;
+    max-width: 55% !important;
+}
+
