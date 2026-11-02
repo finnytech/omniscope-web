@@ -4738,19 +4738,200 @@ path.subsea-cable-path {
     flex-shrink: 0 !important;
 }
 
-/* Position TV Side-Tab at bottom-right above DVR bar so it NEVER overlaps .mv-cell-header buttons */
-.mon02-tv-side-tab-btn {
-    top: auto !important;
-    bottom: 28px !important;
-    right: 8px !important;
-    z-index: 2450 !important;
-    padding: 3px 8px !important;
-    font-size: 0.65rem !important;
+/* MON-02 1x-4x Layout Architecture: Smooth Expansion, Zero Overlap, Full Visibility */
+#btn-mon02-tv-side-tab {
+    display: none !important;
 }
 
-/* Keep TV Side Panel compact (52% width) so live video stays visible on the left while switching channels */
+.top-monitors-row {
+    transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.top-monitors-row[data-mv-layout="1x"] {
+    height: 590px !important;
+    min-height: 590px !important;
+}
+
+.top-monitors-row[data-mv-layout="2x"] {
+    height: 690px !important;
+    min-height: 690px !important;
+}
+
+.top-monitors-row[data-mv-layout="3x"] {
+    height: 770px !important;
+    min-height: 770px !important;
+}
+
+.top-monitors-row[data-mv-layout="4x"] {
+    height: 850px !important;
+    min-height: 850px !important;
+}
+
+.mon02-multiview-root {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: grid !important;
+    gap: 6px !important;
+    padding: 4px !important;
+    box-sizing: border-box !important;
+    background: #030712 !important;
+    overflow: hidden !important;
+}
+
+/* 1x: 1 single full-size monitor */
+.mon02-multiview-root[data-layout="1x"] {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr !important;
+}
+.mon02-multiview-root[data-layout="1x"] .mv-submonitor-cell {
+    height: 100% !important;
+    width: 100% !important;
+    grid-column: 1 / -1 !important;
+    grid-row: 1 / -1 !important;
+}
+
+/* 2x: 2 monitors stacked vertically, each taking full width so both video streams are 100% wide */
+.mon02-multiview-root[data-layout="2x"] {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
+}
+
+/* 3x: Top monitor full width, bottom 2 side-by-side */
+.mon02-multiview-root[data-layout="3x"] {
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1.15fr 0.85fr !important;
+}
+.mon02-multiview-root[data-layout="3x"] #mv-slot-cell-0 {
+    grid-column: 1 / -1 !important;
+}
+
+/* 4x: Quad 2x2 matrix */
+.mon02-multiview-root[data-layout="4x"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.mv-submonitor-cell {
+    min-height: 135px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #060b14 !important;
+    border: 1.5px solid #1e293b !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+.mv-submonitor-cell.active-target-slot {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4), inset 0 0 5px rgba(16, 185, 129, 0.15) !important;
+}
+
+.mv-cell-header {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 2px 6px !important;
+    background: #09101f !important;
+    border-bottom: 1px solid #1e293b !important;
+    overflow: hidden !important;
+    min-width: 0 !important;
+}
+
+.mv-cell-title-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+}
+
+.mv-slot-badge {
+    flex-shrink: 0 !important;
+    font-size: 0.62rem !important;
+    font-weight: 700 !important;
+    color: #38bdf8 !important;
+}
+
+.mv-cell-title {
+    font-size: 0.64rem !important;
+    color: #e2e8f0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    min-width: 0 !important;
+}
+
+.mv-cell-quick-btns {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    flex-shrink: 0 !important;
+}
+
+.mv-mini-btn {
+    padding: 1px 4px !important;
+    font-size: 0.58rem !important;
+    background: rgba(30, 41, 59, 0.8) !important;
+    color: #94a3b8 !important;
+    border: 1px solid #334155 !important;
+    border-radius: 2px !important;
+    cursor: pointer !important;
+}
+
+.mv-mini-btn:hover {
+    color: #fff !important;
+    border-color: #0284c7 !important;
+}
+
+.mv-cell-body {
+    flex: 1 1 0 !important;
+    min-height: 80px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    position: relative !important;
+    background: #000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.mv-video-player {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    background: #000 !important;
+    flex: 1 1 0 !important;
+}
+
+.mv-cell-dvr-bar {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 2px 5px !important;
+    background: #080d1a !important;
+    border-top: 1px solid #1e293b !important;
+    overflow-x: auto !important;
+    font-family: var(--font-mono) !important;
+    font-size: 0.62rem !important;
+    white-space: nowrap !important;
+}
+
+/* TV Side Panel: docked cleanly on right */
 .mon02-tv-sidepanel {
     width: 285px !important;
     max-width: 55% !important;
+    z-index: 2600 !important;
 }
-

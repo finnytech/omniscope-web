@@ -1265,10 +1265,12 @@
                     <span id="cam-active-title" title="GLOBAL LIVE WEBCAM & SURVEILLANCE FEED">GLOBAL LIVE WEBCAM & SURVEILLANCE FEED</span>
                 </div>
                 <div class="mon02-header-controls">
-                    <div class="cam-grid-toggle" style="display:inline-flex;gap:2px;background:#030712;border:1px solid #1e293b;border-radius:3px;padding:1px;flex-shrink:0;">
-                        <button class="ops-btn active" id="btn-cam-view-1x1" data-grid="1" style="padding:1px 5px;font-size:0.68rem;" title="Einzelbild (1x1)">1x1</button>
-                        <button class="ops-btn" id="btn-cam-view-2x2" data-grid="4" style="padding:1px 5px;font-size:0.68rem;" title="Quad Multi-Cam (2x2)">2x2</button>
-                        <button class="ops-btn" id="btn-cam-view-3x3" data-grid="9" style="padding:1px 5px;font-size:0.68rem;" title="Matrix Multi-Cam (3x3)">3x3</button>
+                    <button id="btn-toggle-tv-drawer" class="ops-btn" style="padding:2px 8px;font-size:0.7rem;background:rgba(16,185,129,0.22);color:#34d399;border:1px solid #10b981;font-weight:700;flex-shrink:0;cursor:pointer;" title="108 Live-TV & Nachrichtensender Side-Panel ein-/ausklappen">📺 LIVE TV (108)</button>
+                    <div class="mon02-layout-toggle" id="mon02-layout-toggle" style="display:inline-flex;gap:2px;background:#030712;border:1px solid #1e293b;border-radius:3px;padding:1px;flex-shrink:0;">
+                        <button class="ops-btn active" id="btn-mv-1x" data-mv="1" style="padding:2px 7px;font-size:0.68rem;font-weight:700;" title="1x Einzelmonitor (Standard // MON 2.1 voll)">1x</button>
+                        <button class="ops-btn" id="btn-mv-2x" data-mv="2" style="padding:2px 7px;font-size:0.68rem;font-weight:700;" title="2x Dual Sub-Monitore (MON 2.1 + 2.2)">2x</button>
+                        <button class="ops-btn" id="btn-mv-3x" data-mv="3" style="padding:2px 7px;font-size:0.68rem;font-weight:700;" title="3x Triple Sub-Monitore (MON 2.1 – 2.3)">3x</button>
+                        <button class="ops-btn" id="btn-mv-4x" data-mv="4" style="padding:2px 7px;font-size:0.68rem;font-weight:700;" title="4x Quad Matrix Sub-Monitore (MON 2.1 – 2.4)">4x</button>
                     </div>
                     <select id="cam-shader-filter" class="ops-select" style="font-size:0.68rem;padding:2px 4px;background:#050914;color:#22d3ee;border-color:#0891b2;flex-shrink:0;" title="Optische Sensor-Filter (NVG Nachtsicht, FLIR Wärmebild)">
                         <option value="normal" selected>👁️ NORMAL</option>

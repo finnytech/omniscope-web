@@ -561,6 +561,11 @@
         }
 
         async function setGridMode(num) {
+            if (window.OmniMultiView) {
+                const count = (num === 4) ? 4 : ((num === 9) ? 4 : num);
+                window.OmniMultiView.setViewportCount(count);
+                return;
+            }
             document.querySelectorAll('.cam-grid-toggle .ops-btn').forEach(b => {
                 b.classList.toggle('active', parseInt(b.dataset.grid) === num);
             });

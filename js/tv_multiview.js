@@ -125,7 +125,8 @@
             this.startTvTwoMinutePoller();
             this.startRadarAndSatAutoRefresh();
             this.hookMapAndWebcamRouting();
-            console.log(`[OmniScope v2.7.1] MON-02 TV Side Panel (108 channels), 1x-4x Independent Sub-Monitors & Collapsible NEXRAD/TDWR/GOES online.`);
+            this.setViewportCount(1); // Standard default is ALWAYS 1x monitor only!
+            console.log(`[OmniScope v2.7.3] MON-02 Standard 1x, 1x-4x Independent Sub-Monitors (Zero Overlap) online.`);
         }
 
         async loadTvCatalog() {
@@ -223,20 +224,8 @@
             `;
             mon02Card.insertBefore(slotBar, camPlayerBody);
 
-            // Docked Side Toggle Tab inside #cam-player (top-right, never overlapping the SEARCH button!)
-            let sideToggleBtn = document.getElementById('btn-mon02-tv-side-tab');
-            if (!sideToggleBtn) {
-                sideToggleBtn = document.createElement('button');
-                sideToggleBtn.id = 'btn-mon02-tv-side-tab';
-                sideToggleBtn.className = 'mon02-tv-side-tab-btn';
-                sideToggleBtn.title = 'Live-TV & News Sender-Side-Panel ein-/ausklappen';
-                sideToggleBtn.innerHTML = `<span id="mon02-tv-side-arrow">◀</span> <span>📺 TV (108)</span>`;
-                camPlayerBody.appendChild(sideToggleBtn);
-                sideToggleBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.toggleTvDrawer();
-                });
-            }
+            // Remove floating side tab so it NEVER overlaps any monitor content or buttons
+            document.getElementById('btn-mon02-tv-side-tab')?.remove();
 
             // Full-Height Collapsible Side Panel docked on the right side of MON-02
             const tvSidePanel = document.createElement('aside');
@@ -287,10 +276,10 @@
 
             // Wire Slot Selector Pills in top bar & inside TV Side Panel
             const bindSlotSelection = (sIdx) => {
-                // If user clicks MON 2.2, 2.3, or 2.4 while viewportCount is smaller, auto-expand MON-02!
+                // Selection only: NEVER auto-expand viewports without manual user click on 1x/2x/3x/4x!
                 if (sIdx >= this.viewportCount) {
-                    const needed = sIdx === 1 ? 2 : (sIdx === 2 ? 3 : 4);
-                    this.setViewportCount(needed);
+                    console.log(`[OmniScope] Sub-Monitor 2.${sIdx + 1} is currently inactive in ${this.viewportCount}x mode.`);
+                    return;
                 }
                 this.setActiveSlot(sIdx);
             };
@@ -526,9 +515,9 @@
 
         setViewportCount(count) {
             this.viewportCount = [1, 2, 3, 4].includes(count) ? count : 1;
-            this.multiviewActive = true;
+            this.multiviewActive = (this.viewportCount > 1);
 
-            document.querySelectorAll('.mon02-header-controls [data-mv]').forEach(btn => {
+            document.querySelectorAll('[data-mv]').forEach(btn => {
                 btn.classList.toggle('active', parseInt(btn.getAttribute('data-mv'), 10) === this.viewportCount);
             });
 
@@ -536,6 +525,20 @@
             if (topRow) {
                 topRow.setAttribute('data-mv-layout', `${this.viewportCount}x`);
             }
+
+            // Sync ZIEL-MONITOR router pills: active slots full opacity, inactive slots dimmed
+            document.querySelectorAll('#mon02-slot-router-bar .slot-pill').forEach((pill, idx) => {
+                const isAvail = idx < this.viewportCount;
+                pill.style.opacity = isAvail ? '1' : '0.35';
+                pill.style.cursor = isAvail ? 'pointer' : 'not-allowed';
+                pill.title = isAvail ? `Sub-Monitor 2.${idx + 1} auswählen` : `Sub-Monitor 2.${idx + 1} (inaktiv // oben ${idx >= 2 ? (idx === 3 ? '4x' : '3x') : '2x'} wählen)`;
+            });
+
+            document.querySelectorAll('.tv-sp-slot-btn').forEach((btn, idx) => {
+                const isAvail = idx < this.viewportCount;
+                btn.style.opacity = isAvail ? '1' : '0.35';
+                btn.style.cursor = isAvail ? 'pointer' : 'not-allowed';
+            });
 
             if (this.activeSlotIndex >= this.viewportCount) {
                 this.setActiveSlot(0);
@@ -546,7 +549,7 @@
                 if (window.MapController && window.MapController.map) {
                     window.MapController.map.invalidateSize();
                 }
-            }, 310);
+            }, 320);
         }
 
         restoreSingleWebcamMode() {
@@ -674,6 +677,9 @@
 
                 if (i < this.viewportCount) {
                     cell.style.display = 'flex';
+                    if (!this.slots[i].data) {
+                        this.renderSlotStandby(i);
+                    }
                 } else {
                     cell.style.display = 'none';
                     this.cleanupSlotMedia(i);
@@ -765,6 +771,33 @@
             });
         }
 
+
+        renderSlotStandby(slotIdx) {
+            const bodyEl = document.getElementById(`mv-cell-body-${slotIdx}`);
+            if (!bodyEl) return;
+            const titleEl = document.getElementById(`mv-cell-title-${slotIdx}`);
+            const dvrEl = document.getElementById(`mv-cell-dvr-${slotIdx}`);
+            if (titleEl) titleEl.textContent = 'BEREIT // QUELLE WÄHLEN';
+            if (dvrEl) dvrEl.style.display = 'none';
+
+            bodyEl.innerHTML = `
+                <div class="mv-standby-screen" style="width:100%;height:100%;min-height:85px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#050914;color:#94a3b8;font-family:var(--font-mono);gap:6px;padding:8px;text-align:center;">
+                    <div style="font-size:0.72rem;font-weight:700;color:#38bdf8;display:flex;align-items:center;gap:6px;">
+                        <span>📡</span> <span>MON 2.${slotIdx + 1} BEREIT</span>
+                    </div>
+                    <div style="font-size:0.6rem;color:#64748b;">
+                        Live-Quelle für diesen Sub-Monitor wählen:
+                    </div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+                        <button type="button" class="mv-mini-btn" style="padding:2px 6px;font-size:0.62rem;cursor:pointer;background:rgba(16,185,129,0.18);color:#34d399;border:1px solid #10b981;" onclick="window.OmniMultiView.setActiveSlot(${slotIdx}); window.OmniMultiView.toggleTvDrawer(true);">📺 TV</button>
+                        <button type="button" class="mv-mini-btn" style="padding:2px 6px;font-size:0.62rem;cursor:pointer;background:rgba(56,189,248,0.18);color:#38bdf8;border:1px solid #0284c7;" onclick="window.OmniMultiView.loadNextLiveWebcamIntoSlot(${slotIdx})">📷 CAM</button>
+                        <button type="button" class="mv-mini-btn" style="padding:2px 6px;font-size:0.62rem;cursor:pointer;background:rgba(250,204,21,0.18);color:#facc15;border:1px solid #ca8a04;" onclick="window.OmniMultiView.assignRadioToSlot(${slotIdx}, null)">📻 RADIO</button>
+                        <button type="button" class="mv-mini-btn" style="padding:2px 6px;font-size:0.62rem;cursor:pointer;background:rgba(168,85,247,0.18);color:#c084fc;border:1px solid #7c3aed;" onclick="window.OmniMultiView.assignCurrentMapSectorToSlot(${slotIdx})">🗺️ NODE</button>
+                    </div>
+                </div>
+            `;
+        }
+
         cleanupSlotMedia(slotIdx) {
             const s = this.slots[slotIdx];
             if (!s) return;
@@ -813,8 +846,10 @@
         // Assign Live TV Channel (.m3u8) with Full DVR Controls to Slot
         assignTvChannelToSlot(slotIdx, channel) {
             if (!channel) return;
-            if (slotIdx >= this.viewportCount) {
-                this.setViewportCount(slotIdx + 1);
+            if (this.viewportCount === 1) {
+                slotIdx = 0;
+            } else if (slotIdx >= this.viewportCount) {
+                slotIdx = this.viewportCount - 1;
             }
             this.ensureMultiViewportDom(true);
             this.cleanupSlotMedia(slotIdx);
@@ -919,6 +954,8 @@
 
         // Assign Live Webcam (HLS, Panomax/YouTube/Windy Embed, or Live Auto-Refreshing Snapshot) to Slot
         assignCameraToSlot(slotIdx, cam) {
+            if (this.viewportCount === 1) slotIdx = 0;
+            else if (slotIdx >= this.viewportCount) slotIdx = this.viewportCount - 1;
             this.ensureMultiViewportDom(true);
             this.cleanupSlotMedia(slotIdx);
 
@@ -1089,6 +1126,8 @@
 
         // Assign Live Radio / SDR Audio + Spectrum Waterfall to Slot
         assignRadioToSlot(slotIdx, radioPreset) {
+            if (this.viewportCount === 1) slotIdx = 0;
+            else if (slotIdx >= this.viewportCount) slotIdx = this.viewportCount - 1;
             this.ensureMultiViewportDom(true);
             this.cleanupSlotMedia(slotIdx);
 
@@ -1169,6 +1208,8 @@
 
         // Assign Map Node (Weather Station, Storm, Vessel, Quake, TDWR Radar) to Slot
         assignMapNodeToSlot(slotIdx, nodeData) {
+            if (this.viewportCount === 1) slotIdx = 0;
+            else if (slotIdx >= this.viewportCount) slotIdx = this.viewportCount - 1;
             this.ensureMultiViewportDom(true);
             this.cleanupSlotMedia(slotIdx);
 
