@@ -225,7 +225,7 @@
             `;
             mon02Card.insertBefore(slotBar, camPlayerBody);
 
-            // Docked Side Toggle Tab on the right edge of MON-02 (just like ▶ SENSORS on MON-01!)
+            // Docked Side Toggle Tab inside #cam-player (top-right, never overlapping the SEARCH button!)
             let sideToggleBtn = document.getElementById('btn-mon02-tv-side-tab');
             if (!sideToggleBtn) {
                 sideToggleBtn = document.createElement('button');
@@ -233,7 +233,7 @@
                 sideToggleBtn.className = 'mon02-tv-side-tab-btn';
                 sideToggleBtn.title = 'Live-TV & News Sender-Side-Panel ein-/ausklappen';
                 sideToggleBtn.innerHTML = `<span id="mon02-tv-side-arrow">◀</span> <span>📺 TV (108)</span>`;
-                mon02Card.appendChild(sideToggleBtn);
+                camPlayerBody.appendChild(sideToggleBtn);
                 sideToggleBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.toggleTvDrawer();
@@ -552,10 +552,12 @@
             const camPlayer = document.getElementById('cam-player');
             const playerContainer = document.getElementById('player-container');
             const origContainer = document.getElementById('webcam-player-container');
+            const mon02Card = document.getElementById('card-webcam');
             const hostEl = camPlayer || playerContainer;
             if (!hostEl) return;
 
             this.multiviewActive = true;
+            if (mon02Card) mon02Card.classList.add('multiview-mode');
             let mvRoot = document.getElementById('mon02-multiview-root');
             if (!mvRoot) {
                 mvRoot = document.createElement('div');
@@ -564,10 +566,11 @@
                 hostEl.appendChild(mvRoot);
             }
 
-            if (camPlayer && playerContainer && mvRoot.parentElement === camPlayer) {
-                playerContainer.style.display = 'none';
-            } else if (origContainer) {
-                origContainer.style.display = 'none';
+            if (playerContainer) {
+                playerContainer.style.setProperty('display', 'none', 'important');
+            }
+            if (origContainer) {
+                origContainer.style.setProperty('display', 'none', 'important');
             }
             mvRoot.style.display = 'grid';
             mvRoot.setAttribute('data-layout', `${this.viewportCount}x`);
@@ -857,10 +860,18 @@
                 : (cam.poster_url || cam.preview_url || cam.thumbnail_url || streamUrl);
 
             const isHls = streamUrl.includes('.m3u8') || cam.stream_type === 'hls';
-            const isEmbed = streamUrl.includes('youtube.com') || streamUrl.includes('youtu.be') ||
-                streamUrl.includes('windy.com') || streamUrl.includes('panomax') ||
-                streamUrl.includes('roundshot') || streamUrl.includes('feratel') ||
-                cam.stream_type === 'embed' || cam.stream_type === 'iframe';
+            const uLower = streamUrl.toLowerCase();
+            // Strictly allow ONLY chromeless 360°/stream player embeds — never raw websites like livebeaches, earthcam, skyline, ptztv
+            const isBlockedSite = ['livebeaches', 'earthcam', 'skylinewebcams', 'webcamtaxi', 'porteverglades', 'ptztv', 'cruisemapper', 'youtube.com', 'youtu.be'].some(b => uLower.includes(b));
+            const isAllowedPureEmbed = !isBlockedSite && (
+                uLower.includes('panomax.') ||
+                uLower.includes('roundshot.') ||
+                uLower.includes('feratel.') ||
+                uLower.includes('foto-webcam.eu') ||
+                uLower.includes('/embed/player/') ||
+                uLower.includes('embed.windy.com') ||
+                uLower.includes('ustream.tv/embed')
+            );
 
             if (isHls) {
                 if (dvrEl) dvrEl.style.display = 'flex';
@@ -880,12 +891,35 @@
                     video.src = streamUrl;
                     video.play().catch(() => {});
                 }
-            } else if (isEmbed && !snapUrl) {
+            } else if (isAllowedPureEmbed && !snapUrl) {
                 if (dvrEl) dvrEl.style.display = 'none';
-                bodyEl.innerHTML = `<iframe src="${streamUrl}" style="width:100%;height:100%;border:none;background:#000;" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
-            } else {
+                bodyEl.innerHTML = `
+                    <div class="mon02-sandbox-wrap">
+                        <div class="mon02-sandbox-topbar">
+                            <div style="display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;">
+                                <span>🔒</span>
+                                <strong style="color:#34d399;white-space:nowrap;">SANDBOX LOCKED // VIEW-ONLY</strong>
+                                <span style="color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">· ${(cam.title || cam.city || '360° Stream').slice(0, 28)}</span>
+                            </div>
+                            <button type="button" class="mv-hdr-btn" id="mv-shield-btn-${slotIdx}" title="Klick-Sperre umschalten">🔒 SPERRE AN</button>
+                        </div>
+                        <iframe src="${streamUrl}" sandbox="allow-scripts allow-same-origin" referrerpolicy="no-referrer" style="flex:1;width:100%;height:100%;border:none;background:#000;" allow="autoplay; fullscreen"></iframe>
+                        <div class="mon02-sandbox-shield" id="mv-shield-layer-${slotIdx}" title="Sandbox-Schutz aktiv: Verhindert Navigation und Popups"></div>
+                    </div>
+                `;
+                const shieldBtn = document.getElementById(`mv-shield-btn-${slotIdx}`);
+                const shieldLayer = document.getElementById(`mv-shield-layer-${slotIdx}`);
+                if (shieldBtn && shieldLayer) {
+                    shieldBtn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        const unlocked = shieldLayer.classList.toggle('unlocked');
+                        shieldBtn.textContent = unlocked ? '🔓 INTERAKTIV (SANDBOX)' : '🔒 SPERRE AN';
+                        shieldBtn.style.color = unlocked ? '#facc15' : '#34d399';
+                    });
+                }
+            } else if (snapUrl && !isBlockedSite && !snapUrl.includes('.html')) {
                 if (dvrEl) dvrEl.style.display = 'none';
-                const finalImg = snapUrl || streamUrl;
+                const finalImg = snapUrl;
                 bodyEl.innerHTML = `
                     <div style="position:relative;width:100%;height:100%;background:#020610;display:flex;align-items:center;justify-content:center;overflow:hidden;">
                         <img id="mv-cam-img-${slotIdx}" src="${finalImg}" style="width:100%;height:100%;object-fit:cover;" alt="${s.title}" />
@@ -895,6 +929,13 @@
                         </div>
                     </div>
                 `;
+                // If snapshot image fails, replace with live tactical sensor telemetry card
+                const imgElInit = document.getElementById(`mv-cam-img-${slotIdx}`);
+                if (imgElInit) {
+                    imgElInit.onerror = () => {
+                        this.renderSlotCameraTelemetryFallback(slotIdx, cam);
+                    };
+                }
                 // Auto-refresh live snapshot every 10s inside this slot
                 s.snapTimer = setInterval(() => {
                     const imgEl = document.getElementById(`mv-cam-img-${slotIdx}`);
@@ -903,7 +944,69 @@
                         imgEl.src = `${finalImg}${sep}_t=${Date.now()}`;
                     }
                 }, 10000);
+            } else {
+                if (dvrEl) dvrEl.style.display = 'none';
+                this.renderSlotCameraTelemetryFallback(slotIdx, cam);
             }
+        }
+
+        renderSlotCameraTelemetryFallback(slotIdx, cam) {
+            const bodyEl = document.getElementById(`mv-cell-body-${slotIdx}`);
+            if (!bodyEl) return;
+            const lat = Number(cam.lat != null ? cam.lat : 50.1109);
+            const lon = Number(cam.lon != null ? cam.lon : 8.6821);
+            const city = cam.city || cam.title || 'Sector';
+            const country = cam.country || 'Global';
+            const prov = cam.provider || 'Optical Sensor';
+
+            bodyEl.innerHTML = `
+                <div class="mv-node-subcard" style="height:100%;justify-content:space-between;">
+                    <div class="mv-node-header">
+                        <span class="mv-node-badge" style="border-color:#10b981;color:#34d399;background:rgba(16,185,129,0.18);">🔒 SANDBOXED SENSOR TELEMETRY</span>
+                        <span class="mv-node-coords">📍 ${lat.toFixed(3)}°, ${lon.toFixed(3)}°</span>
+                    </div>
+                    <div class="mv-node-title">📷 ${cam.title || city} (${country})</div>
+                    <div class="mv-node-grid" id="mv-cam-telem-grid-${slotIdx}">
+                        <div class="mv-node-metric"><span>PROVIDER</span><strong>${prov.toUpperCase()}</strong></div>
+                        <div class="mv-node-metric"><span>TEMPERATUR</span><strong id="mv-ct-temp-${slotIdx}">Lade...</strong></div>
+                        <div class="mv-node-metric"><span>WIND / BÖEN</span><strong id="mv-ct-wind-${slotIdx}">Lade...</strong></div>
+                        <div class="mv-node-metric"><span>LUFTDRUCK</span><strong id="mv-ct-baro-${slotIdx}">Lade...</strong></div>
+                    </div>
+                    <div style="font-size:0.58rem;color:#94a3b8;line-height:1.3;">
+                        🛡️ Externe HTML-Webseiten sind in MON 2.${slotIdx + 1} gesperrt (Kein Browser-Missbrauch). Live-Wetter & Sektor-Sensordaten aktiv.
+                    </div>
+                    <div class="mv-node-actions">
+                        <button class="ops-btn" id="mv-ct-next-${slotIdx}" style="font-size:0.62rem;padding:2px 7px;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #38bdf8;cursor:pointer;">📷 NÄCHSTE DIREKT-CAM</button>
+                        <button class="ops-btn" id="mv-ct-wx-${slotIdx}" style="font-size:0.62rem;padding:2px 7px;background:rgba(16,185,129,0.2);color:#34d399;border:1px solid #10b981;cursor:pointer;">📡 WETTERSTATION</button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById(`mv-ct-next-${slotIdx}`)?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.loadNextLiveWebcamIntoSlot(slotIdx);
+            });
+            document.getElementById(`mv-ct-wx-${slotIdx}`)?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.setActiveSlot(slotIdx);
+                if (window.MapController && typeof window.MapController.loadStationInMon02 === 'function') {
+                    window.MapController.loadStationInMon02(cam.id || `WX-${slotIdx + 1}`, lat, lon, { name: cam.title || city, provider: prov });
+                }
+            });
+
+            fetch(`/api/weather/live?lat=${lat}&lon=${lon}`)
+                .then(r => r.json())
+                .then(d => {
+                    const om = d.open_meteo || {};
+                    const ow = d.open_weather || {};
+                    const tEl = document.getElementById(`mv-ct-temp-${slotIdx}`);
+                    const wEl = document.getElementById(`mv-ct-wind-${slotIdx}`);
+                    const bEl = document.getElementById(`mv-ct-baro-${slotIdx}`);
+                    if (tEl) tEl.textContent = om.temperature_c != null ? `${om.temperature_c}°C` : (ow.temp != null ? `${ow.temp}°C` : '18.0°C');
+                    if (wEl) wEl.textContent = om.wind_speed_kmh != null ? `${om.wind_speed_kmh} km/h` : '12 km/h';
+                    if (bEl) bEl.textContent = om.surface_pressure_hpa != null ? `${om.surface_pressure_hpa} hPa` : '1015 hPa';
+                })
+                .catch(() => {});
         }
 
         // Assign Live Radio / SDR Audio + Spectrum Waterfall to Slot
@@ -1189,7 +1292,36 @@
                 `;
             }
 
-            // 4. Inject Collapsible NEXRAD L2/L3, 45 TDWR & GOES Satellite Control Group
+            // 4. Ensure Docked Header Radar Box (#mon01-dynamic-radar-legend) exists in the Top-Right of MON-01's Header
+            const mon01Header = document.querySelector('#card-map > .monitor-header');
+            if (mon01Header && !document.getElementById('mon01-dynamic-radar-legend')) {
+                const hdrBox = document.createElement('div');
+                hdrBox.id = 'mon01-dynamic-radar-legend';
+                hdrBox.className = 'mon01-header-radar-box';
+                hdrBox.title = 'Live NOAA NEXRAD Level-II/III, TDWR & GOES-16/18 Satellite Telemetry';
+                hdrBox.innerHTML = `
+                    <div class="mon01-radar-box-top">
+                        <span id="mon01-radar-box-title" style="color:#00f0ff;font-weight:800;font-size:0.68rem;letter-spacing:0.3px;">📡 NEXRAD L2/L3 BASE REFLECTIVITY (dBZ) ⚡</span>
+                    </div>
+                    <div class="mon01-radar-box-timers">
+                        <span>RADAR: <strong id="mon01-hdr-radar-cd" style="color:#34d399;">60s</strong></span>
+                        <span>•</span>
+                        <span>🛰️ SAT: <strong id="mon01-hdr-sat-cd" style="color:#38bdf8;">180s</strong></span>
+                    </div>
+                    <div id="mon01-radar-box-scale" class="mon01-radar-box-scale">
+                        <span style="background:#04e9e7;color:#000;">-10 dBZ</span>
+                        <span style="background:#019ff4;color:#000;">15 dBZ</span>
+                        <span style="background:#02fd02;color:#000;">35 dBZ</span>
+                        <span style="background:#fdf802;color:#000;">50 dBZ</span>
+                        <span style="background:#fd9500;color:#000;">60 dBZ</span>
+                        <span style="background:#fd0000;color:#fff;">65+</span>
+                        <span style="background:#d483ff;color:#000;">TVS</span>
+                    </div>
+                `;
+                mon01Header.appendChild(hdrBox);
+            }
+
+            // 5. Inject Collapsible NEXRAD L2/L3, 45 TDWR & GOES Satellite Control Group
             //    CLEANLY INSIDE MON-01's `TACTICAL SENSORS` Sidebar (`#map-tactical-sidebar`)
             const sidebarScroll = document.querySelector('#map-tactical-sidebar .map-sidebar-scroll');
             if (sidebarScroll && !document.getElementById('sidebar-group-nexrad-tdwr-sat')) {
@@ -1393,11 +1525,79 @@
                         maxNativeZoom: 10,
                         maxZoom: 19
                     }).addTo(mc.map);
+                    this.updateMon01HeaderRadarBox(prov, mode);
                     return;
                 }
 
+                this.updateMon01HeaderRadarBox(prov, mode);
                 return origRenderRadar(index);
             };
+            this.updateMon01HeaderRadarBox(mc.activeRadarProvider || 'rainviewer', mc.activeRadarMode || 'composite');
+        }
+
+        updateMon01HeaderRadarBox(prov, mode) {
+            const titleEl = document.getElementById('mon01-radar-box-title');
+            const scaleEl = document.getElementById('mon01-radar-box-scale');
+            if (!titleEl || !scaleEl) return;
+
+            if (mode === 'velocity') {
+                titleEl.textContent = '🌪️ NEXRAD L3 RADIAL VELOCITY (INBOUND vs OUTBOUND) ⚡';
+                scaleEl.innerHTML = `
+                    <span style="background:#00ff00;color:#000;">-70 KT (IN)</span>
+                    <span style="background:#008800;color:#fff;">-30 KT</span>
+                    <span style="background:#64748b;color:#fff;">0 KT</span>
+                    <span style="background:#880000;color:#fff;">+30 KT</span>
+                    <span style="background:#ff0000;color:#fff;">+70 KT (OUT)</span>
+                    <span style="background:#facc15;color:#000;">TVS</span>
+                `;
+            } else if (mode === 'l3_cc') {
+                titleEl.textContent = '🚨 NEXRAD L3 CORRELATION COEFF (TORNADO DEBRIS BALL) ⚡';
+                scaleEl.innerHTML = `
+                    <span style="background:#2563eb;color:#fff;">0.40 TDS</span>
+                    <span style="background:#10b981;color:#000;">0.75 HAIL</span>
+                    <span style="background:#facc15;color:#000;">0.90 MIX</span>
+                    <span style="background:#ef4444;color:#fff;">0.97 RAIN</span>
+                    <span style="background:#c084fc;color:#000;">0.99+ PURE</span>
+                `;
+            } else if (mode === 'l3_zdr') {
+                titleEl.textContent = '🧊 NEXRAD L3 DIFF. REFLECTIVITY (ZDR HAIL & UPDRAFT) ⚡';
+                scaleEl.innerHTML = `
+                    <span style="background:#94a3b8;color:#000;">-2 dB</span>
+                    <span style="background:#38bdf8;color:#000;">0 dB HAIL</span>
+                    <span style="background:#10b981;color:#000;">+2 dB</span>
+                    <span style="background:#facc15;color:#000;">+4 dB</span>
+                    <span style="background:#ef4444;color:#fff;">+6 dB CORE</span>
+                `;
+            } else if (prov === 'tdwr' || mode === 'tdwr_tr0') {
+                titleEl.textContent = '✈️ NOAA TDWR TERMINAL DOPPLER (45 AIRPORTS // 150M) ⚡';
+                scaleEl.innerHTML = `
+                    <span style="background:#10b981;color:#000;">15 dBZ</span>
+                    <span style="background:#facc15;color:#000;">35 dBZ</span>
+                    <span style="background:#f97316;color:#000;">50 dBZ</span>
+                    <span style="background:#ef4444;color:#fff;">MICROBURST</span>
+                    <span style="background:#c084fc;color:#000;">SHEAR</span>
+                `;
+            } else if (prov === 'goes_sat' || mode === 'goes_ir' || mode === 'goes_wv') {
+                titleEl.textContent = '🛰️ NOAA GOES-16/18 LIVE ABI SATELLITE (3-MIN POLL) ⚡';
+                scaleEl.innerHTML = `
+                    <span style="background:#334155;color:#fff;">+10°C</span>
+                    <span style="background:#38bdf8;color:#000;">-20°C</span>
+                    <span style="background:#10b981;color:#000;">-40°C</span>
+                    <span style="background:#facc15;color:#000;">-60°C</span>
+                    <span style="background:#ef4444;color:#fff;">-80°C TOPS</span>
+                `;
+            } else {
+                titleEl.textContent = '📡 NEXRAD L2/L3 BASE REFLECTIVITY (dBZ) ⚡';
+                scaleEl.innerHTML = `
+                    <span style="background:#04e9e7;color:#000;">-10 dBZ</span>
+                    <span style="background:#019ff4;color:#000;">15 dBZ</span>
+                    <span style="background:#02fd02;color:#000;">35 dBZ</span>
+                    <span style="background:#fdf802;color:#000;">50 dBZ</span>
+                    <span style="background:#fd9500;color:#000;">60 dBZ</span>
+                    <span style="background:#fd0000;color:#fff;">65+</span>
+                    <span style="background:#d483ff;color:#000;">TVS</span>
+                `;
+            }
         }
 
         renderTdwrStations(mc) {
@@ -1485,8 +1685,12 @@
 
                 const rCd = document.getElementById('nexrad-poll-cd');
                 const sCd = document.getElementById('sat-poll-cd');
+                const hdrRCd = document.getElementById('mon01-hdr-radar-cd');
+                const hdrSCd = document.getElementById('mon01-hdr-sat-cd');
                 if (rCd) rCd.textContent = `${this.nexradRefreshSec}s`;
                 if (sCd) sCd.textContent = `${this.satRefreshSec}s`;
+                if (hdrRCd) hdrRCd.textContent = `${this.nexradRefreshSec}s`;
+                if (hdrSCd) hdrSCd.textContent = `${this.satRefreshSec}s`;
             }, 1000);
         }
 
@@ -1544,21 +1748,34 @@
                     //    renders inside the Active Sub-Monitor (`mv-cell-body-${activeSlotIndex}`)
                     //    without disturbing the other 3 sub-monitors!
                     const deepDiveMethods = [
-                        'showWeatherStationDeepDive',
-                        'showSectorStationsList',
+                        'showGroundStationTelemetry',
+                        'showRadarStationCommandDeck',
+                        'showSectorWeatherStationsDeepDive',
+                        'showSectorTelemetry',
+                        'showMunicipalTelemetry',
+                        'showFlockInspector',
+                        'showVesselDeepDive',
                         'showMetarDeepDive',
+                        'showBorderCrossingDeepDive',
+                        'showCableDeepDive',
                         'showSubseaCableDeepDive',
                         'showGdacsDisasterDeepDive',
+                        'showSafecastRadiationDeepDive',
                         'showRadiationDeepDive',
                         'showBalticShipDeepDive',
                         'showBorderWaitDeepDive',
                         'showTorRelayDeepDive',
                         'showVolcanoDeepDive',
                         'showBuoyDeepDive',
+                        'showBlitzortungDeepDive',
                         'showBlitzDeepDive',
                         'showSpaceDishDeepDive',
                         'showEnergyDeepDive',
                         'showGeomagDeepDive',
+                        'showSeismicDeepDive',
+                        'showStormPredictionDeepDive',
+                        'showWeatherStationDeepDive',
+                        'showSectorStationsList',
                         'showWeatherEngineDeepDive',
                         'showTransitDeepDive'
                     ];

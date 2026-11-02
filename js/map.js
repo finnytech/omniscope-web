@@ -2327,6 +2327,7 @@ class OperationsMap {
 
                     marker.on('click', (ev) => {
                         this.notifyLayerClicked(ev);
+                        this.loadStationInMon02(st.id, st.lat, st.lon, st);
                     });
 
                     this.weatherEnginesLayer.addLayer(marker);
@@ -2337,7 +2338,7 @@ class OperationsMap {
 
             // 7. Lock Nearest Proximity Camera and Ground Station in MON-02
             await this.lockProximityCamera(lat, lng, null, true);
-            await this.lockProximityGroundStation(lat, lng);
+            await this.lockProximityGroundStation(lat, lng, false);
 
             // 8. Update HUD with exact counts loaded in this sector
             if (hud) {
@@ -2348,7 +2349,7 @@ class OperationsMap {
             console.warn("Sector node loading error:", err);
             // Fallback locks
             await this.lockProximityCamera(lat, lng, null, false);
-            await this.lockProximityGroundStation(lat, lng);
+            await this.lockProximityGroundStation(lat, lng, false);
         }
     }
 
@@ -2394,7 +2395,7 @@ class OperationsMap {
         this.reticle = L.marker([lat, lng], { icon }).addTo(this.map);
     }
 
-    async lockProximityGroundStation(lat, lng) {
+    async lockProximityGroundStation(lat, lng, openInMon02 = true) {
         try {
             const res = await fetch(`/api/weather/stations/nearby?lat=${lat}&lon=${lng}&limit=5&radius_km=250`);
             if (!res.ok) return null;
@@ -2463,6 +2464,9 @@ class OperationsMap {
                 `)
                 .openOn(this.map);
 
+            if (openInMon02) {
+                await this.loadStationInMon02(st.id, st.lat, st.lon, Object.assign({}, st, { name: stName, provider: provName }));
+            }
             return st;
         } catch (e) {
             console.warn("lockProximityGroundStation error:", e);
@@ -2487,7 +2491,34 @@ class OperationsMap {
 
             const camsData = await camsRes.json();
             const weatherData = await weatherRes.json();
-            const cams = camsData.webcams || camsData.cameras || [];
+            const rawCams = camsData.webcams || camsData.cameras || [];
+            // Compute Haversine distance if missing (prevents "DIST: undefined km") & prioritize direct streams over raw websites
+            const calcDistKm = (lat1, lon1, lat2, lon2) => {
+                if (lat2 == null || lon2 == null) return 0;
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+            };
+            rawCams.forEach(c => {
+                if (c.distance_km === undefined || c.distance_km === null || Number.isNaN(Number(c.distance_km))) {
+                    c.distance_km = calcDistKm(lat, lng, Number(c.lat || lat), Number(c.lon || lng));
+                }
+                if (!c.city) c.city = 'Sector';
+                if (!c.country) c.country = 'Global';
+            });
+            const scoreCam = (c) => {
+                const u = String(c.stream_url || c.preview_url || '').toLowerCase();
+                if (u.includes('.m3u8') || c.stream_type === 'hls') return 0;
+                if (u.includes('panomax.') || u.includes('roundshot.') || u.includes('foto-webcam')) return 1;
+                if (u.match(/\.(jpg|jpeg|png|webp)/i) || c.poster_url || c.preview_url) return 2;
+                if (u.includes('livebeaches') || u.includes('earthcam') || u.includes('ptztv')) return 9;
+                return 4;
+            };
+            const cams = rawCams.slice().sort((a, b) => scoreCam(a) - scoreCam(b) || (a.distance_km - b.distance_km));
 
             const listContainer = document.getElementById('available-cams-list');
             if (listContainer) listContainer.innerHTML = '';
@@ -2830,7 +2861,7 @@ class OperationsMap {
                 this.placeReticle(cam.lat, cam.lon);
                 this.map.flyTo([cam.lat, cam.lon], Math.max(this.map.getZoom(), 7), { duration: 1.0 });
                 // Query nearby authentic ground weather station to immediately update telemetry banner
-                this.lockProximityGroundStation(cam.lat, cam.lon);
+                this.lockProximityGroundStation(cam.lat, cam.lon, false);
             }
 
             window.MainPlayer.playCam(cam, 'live');
@@ -3107,7 +3138,7 @@ class OperationsMap {
                             <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:rgba(239,68,68,0.25);border-color:#ef4444;color:#fca5a5;cursor:pointer;font-weight:bold;" onclick="window.openSupercellDossier('${alert.id}', ${stormLat}, ${stormLon})">
                                 🌪️ SUPERCELL DOSSIER
                             </button>
-                            <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:rgba(16,185,129,0.25);border-color:#10b981;color:#6ee7b7;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.lockProximityGroundStation(${stormLat}, ${stormLon}); window.MapController.lockProximityCamera(${stormLat}, ${stormLon});}">
+                            <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:rgba(16,185,129,0.25);border-color:#10b981;color:#6ee7b7;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.lockProximityGroundStation(${stormLat}, ${stormLon}, true);}">
                                 📡 BODENSTATION
                             </button>
                         </div>
@@ -3277,7 +3308,7 @@ class OperationsMap {
                         <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:${headerColor};color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.targetStorm({lat:${lat},lon:${lon},id:'${tg.alert_id||tg.id||''}',title:'${headline.replace(/'/g, '')}',ef_scale:'${ef}',wind_speed:'${windDisplay}',is_tornado:true,is_ground_confirmed:${isGroundConfirmed}});}">
                             🎯 ANVISIEREN
                         </button>
-                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.lockProximityGroundStation(${lat}, ${lon}); window.MapController.lockProximityCamera(${lat}, ${lon});}">
+                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.lockProximityGroundStation(${lat}, ${lon}, true);}">
                             📡 BODENSTATION
                         </button>
                     </div>
@@ -3619,7 +3650,7 @@ class OperationsMap {
         }
 
         // 2. Load authentic nearest ground station telemetry & local DOT camera
-        this.lockProximityGroundStation(lat, lon);
+        this.lockProximityGroundStation(lat, lon, false);
         this.lockProximityCamera(lat, lon);
 
         // 3. Load nearest optical/DOT feed for this storm's exact location into MON-02
@@ -5120,6 +5151,7 @@ class OperationsMap {
 
                 marker.on('click', (ev) => {
                     this.notifyLayerClicked(ev);
+                    this.loadStationInMon02(st.id, st.lat, st.lon, Object.assign({}, st, { provider: st.provider || meta.label }));
                 });
 
                 this.weatherEnginesLayer.addLayer(marker);
@@ -8257,6 +8289,9 @@ OperationsMap.prototype.scanSectorWeatherStations = async function(bounds) {
 OperationsMap.prototype.focusWeatherStation = function(station) {
         if (!station || station.lat == null || station.lon == null) return;
         this.map.flyTo([station.lat, station.lon], 10, { duration: 1.2 });
+        if (typeof this.loadStationInMon02 === 'function') {
+            this.loadStationInMon02(station.id || 'WX-STATION', station.lat, station.lon, station);
+        }
         const pingIcon = L.divIcon({
             className: 'station-focus-ping',
             html: `<div style="width:36px;height:36px;border-radius:50%;border:2px solid #10b981;box-shadow:0 0 15px #10b981;animation:ping 1s cubic-bezier(0,0,0.2,1) infinite;"></div>`,

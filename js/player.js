@@ -145,7 +145,7 @@ class StreamPlayer {
     }
 
     checkAndLoadInitialFeed() {
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
         const text = (this.container.innerText || this.container.textContent || '').trim();
         const isInitialState = !this.currentCamData || text.includes('ACQUIRING LIVE FEED') || this.container.children.length === 0;
@@ -305,9 +305,14 @@ class StreamPlayer {
             }
         }
 
-        // 3. EarthCam & Skyline Webcams Embeds
+        // 3. EarthCam & Skyline Webcams: Only allow direct image/HLS, never raw website HTML
         if (cam.provider === 'EarthCam' || (cam.stream_url && cam.stream_url.includes('earthcam'))) {
-            this.play(cam.stream_url, 'earthcam_embed');
+            const realImg = this.hasRealImage(cam);
+            if (realImg) {
+                this.playLiveSnapshot(cam, realImg);
+                return;
+            }
+            this.showCameraSensorTelemetryCard(cam);
             return;
         }
         if (cam.provider === 'Skyline' || (cam.stream_url && cam.stream_url.includes('skylinewebcams'))) {
@@ -316,7 +321,7 @@ class StreamPlayer {
                 this.playLiveSnapshot(cam, realImg);
                 return;
             }
-            this.play(cam.stream_url, 'skyline_embed');
+            this.showCameraSensorTelemetryCard(cam);
             return;
         }
 
@@ -342,14 +347,14 @@ class StreamPlayer {
             return;
         }
 
-        // 7. Generic iframe embed if stream_url is present
-        if (cam.stream_url && cam.stream_url.startsWith('http') && !cam.stream_url.includes('example.com')) {
+        // 7. Sandboxed chromeless stream embed ONLY if verified pure player (never raw websites like livebeaches)
+        if (cam.stream_url && this.isAllowedPureStreamEmbed(cam.stream_url)) {
             this.play(cam.stream_url, 'iframe_embed');
             return;
         }
 
-        // 8. Direct camera feed offline check (Kein Fake, keine Satelliten-Simulation)
-        this.showOffline(cam, 'Kein aktiver Video- oder Bild-Stream für diesen Standort verfügbar');
+        // 8. For any camera with a third-party HTML page URL, show clean Tactical Sensor & Weather Card
+        this.showCameraSensorTelemetryCard(cam);
     }
 
     renderTimelineBar(camData) {
@@ -393,7 +398,7 @@ class StreamPlayer {
 
     playSnapshotsSequence(camData, rawSnapshots) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         // Normalize raw snapshots from earliest to latest
@@ -545,7 +550,7 @@ class StreamPlayer {
     playLiveSnapshot(camData, overrideUrl = null) {
         this.destroy();
         this.currentCamData = camData || this.currentCamData;
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const imgUrl = overrideUrl || this.hasRealImage(camData);
@@ -647,7 +652,7 @@ class StreamPlayer {
 
     showOffline(camData, reason = 'SENSOR OFFLINE // BILDQUELLE ANTWORTET NICHT (HTTP 502/504)') {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const title = camData ? (camData.title || 'Live Webcam') : 'Kamera-Feed';
@@ -736,7 +741,7 @@ class StreamPlayer {
 
     showMunicipalTelemetry(camData) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const op = camData.operator || camData.provider || 'Municipal Highway / Traffic Authority';
@@ -869,7 +874,7 @@ class StreamPlayer {
 
     showFlockInspector(camData) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const title = camData.title || 'Flock Falcon ALPR Sensor';
@@ -1006,7 +1011,7 @@ class StreamPlayer {
 
     showGroundStationTelemetry(stationData) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const st = stationData || {};
@@ -1309,7 +1314,7 @@ class StreamPlayer {
 
     showSectorTelemetry(camData) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const cam = camData || this.currentCamData || {};
@@ -1406,7 +1411,7 @@ class StreamPlayer {
 
     showCableDeepDive(cable) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const typePill = document.getElementById('mon02-active-type-pill');
@@ -1501,7 +1506,7 @@ class StreamPlayer {
 
     showGdacsDisasterDeepDive(disaster) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const p = disaster.properties || disaster;
@@ -1587,7 +1592,7 @@ class StreamPlayer {
 
     showSafecastRadiationDeepDive(measurement) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const m = measurement || {};
@@ -1663,7 +1668,7 @@ class StreamPlayer {
 
     showVesselDeepDive(vessel) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const p = vessel.properties || vessel;
@@ -1732,7 +1737,7 @@ class StreamPlayer {
 
     showMetarDeepDive(metar) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const icao = metar.icaoId || 'EDDF';
@@ -1811,7 +1816,7 @@ class StreamPlayer {
 
         showKiwiSdrDeepDive(sdr) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const name = sdr.name || 'Public KiwiSDR Receiver';
@@ -2456,7 +2461,7 @@ class StreamPlayer {
 
     showBorderCrossingDeepDive(border) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const portName = border.port_name || 'Border Crossing';
@@ -2531,7 +2536,7 @@ class StreamPlayer {
 
     showRadarStationCommandDeck(radarData) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const rd = radarData || {};
@@ -3036,7 +3041,7 @@ class StreamPlayer {
 
     play(url, type = 'panomax_archive') {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         this.currentUrl = url;
@@ -3056,29 +3061,15 @@ class StreamPlayer {
             };
         }
 
-        // 1. Panomax & Roundshot 360 Viewer & Archive (100% Free, No-Key)
+        // 1. Panomax & Roundshot 360 Viewer & Archive (Strictly Sandboxed & Locked)
         if (this.currentType === 'panomax_archive' || this.currentType === 'roundshot_archive' || this.currentType === 'roundshot_embed' || url.includes('panomax.com') || url.includes('roundshot.com')) {
-            const iframe = document.createElement('iframe');
-            iframe.src = url;
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframe.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen';
-            iframe.allowFullscreen = true;
-            this.container.appendChild(iframe);
+            this.appendSandboxedLockedIframe(this.container, url, (this.currentCamData && this.currentCamData.title) || '360° Live Panorama');
             return;
         }
 
-        // 2. EarthCam, Skyline, FotoWebcam & Verified Embeds
-        if (this.currentType === 'earthcam_embed' || this.currentType === 'skyline_embed' || url.includes('earthcam.com') || url.includes('skylinewebcams.com')) {
-            const iframe = document.createElement('iframe');
-            iframe.src = url;
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframe.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen';
-            iframe.allowFullscreen = true;
-            this.container.appendChild(iframe);
+        // 2. EarthCam / Skyline / Website portals: Never render raw website HTML in an iframe
+        if (this.currentType === 'earthcam_embed' || this.currentType === 'skyline_embed' || url.includes('earthcam.com') || url.includes('skylinewebcams.com') || url.includes('livebeaches')) {
+            this.showCameraSensorTelemetryCard(this.currentCamData || { stream_url: url, title: 'Live Coastal Sensor' });
             return;
         }
 
@@ -3252,16 +3243,13 @@ class StreamPlayer {
             return;
         }
 
-        // 6. Generic Iframe Embed
-        if (this.currentType === 'iframe_embed' || this.currentType === 'embed' || (url && url.startsWith('http') && !url.includes('example.com'))) {
-            const iframe = document.createElement('iframe');
-            iframe.src = url;
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframe.allow = 'accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen';
-            iframe.allowFullscreen = true;
-            this.container.appendChild(iframe);
+        // 6. Strict Sandboxed Stream Player Embed (ONLY for allowed pure players; otherwise Sensor Telemetry Card)
+        if (this.isAllowedPureStreamEmbed(url)) {
+            this.appendSandboxedLockedIframe(this.container, url, (this.currentCamData && this.currentCamData.title) || 'Live Sensor Stream');
+            return;
+        }
+        if (this.currentType === 'iframe_embed' || this.currentType === 'embed' || (url && url.startsWith('http'))) {
+            this.showCameraSensorTelemetryCard(this.currentCamData || { stream_url: url, title: 'Sector Sensor Node' });
             return;
         }
 
@@ -3371,7 +3359,7 @@ class StreamPlayer {
 
     showVolcanoDeepDive(volcano, coords) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const name = volcano.v_name || 'Active Caldera';
@@ -3423,7 +3411,7 @@ class StreamPlayer {
 
     showBuoyDeepDive(buoy) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const isDart = buoy.type === 'tsunami_dart';
@@ -3489,7 +3477,7 @@ class StreamPlayer {
 
     showSpaceDishDeepDive(dish) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const typePill = document.getElementById('mon02-active-type-pill');
@@ -3524,7 +3512,7 @@ class StreamPlayer {
 
     showEnergyDeepDive(terminal) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const typePill = document.getElementById('mon02-active-type-pill');
@@ -3559,7 +3547,7 @@ class StreamPlayer {
 
     showGeomagDeepDive(geomag) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const g = geomag || {};
@@ -3813,7 +3801,7 @@ class StreamPlayer {
 
     showTorRelayDeepDive(relay) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const isExit = (relay.flags || []).includes('Exit');
@@ -4006,7 +3994,7 @@ class StreamPlayer {
 
     showSeismicDeepDive(data) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const mag = data.magnitude || data.mag || 4.8;
@@ -4165,7 +4153,7 @@ class StreamPlayer {
 
     showStormPredictionDeepDive(data) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const name = data.name || data.location_name || 'ALADIN / ICON Convective Domain';
@@ -4325,7 +4313,7 @@ class StreamPlayer {
 
     showSectorWeatherStationsDeepDive(sectorData) {
         this.destroy();
-        this.container = document.getElementById(this.containerId) || document.getElementById('player-container') || document.getElementById('cam-player');
+        this.container = this.resolveActiveContainer();
         if (!this.container) return;
 
         const stations = (sectorData && sectorData.stations) || [];

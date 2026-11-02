@@ -4252,8 +4252,99 @@ path.subsea-cable-path {
     margin-top: 4px;
 }
 
-.mon01-dynamic-radar-legend {
+#card-webcam.multiview-mode #player-container,
+#card-webcam.multiview-mode #webcam-player-container {
     display: none !important;
+}
+
+.mon01-header-radar-box {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    background: rgba(6, 12, 24, 0.96);
+    border: 1px solid #0284c7;
+    border-left: 3px solid #00f0ff;
+    border-radius: 5px;
+    padding: 5px 10px;
+    min-width: 245px;
+    max-width: 315px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.7), 0 0 10px rgba(0, 240, 255, 0.18);
+    font-family: var(--font-mono);
+    flex-shrink: 0;
+    align-self: stretch;
+}
+
+.mon01-radar-box-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mon01-radar-box-timers {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.64rem;
+    color: #cbd5e1;
+}
+
+.mon01-radar-box-scale {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 1px;
+}
+
+.mon01-radar-box-scale span {
+    flex: 1;
+    text-align: center;
+    font-size: 0.54rem;
+    font-weight: 800;
+    padding: 1px 3px;
+    border-radius: 2px;
+    white-space: nowrap;
+}
+
+.mon02-sandbox-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #020610;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.mon02-sandbox-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 3px 8px;
+    background: rgba(4, 12, 24, 0.96);
+    border-bottom: 1px solid rgba(16, 185, 129, 0.45);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: #34d399;
+    z-index: 25;
+    flex-shrink: 0;
+}
+
+.mon02-sandbox-shield {
+    position: absolute;
+    inset: 24px 0 0 0;
+    z-index: 20;
+    background: transparent;
+    cursor: default;
+}
+
+.mon02-sandbox-shield.unlocked {
+    pointer-events: none;
 }
 
 /* ========================================================================= */
@@ -4262,7 +4353,7 @@ path.subsea-cable-path {
 
 .mon02-tv-side-tab-btn {
     position: absolute;
-    top: 38px;
+    top: 6px;
     right: 6px;
     z-index: 2450;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 78, 59, 0.92));

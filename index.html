@@ -157,7 +157,7 @@
     <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png?v=2.6.2" />
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/cyberpunk.css?v=2.7.1" />
+    <link rel="stylesheet" href="css/cyberpunk.css?v=2.7.2" />
 </head>
 <body>
     <!-- Top Operations Header -->
@@ -318,7 +318,8 @@
 
             <!-- MONITOR 1: Tactical World Map (Large Primary) -->
             <div class="monitor-card span-col" id="card-map">
-            <div class="monitor-header" style="flex-wrap:wrap;gap:8px;">
+            <div class="monitor-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;position:relative;">
+                <div class="mon01-header-controls-col" style="display:flex;flex-direction:column;gap:5px;flex:1 1 520px;min-width:0;">
                 <div class="monitor-header-left">
                     <span class="monitor-id">MON-01</span>
                     <span>GLOBAL TACTICAL RADAR & SATELLITE MAP</span>
@@ -372,6 +373,27 @@
                 </div>
                 <div id="map-mode-hint" style="font-size:0.75rem;color:var(--text-muted);">
                     CLICK ANYWHERE ON MAP TO LOCK NEAREST WEBCAM & WEATHER
+                </div>
+                </div>
+                <!-- DOCKED RADAR & SATELLITE TELEMETRY BOX (TOP-RIGHT OF MON-01 HEADER) -->
+                <div id="mon01-dynamic-radar-legend" class="mon01-header-radar-box" title="Live NOAA NEXRAD Level-II/III, TDWR & GOES-16/18 Satellite Telemetry">
+                    <div class="mon01-radar-box-top">
+                        <span id="mon01-radar-box-title" style="color:#00f0ff;font-weight:800;font-size:0.68rem;letter-spacing:0.3px;">📡 NEXRAD L2/L3 BASE REFLECTIVITY (dBZ) ⚡</span>
+                    </div>
+                    <div class="mon01-radar-box-timers">
+                        <span>RADAR: <strong id="mon01-hdr-radar-cd" style="color:#34d399;">60s</strong></span>
+                        <span>•</span>
+                        <span>🛰️ SAT: <strong id="mon01-hdr-sat-cd" style="color:#38bdf8;">180s</strong></span>
+                    </div>
+                    <div id="mon01-radar-box-scale" class="mon01-radar-box-scale">
+                        <span style="background:#04e9e7;color:#000;">-10 dBZ</span>
+                        <span style="background:#019ff4;color:#000;">15 dBZ</span>
+                        <span style="background:#02fd02;color:#000;">35 dBZ</span>
+                        <span style="background:#fdf802;color:#000;">50 dBZ</span>
+                        <span style="background:#fd9500;color:#000;">60 dBZ</span>
+                        <span style="background:#fd0000;color:#fff;">65+</span>
+                        <span style="background:#d483ff;color:#000;">TVS</span>
+                    </div>
                 </div>
             </div>
 
@@ -2202,15 +2224,15 @@
 
     <script src="js/audio.js?v=7.4"></script>
     <script src="js/ram_cleaner.js?v=7.4"></script>
-    <script src="js/player.js?v=2.5.1"></script>
+    <script src="js/player.js?v=2.7.2"></script>
     <script src="js/globe.js?v=7.4"></script>
-    <script src="js/map.js?v=2.6.4"></script>
+    <script src="js/map.js?v=2.7.2"></script>
         <script>window.OMNISCOPE_DEFAULT_LANG = 'en';</script>
     <script src="js/i18n.js?v=2.6.3"></script>
     <script src="js/settings.js?v=7.4"></script>
     <script src="js/app.js?v=2.5.0"></script>
-    <script src="js/upgrade.js?v=2.7"></script>
-    <script src="js/tv_multiview.js?v=2.7.1"></script>
+    <script src="js/upgrade.js?v=2.7.2"></script>
+    <script src="js/tv_multiview.js?v=2.7.2"></script>
 
     <!-- ========================================================================= -->
     <!-- 115-LANGUAGE SYSTEM SETTINGS & CONFIGURATION MODAL                        -->
