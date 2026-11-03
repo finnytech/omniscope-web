@@ -526,25 +526,41 @@
                 topRow.setAttribute('data-mv-layout', `${this.viewportCount}x`);
             }
 
-            // Sync ZIEL-MONITOR router pills: active slots full opacity, inactive slots dimmed
-            document.querySelectorAll('#mon02-slot-router-bar .slot-pill').forEach((pill, idx) => {
-                const isAvail = idx < this.viewportCount;
-                pill.style.opacity = isAvail ? '1' : '0.35';
-                pill.style.cursor = isAvail ? 'pointer' : 'not-allowed';
-                pill.title = isAvail ? `Sub-Monitor 2.${idx + 1} auswählen` : `Sub-Monitor 2.${idx + 1} (inaktiv // oben ${idx >= 2 ? (idx === 3 ? '4x' : '3x') : '2x'} wählen)`;
-            });
+            if (this.viewportCount === 1) {
+                // 1x Single Monitor Mode (Standard // Full Native Display)
+                this.restoreSingleWebcamMode();
+                if (window.MainPlayer) {
+                    if (window.MainPlayer.currentCamData) {
+                        window.MainPlayer.playCam(window.MainPlayer.currentCamData, 'live');
+                    } else if (window.MapController && window.MapController.activeCam) {
+                        window.MapController.selectAndPlayCam(window.MapController.activeCam.id);
+                    }
+                }
+            } else {
+                // 2x, 3x, 4x Multiview Mode
+                const slotBar = document.getElementById('mon02-slot-router-bar');
+                if (slotBar) slotBar.style.display = 'flex';
 
-            document.querySelectorAll('.tv-sp-slot-btn').forEach((btn, idx) => {
-                const isAvail = idx < this.viewportCount;
-                btn.style.opacity = isAvail ? '1' : '0.35';
-                btn.style.cursor = isAvail ? 'pointer' : 'not-allowed';
-            });
+                document.querySelectorAll('#mon02-slot-router-bar .slot-pill').forEach((pill, idx) => {
+                    const isAvail = idx < this.viewportCount;
+                    pill.style.opacity = isAvail ? '1' : '0.35';
+                    pill.style.cursor = isAvail ? 'pointer' : 'not-allowed';
+                    pill.title = isAvail ? `Sub-Monitor 2.${idx + 1} auswählen` : `Sub-Monitor 2.${idx + 1} (inaktiv // oben ${idx >= 2 ? (idx === 3 ? '4x' : '3x') : '2x'} wählen)`;
+                });
 
-            if (this.activeSlotIndex >= this.viewportCount) {
-                this.setActiveSlot(0);
+                document.querySelectorAll('.tv-sp-slot-btn').forEach((btn, idx) => {
+                    const isAvail = idx < this.viewportCount;
+                    btn.style.opacity = isAvail ? '1' : '0.35';
+                    btn.style.cursor = isAvail ? 'pointer' : 'not-allowed';
+                });
+
+                if (this.activeSlotIndex >= this.viewportCount) {
+                    this.setActiveSlot(0);
+                }
+
+                this.ensureMultiViewportDom();
             }
 
-            this.ensureMultiViewportDom();
             setTimeout(() => {
                 if (window.MapController && window.MapController.map) {
                     window.MapController.map.invalidateSize();
@@ -565,11 +581,23 @@
             if (mon02Card) mon02Card.classList.remove('multiview-mode');
             if (topRow) topRow.setAttribute('data-mv-layout', '1x');
             if (mvRoot) mvRoot.style.display = 'none';
-            if (playerContainer) playerContainer.style.display = 'flex';
-            if (origContainer) origContainer.style.display = 'flex';
+            if (playerContainer) {
+                playerContainer.style.removeProperty('display');
+                playerContainer.style.setProperty('display', 'flex', 'important');
+            }
+            if (origContainer) {
+                origContainer.style.removeProperty('display');
+                origContainer.style.setProperty('display', 'flex', 'important');
+            }
+            const slotBar = document.getElementById('mon02-slot-router-bar');
+            if (slotBar) slotBar.style.display = 'none';
         }
 
         ensureMultiViewportDom(skipDefaultPopulate = false) {
+            if (this.viewportCount === 1) {
+                this.restoreSingleWebcamMode();
+                return;
+            }
             const camPlayer = document.getElementById('cam-player');
             const playerContainer = document.getElementById('player-container');
             const origContainer = document.getElementById('webcam-player-container');
@@ -847,10 +875,28 @@
         assignTvChannelToSlot(slotIdx, channel) {
             if (!channel) return;
             if (this.viewportCount === 1) {
-                slotIdx = 0;
-            } else if (slotIdx >= this.viewportCount) {
-                slotIdx = this.viewportCount - 1;
+                // In 1x mode: Play live TV full-size directly in MainPlayer
+                this.restoreSingleWebcamMode();
+                if (window.MainPlayer) {
+                    window.MainPlayer.currentCamData = {
+                        title: channel.name,
+                        city: channel.category || 'Live TV',
+                        country: channel.country || 'Global',
+                        stream_url: channel.url,
+                        provider: 'Live TV'
+                    };
+                    window.MainPlayer.play(channel.url, 'hls');
+                    const titleEl = document.getElementById('cam-active-title');
+                    const topTitle = document.getElementById('cam-player-title');
+                    const pill = document.getElementById('mon02-active-type-pill');
+                    if (titleEl) titleEl.textContent = `📺 ${channel.flag || ''} ${channel.name} (${channel.country || 'LIVE'})`;
+                    if (topTitle) topTitle.textContent = `LIVE TV // ${channel.name.toUpperCase()}`;
+                    if (pill) pill.innerHTML = `📺 LIVE TV`;
+                }
+                return;
             }
+
+            slotIdx = Math.min(slotIdx, this.viewportCount - 1);
             this.ensureMultiViewportDom(true);
             this.cleanupSlotMedia(slotIdx);
 
@@ -1831,7 +1877,7 @@
                     const origPlayCam = mp.playCam.bind(mp);
                     mp.playCam = (camData, preferredTimeline = 'live') => {
                         mp.currentCamData = camData;
-                        if (this.multiviewActive || this.viewportCount > 1) {
+                        if (this.multiviewActive && this.viewportCount > 1) {
                             this.assignCameraToSlot(this.activeSlotIndex, camData);
                             return;
                         }
@@ -1843,7 +1889,7 @@
                     if (typeof mp.showKiwiSdrDeepDive === 'function') {
                         const origSdr = mp.showKiwiSdrDeepDive.bind(mp);
                         mp.showKiwiSdrDeepDive = (sdr) => {
-                            if (this.multiviewActive || this.viewportCount > 1) {
+                            if (this.multiviewActive && this.viewportCount > 1) {
                                 this.ensureMultiViewportDom();
                                 this.cleanupSlotMedia(this.activeSlotIndex);
                                 const titleEl = document.getElementById(`mv-cell-title-${this.activeSlotIndex}`);
@@ -1903,7 +1949,7 @@
                         if (typeof mp[methodName] === 'function') {
                             const origFn = mp[methodName].bind(mp);
                             mp[methodName] = (...args) => {
-                                if (this.multiviewActive || this.viewportCount > 1) {
+                                if (this.multiviewActive && this.viewportCount > 1) {
                                     this.ensureMultiViewportDom();
                                     this.cleanupSlotMedia(this.activeSlotIndex);
                                     const nodeArg = args[0] || {};
