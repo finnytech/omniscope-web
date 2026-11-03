@@ -998,6 +998,88 @@
             if (pill) pill.innerHTML = `📺 LIVE TV (MON 2.${slotIdx + 1})`;
         }
 
+        // Assign Live Storm Chaser (HLS or Sandboxed YouTube Live) to Slot
+        assignChaserToSlot(slotIdx, chaser) {
+            if (!chaser) return;
+            if (this.viewportCount === 1) {
+                // 1x Single Monitor Mode: Play full-size directly in MON-02
+                this.restoreSingleWebcamMode();
+                const titleEl = document.getElementById('cam-active-title');
+                const topTitle = document.getElementById('cam-player-title');
+                const typePill = document.getElementById('mon02-active-type-pill');
+                const banner = document.getElementById('cam-telemetry-banner');
+
+                if (titleEl) titleEl.innerText = `⚡ CHASER LIVE // ${chaser.name.toUpperCase()}`;
+                if (topTitle) topTitle.innerText = `CHASER LIVE // ${chaser.name.toUpperCase()}`;
+                if (typePill) {
+                    typePill.innerHTML = `⚡ CHASER LIVE`;
+                    typePill.style.background = 'rgba(239,68,68,0.2)';
+                    typePill.style.color = '#fca5a5';
+                    typePill.style.borderColor = '#ef4444';
+                }
+                if (banner) {
+                    const hd = chaser.heading != null ? `${chaser.headingLabel ? chaser.headingLabel + ' ' : ''}${chaser.heading}°` : '—';
+                    const spd = chaser.speed ? `${chaser.speed} mph` : 'STATIONARY';
+                    banner.innerHTML = `
+                        <span>CHASER: ${chaser.name.toUpperCase()} // STATUS: ${chaser.status || 'LIVE'} // QUELLE: ${(chaser.source || 'Spotter Network').toUpperCase()}</span>
+                        <span>GPS: ${chaser.lat.toFixed(4)}°, ${chaser.lon.toFixed(4)}° // HEADING: ${hd} // SPEED: ${spd}</span>
+                    `;
+                }
+
+                const target = document.getElementById('webcam-player-container') || document.getElementById('player-container');
+                if (!target) return;
+
+                if (chaser.stream && chaser.stream.type === 'hls' && chaser.stream.url) {
+                    if (window.MainPlayer) {
+                        window.MainPlayer.play(chaser.stream.url, 'hls');
+                    }
+                } else if (chaser.stream && chaser.stream.embedUrl) {
+                    target.innerHTML = `
+                        <div style="position:relative;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;">
+                            <iframe src="${chaser.stream.embedUrl}" 
+                                    style="width:100%;height:100%;border:none;" 
+                                    allow="autoplay; encrypted-media; picture-in-picture" 
+                                    allowfullscreen
+                                    sandbox="allow-scripts allow-same-origin allow-presentation"
+                                    referrerpolicy="no-referrer">
+                            </iframe>
+                        </div>`;
+                }
+                return;
+            }
+
+            slotIdx = Math.min(slotIdx, this.viewportCount - 1);
+            this.ensureMultiViewportDom(true);
+            this.cleanupSlotMedia(slotIdx);
+
+            const s = this.slots[slotIdx];
+            s.type = 'chaser';
+            s.data = chaser;
+            s.title = `⚡ ${chaser.name}`;
+
+            const titleEl = document.getElementById(`mv-cell-title-${slotIdx}`);
+            const bodyEl = document.getElementById(`mv-cell-body-${slotIdx}`);
+            const dvrEl = document.getElementById(`mv-cell-dvr-${slotIdx}`);
+            if (titleEl) titleEl.textContent = `⚡ ${chaser.name} (${chaser.status || 'LIVE'})`;
+            if (dvrEl) dvrEl.style.display = (chaser.stream && chaser.stream.type === 'hls') ? 'flex' : 'none';
+            if (!bodyEl) return;
+
+            if (chaser.stream && chaser.stream.type === 'hls' && chaser.stream.url) {
+                this.renderHlsSlot(slotIdx, chaser.stream.url, `⚡ ${chaser.name}`);
+            } else if (chaser.stream && chaser.stream.embedUrl) {
+                bodyEl.innerHTML = `
+                    <div style="position:relative;width:100%;height:100%;background:#000;">
+                        <iframe src="${chaser.stream.embedUrl}" 
+                                style="width:100%;height:100%;border:none;" 
+                                allow="autoplay; encrypted-media; picture-in-picture" 
+                                allowfullscreen
+                                sandbox="allow-scripts allow-same-origin allow-presentation"
+                                referrerpolicy="no-referrer">
+                        </iframe>
+                    </div>`;
+            }
+        }
+
         // Assign Live Webcam (HLS, Panomax/YouTube/Windy Embed, or Live Auto-Refreshing Snapshot) to Slot
         assignCameraToSlot(slotIdx, cam) {
             if (this.viewportCount === 1) slotIdx = 0;
@@ -1978,6 +2060,23 @@
     }
 
     window.OmniScopeMultiView = new OmniScopeMultiViewController();
+    window.OmniMultiView = window.OmniScopeMultiView;
+
+    window.streamChaserToMon02 = function(chaserId) {
+        const chaser = (window._chaserIndex && window._chaserIndex.get(chaserId)) ||
+                       (window.MapController && window.MapController.rawChasers && window.MapController.rawChasers.find(x => x.id === chaserId));
+        if (!chaser) {
+            console.warn('[OmniScope] Chaser not found:', chaserId);
+            return;
+        }
+        if (!chaser.stream || (!chaser.stream.url && !chaser.stream.embedUrl)) {
+            alert('⚡ ' + chaser.name + ' hat derzeit keinen verifizierten Live-Stream aktiv.');
+            return;
+        }
+        if (window.OmniScopeMultiView) {
+            window.OmniScopeMultiView.assignChaserToSlot(window.OmniScopeMultiView.activeSlotIndex, chaser);
+        }
+    };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => window.OmniScopeMultiView.init());
     } else {

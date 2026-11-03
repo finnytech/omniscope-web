@@ -701,6 +701,8 @@ class OperationsMap {
         this.alertGeometries = new Map();
         this.rawAlerts = [];
         this.tornadoGroundLayer = L.layerGroup().addTo(this.map);
+        this.chasersLayer = L.layerGroup().addTo(this.map);
+        this.rawChasers = [];
         this.activeTornadoGroundMarkers = new Map();
         this.rawTornadoGroundAlerts = [];
         this._tornadoAlertSoundPlayed = false;
@@ -1239,7 +1241,8 @@ class OperationsMap {
             { topId: 'layer-blitzortung', sideId: 'side-layer-blitzortung', layer: this.blitzortungLayer },
             { topId: 'layer-spacedish', sideId: 'side-layer-spacedish', layer: this.spaceDishLayer },
             { topId: 'layer-energy', sideId: 'side-layer-energy', layer: this.energyLayer },
-            { topId: 'layer-geomag', sideId: 'side-layer-geomag', layer: this.geomagLayer }
+            { topId: 'layer-geomag', sideId: 'side-layer-geomag', layer: this.geomagLayer },
+            { topId: 'layer-chasers', sideId: 'side-layer-chasers', layer: this.chasersLayer }
         ];
 
         layerMappings.forEach(mapping => {
@@ -3999,11 +4002,72 @@ class OperationsMap {
         this.fetchGeomagneticStations();
         setInterval(() => this.fetchGeomagneticStations(), 300000);
 
+        // 15c. Storm Chasers: live GPS + verified live streams (every 60s)
+        this.fetchChasers();
+        setInterval(() => this.fetchChasers(), 60000);
+
         // 16. OSINT Tactical Tools Workbench Drawer
         this.initOsintToolsDrawer();
 
         // 17. Real-Time Dead-Reckoning Animation Loop (every 1 second)
         this.startDeadReckoningLoop();
+    }
+
+    async fetchChasers() {
+        try {
+            const res = await fetch('/api/chaser-cams');
+            if (!res.ok) return;
+            const data = await res.json();
+            this.rawChasers = Array.isArray(data.chasers) ? data.chasers : [];
+            this.renderChasers(this.rawChasers);
+        } catch (e) {
+            console.warn('[OmniScope] Chaser fetch error:', e);
+        }
+    }
+
+    renderChasers(list) {
+        if (!this.chasersLayer) return;
+        this.chasersLayer.clearLayers();
+        window._chaserIndex = new Map();
+        list.forEach(c => {
+            if (!isFinite(c.lat) || !isFinite(c.lon)) return;
+            window._chaserIndex.set(c.id, c);
+            const live = !!(c.stream && (c.stream.url || c.stream.embedUrl));
+            const size = live ? 16 : 11;
+            const icon = L.divIcon({
+                className: 'chaser-node-wrap',
+                html: `<div class="chaser-radar-node${live ? ' live' : ''}"></div>`,
+                iconSize: [size, size],
+                iconAnchor: [size / 2, size / 2],
+                popupAnchor: [0, -size / 2]
+            });
+            const marker = L.marker([c.lat, c.lon], { icon, zIndexOffset: live ? 800 : 400 });
+            marker.bindPopup(() => this.buildChaserPopup(c), { maxWidth: 270, className: 'chaser-popup' });
+            marker.addTo(this.chasersLayer);
+        });
+    }
+
+    buildChaserPopup(c) {
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const live = !!(c.stream && (c.stream.url || c.stream.embedUrl));
+        const mins = c.updated ? Math.max(0, Math.round((Date.now() - Date.parse(c.updated)) / 60000)) : null;
+        const hd = c.heading != null ? `${c.headingLabel ? esc(c.headingLabel) + ' ' : ''}${esc(c.heading)}°` : '—';
+        const spd = c.speed ? `${esc(c.speed)} mph` : (c.status === 'STATIONARY' ? 'Stationary' : '—');
+        return `
+            <div class="chaser-popup-body">
+                <div class="chaser-popup-title">⚡ ${esc(c.name)}</div>
+                <div class="chaser-popup-status ${live ? 'live' : ''}">${live ? '🔴 STREAMING LIVE' : '📍 ACTIVE CHASE BEACON'}</div>
+                <div class="chaser-popup-row"><span>GPS</span><b>${esc(c.lat.toFixed(4))}°, ${esc(c.lon.toFixed(4))}°</b></div>
+                <div class="chaser-popup-row"><span>Heading</span><b>${hd}</b></div>
+                <div class="chaser-popup-row"><span>Speed</span><b>${spd}</b></div>
+                ${c.location ? `<div class="chaser-popup-row"><span>Location</span><b>${esc(c.location)}</b></div>` : ''}
+                <div class="chaser-popup-row"><span>Updated</span><b>${mins == null ? '—' : mins + ' min ago'}</b></div>
+                <div class="chaser-popup-row"><span>Source</span><b>${esc(c.source)}</b></div>
+                ${c.twitter ? `<div class="chaser-popup-row"><span>Social</span><a href="${esc(c.twitter)}" target="_blank" rel="noopener noreferrer">${esc(c.twitter.replace('https://', ''))}</a></div>` : ''}
+                ${live
+                    ? `<button class="chaser-stream-btn" onclick="window.streamChaserToMon02('${esc(c.id)}')">📺 STREAM TO MON-02</button>`
+                    : `<div class="chaser-popup-note">Kein verifizierter Live-Stream aktiv</div>`}
+            </div>`;
     }
 
     startDeadReckoningLoop() {

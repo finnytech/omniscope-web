@@ -4935,3 +4935,164 @@ path.subsea-cable-path {
     max-width: 55% !important;
     z-index: 2600 !important;
 }
+
+
+/* =========================================================================
+   STORM CHASER TACTICAL NODES & QUICK-VIEW POPUPS (LiveStormChasing + SpotterNetwork)
+   ========================================================================= */
+.chaser-node-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.chaser-radar-node {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #f59e0b;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px #f59e0b, 0 0 16px rgba(245, 158, 11, 0.6);
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+.chaser-radar-node:hover {
+    transform: scale(1.4);
+}
+
+.chaser-radar-node.live {
+    width: 15px;
+    height: 15px;
+    background: #ef4444;
+    border: 2px solid #fef08a;
+    box-shadow: 0 0 10px #ef4444, 0 0 20px rgba(239, 68, 68, 0.8);
+    animation: chaserLivePulse 1.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes chaserLivePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8), 0 0 8px #ef4444;
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(239, 68, 68, 0), 0 0 14px #ef4444;
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 8px #ef4444;
+    }
+}
+
+.chaser-popup .leaflet-popup-content-wrapper {
+    background: rgba(6, 11, 22, 0.96) !important;
+    border: 1.5px solid #f59e0b !important;
+    box-shadow: 0 0 18px rgba(245, 158, 11, 0.35) !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+    color: #e2e8f0 !important;
+}
+
+.chaser-popup .leaflet-popup-tip {
+    background: rgba(6, 11, 22, 0.96) !important;
+    border: 1px solid #f59e0b !important;
+}
+
+.chaser-popup-body {
+    padding: 8px 10px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+.chaser-popup-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #fbbf24;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chaser-popup-status {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 0.65rem;
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+    margin-bottom: 6px;
+}
+
+.chaser-popup-status.live {
+    background: rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+    border: 1px solid #ef4444;
+    animation: chaserBadgeBlink 1.2s infinite;
+}
+
+@keyframes chaserBadgeBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.chaser-popup-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.chaser-popup-row span {
+    color: #94a3b8;
+}
+
+.chaser-popup-row b {
+    color: #f1f5f9;
+}
+
+.chaser-popup-row a {
+    color: #38bdf8;
+    text-decoration: none;
+}
+
+.chaser-popup-row a:hover {
+    text-decoration: underline;
+}
+
+.chaser-stream-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.75rem;
+    font-family: inherit;
+    border: 1px solid #f87171;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.chaser-stream-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+    transform: translateY(-1px);
+}
+
+.chaser-popup-note {
+    margin-top: 6px;
+    font-size: 0.62rem;
+    color: #64748b;
+    text-align: center;
+    font-style: italic;
+}

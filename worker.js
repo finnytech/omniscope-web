@@ -270,6 +270,160 @@ async function handleWeather(url) {
 
 
 
+// ===== STORM CHASERS: LiveStormChasing + Spotter Network (keyless, zero-fake) =====
+const CHASER_YT = {
+  "reed timmer": "UCV6hWxB0-u_IX7e-h4fEBAw",
+  "connor croff": "UCb0U1g5r4kH_NDMGiGRhysA",
+  "vince waelti": "UCC4F7tC7OQVwJf3qNmNI6xg",
+  "aaron jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
+  "freddy mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
+  "pecos hank": "UCAQpSHsgUcNt6uCOjpgD8kw",
+  "ryan hall": "UCJHAT3Uvv-g3I8H3GhHWV7w",
+  "live storms media": "UC1nJElGcVcTpeZJVyxEbzJw"
+};
+let chaserCache = { ts: 0, data: null };
+const CHASER_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+
+async function chaserFetchT(url, ms = 4000, init = {}) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms);
+  try { return await fetch(url, { ...init, signal: ctl.signal }); } finally { clearTimeout(t); }
+}
+
+function chaserSlug(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function parseSpotterChasers(text) {
+  const out = [];
+  let cur = null;
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (line.startsWith("Object:")) {
+      const [la, lo] = line.slice(7).split(",").map(Number);
+      cur = (isFinite(la) && isFinite(lo)) ? { lat: la, lon: lo, tip: null } : null;
+    } else if (cur && line.startsWith("Icon:")) {
+      const m = line.match(/"([^"]*)"/);
+      if (m) cur.tip = m[1];
+    } else if (line === "End:" && cur) {
+      if (cur.tip) {
+        const parts = cur.tip.split("\\n").map(s => s.trim());
+        const tm = (parts[1] || "").match(/(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)/);
+        const ts = tm ? Date.parse(tm[1].replace(" ", "T") + "Z") : NaN;
+        if (parts[0] && isFinite(ts) && Date.now() - ts <= CHASER_MAX_AGE_MS) {
+          const hd = cur.tip.match(/Heading:\s*([A-Z]+)\s*\((\d+)\)/);
+          const sp = cur.tip.match(/Speed:\s*([\d.]+)/);
+          const tw = cur.tip.match(/Twitter:\s*(https:\/\/(?:www\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]+)/);
+          out.push({
+            name: parts[0], lat: cur.lat, lon: cur.lon,
+            heading: hd ? Number(hd[2]) : null,
+            headingLabel: hd ? hd[1] : null,
+            speed: sp ? Number(sp[1]) : 0,
+            status: /STATIONARY/.test(cur.tip) ? "STATIONARY" : "MOVING",
+            updated: new Date(ts).toISOString(),
+            twitter: tw ? tw[1] : null
+          });
+        }
+      }
+      cur = null;
+    }
+  }
+  return out;
+}
+
+async function chaserYoutubeIsLive(channelId) {
+  try {
+    const r = await chaserFetchT(`https://www.youtube.com/channel/${channelId}/live`, 4000, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36", "Accept-Language": "en-US,en;q=0.9", "Cookie": "CONSENT=YES+1; SOCS=CAI" }
+    });
+    if (!r.ok) return null;
+    const html = await r.text();
+    const vid = html.match(/"videoId":"([\w-]{11})"/);
+    return (/"isLiveNow":true/.test(html) && vid) ? vid[1] : null;
+  } catch (e) { return null; }
+}
+
+async function chaserHlsIsLive(url) {
+  try {
+    const r = await chaserFetchT(url, 3000);
+    if (!r.ok) return false;
+    return (await r.text()).slice(0, 64).includes("#EXTM3U");
+  } catch (e) { return false; }
+}
+
+async function handleChasers() {
+  if (chaserCache.data && Date.now() - chaserCache.ts < 60000) return jsonResponse(chaserCache.data);
+  const ua = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36" };
+  const byName = new Map();
+  let lscCount = 0, spotterCount = 0;
+
+  // 1. LiveStormChasing (GPS + HLS)
+  try {
+    const r = await chaserFetchT("https://api.livestormchasing.com/api/v1/chasers?geojson=true", 5000, {
+      headers: { ...ua, Origin: "https://livestormchasing.com", Referer: "https://livestormchasing.com/" }
+    });
+    if (r.ok) {
+      const gj = await r.json();
+      const feats = (gj && gj.features) || [];
+      await Promise.all(feats.map(async (f) => {
+        const p = f.properties || {};
+        const c = (f.geometry && f.geometry.coordinates) || [];
+        const ts = Date.parse(String(p.gps_update || "").replace(" ", "T") + "Z");
+        if (!p.name || !isFinite(c[0]) || !isFinite(c[1]) || !isFinite(ts) || Date.now() - ts > CHASER_MAX_AGE_MS) return;
+        let stream = null;
+        if (p.stream_status && p.username) {
+          const url = `https://edge.livestormchasing.com/hls/${encodeURIComponent(p.username)}/index.m3u8`;
+          if (await chaserHlsIsLive(url)) stream = { type: "hls", url, verified: true };
+        }
+        lscCount++;
+        byName.set(p.name.toLowerCase(), {
+          id: "lsc-" + chaserSlug(p.name), name: p.name, lat: c[1], lon: c[0],
+          heading: p.heading != null ? Number(p.heading) : null, headingLabel: null, speed: 0,
+          status: stream ? "STREAMING" : "ACTIVE", location: p.location || null,
+          updated: new Date(ts).toISOString(), source: "LiveStormChasing", twitter: null, stream
+        });
+      }));
+    }
+  } catch (e) {}
+
+  // 2. Spotter Network (GPS only; streams only via verified live YouTube channel)
+  try {
+    const r = await chaserFetchT("https://www.spotternetwork.org/feeds/gr.txt", 6000, { headers: ua });
+    if (r.ok) {
+      const list = parseSpotterChasers(await r.text());
+      const ytCache = new Map();
+      await Promise.all(list.map(async (s) => {
+        const key = s.name.toLowerCase();
+        if (byName.has(key)) return;
+        let stream = null;
+        const known = Object.keys(CHASER_YT).find(k => key.includes(k));
+        if (known) {
+          const cid = CHASER_YT[known];
+          if (!ytCache.has(cid)) ytCache.set(cid, chaserYoutubeIsLive(cid));
+          const vid = await ytCache.get(cid);
+          if (vid) stream = { type: "youtube", embedUrl: `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1`, verified: true };
+        }
+        spotterCount++;
+        byName.set(key, {
+          id: "sn-" + chaserSlug(s.name), name: s.name, lat: s.lat, lon: s.lon,
+          heading: s.heading, headingLabel: s.headingLabel, speed: s.speed,
+          status: stream ? "STREAMING" : s.status, location: null,
+          updated: s.updated, source: "Spotter Network", twitter: s.twitter, stream
+        });
+      }));
+    }
+  } catch (e) {}
+
+  const chasers = Array.from(byName.values());
+  const data = {
+    status: "ok", updatedAt: new Date().toISOString(), count: chasers.length,
+    streaming_count: chasers.filter(c => c.stream).length,
+    sources: { livestormchasing: lscCount, spotternetwork: spotterCount }, chasers
+  };
+  if (chasers.length > 0) chaserCache = { ts: Date.now(), data };
+  return jsonResponse(data);
+}
+
 async function handleStorms() {
   const nwsUrl = "https://api.weather.gov/alerts/active?status=actual&message_type=alert";
   const res = await fetch(nwsUrl, {
@@ -5207,6 +5361,10 @@ const PRIMARY_US_STATIONS = [
 
       if (url.pathname.startsWith("/api/v2/")) {
         return jsonResponse({ status: "ok", count: 0, data: [], items: [] });
+      }
+
+      if (url.pathname === "/api/chaser-cams" || url.pathname === "/api/telemetry/chasers") {
+        return handleChasers();
       }
 
       if (url.pathname === "/api/storms" || url.pathname === "/api/telemetry/storms") {
