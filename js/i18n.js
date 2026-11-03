@@ -9445,11 +9445,98 @@
         constructor() {
             this.languages = LANGUAGES;
             this.translations = TRANSLATIONS;
-            const savedLang = localStorage.getItem('omniscope_lang');
-            const defaultLang = window.OMNISCOPE_DEFAULT_LANG || 'en';
-            this.currentLang = savedLang && this.translations[savedLang] ? savedLang : defaultLang;
+            this.currentLang = this.detectUserLanguage();
             this.dynamicCache = {};
-            console.log(`[i18n] Engine v2.6.3 initialized. Active Language: ${this.currentLang} (115 languages ready)`);
+            console.log(`[i18n] Engine v2.7.4 initialized. Auto-detected / Active Language: ${this.currentLang} (115 languages ready)`);
+        }
+
+        detectUserLanguage() {
+            // 1. Explicit user manual selection saved in localStorage takes highest priority
+            try {
+                const saved = localStorage.getItem('omniscope_lang');
+                if (saved && (this.translations[saved] || this.languages.some(l => l.code === saved))) {
+                    return saved;
+                }
+            } catch (_) {}
+
+            // 2. Permissionless Browser Navigator Language (standard legal API, no permissions required)
+            try {
+                const navLangs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
+                for (const raw of navLangs) {
+                    if (!raw) continue;
+                    const clean = raw.toLowerCase().trim();
+                    // Exact match (e.g. 'zh-tw' -> 'zh-TW')
+                    const exact = this.languages.find(l => l.code.toLowerCase() === clean);
+                    if (exact && this.translations[exact.code]) return exact.code;
+
+                    // Base 2-letter language code (e.g. 'de-de' -> 'de', 'fr-fr' -> 'fr', 'es-es' -> 'es')
+                    const base = clean.split('-')[0];
+                    const baseMatch = this.languages.find(l => l.code.toLowerCase() === base);
+                    if (baseMatch && this.translations[baseMatch.code]) return baseMatch.code;
+                }
+            } catch (_) {}
+
+            // 3. Permissionless TimeZone Heuristic via Intl.DateTimeFormat (100% legal, zero permissions)
+            try {
+                const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+                const tzMap = {
+                    'Europe/Berlin': 'de', 'Europe/Vienna': 'de', 'Europe/Zurich': 'de',
+                    'Europe/Paris': 'fr', 'Europe/Brussels': 'fr',
+                    'Europe/Madrid': 'es',
+                    'Europe/Rome': 'it',
+                    'Europe/Warsaw': 'pl',
+                    'Europe/Prague': 'cs',
+                    'Europe/Amsterdam': 'nl',
+                    'Europe/Kyiv': 'uk',
+                    'Europe/Moscow': 'ru',
+                    'Europe/Athens': 'el',
+                    'Europe/Budapest': 'hu',
+                    'Europe/Bucharest': 'ro',
+                    'Europe/Sofia': 'bg',
+                    'Europe/Stockholm': 'sv',
+                    'Europe/Copenhagen': 'da',
+                    'Europe/Helsinki': 'fi',
+                    'Europe/Oslo': 'no',
+                    'Europe/Lisbon': 'pt',
+                    'America/Sao_Paulo': 'pt',
+                    'Asia/Tokyo': 'ja',
+                    'Asia/Seoul': 'ko',
+                    'Asia/Shanghai': 'zh',
+                    'Asia/Chongqing': 'zh',
+                    'Asia/Taipei': 'zh-TW',
+                    'Asia/Kolkata': 'hi',
+                    'Asia/Dhaka': 'bn',
+                    'Asia/Istanbul': 'tr',
+                    'Asia/Ho_Chi_Minh': 'vi',
+                    'Asia/Riyadh': 'ar', 'Asia/Dubai': 'ar', 'Africa/Cairo': 'ar',
+                    'Asia/Bangkok': 'th',
+                    'Asia/Jakarta': 'id',
+                    'Asia/Manila': 'tl',
+                    'Asia/Jerusalem': 'he'
+                };
+                for (const [prefix, lang] of Object.entries(tzMap)) {
+                    if (tz.startsWith(prefix) && this.translations[lang]) {
+                        return lang;
+                    }
+                }
+            } catch (_) {}
+
+            // 4. Permissionless server-provided geolocation header or global country code
+            try {
+                if (typeof window !== 'undefined' && window.__OMNISCOPE_GEO_COUNTRY) {
+                    const cCode = String(window.__OMNISCOPE_GEO_COUNTRY).toUpperCase().trim();
+                    const cMap = {
+                        'DE': 'de', 'AT': 'de', 'CH': 'de',
+                        'FR': 'fr', 'ES': 'es', 'IT': 'it', 'PT': 'pt', 'BR': 'pt',
+                        'RU': 'ru', 'UA': 'uk', 'PL': 'pl', 'NL': 'nl', 'JP': 'ja',
+                        'KR': 'ko', 'CN': 'zh', 'TW': 'zh-TW', 'IN': 'hi', 'TR': 'tr'
+                    };
+                    if (cMap[cCode] && this.translations[cMap[cCode]]) return cMap[cCode];
+                }
+            } catch (_) {}
+
+            // 5. Default Standard: English
+            return 'en';
         }
 
         init() {
@@ -9459,16 +9546,30 @@
         }
 
         autoBindDomElements() {
-            // 1. Bind topbar & subbar buttons that have icon + text spans or direct text
+            // 1. Direct ID to key mapping
             const idToKey = {
+                'brand-title': 'app_title',
+                'status-connected': 'status_connected',
+                'telemetry-badge': 'telemetry_badge',
                 'btn-poll-now': 'btn_poll_scan',
+                'btn-weather-alarm-modal': 'btn_weather_alarm',
                 'btn-flush-ram-extreme': 'btn_flush_ram',
                 'btn-weather-mode-global': 'weather_mode_global',
                 'btn-weather-mode-sector': 'weather_mode_sector',
                 'btn-weather-mode-off': 'weather_mode_off',
-                'btn-reset-monitors-header': 'btn_reset_layout',
+                'btn-reset-monitors-header': 'btn_reset_monitors',
+                'btn-reset-panels-layout': 'btn_reset_layout',
+                'btn-popout': 'btn_detach_window',
                 'cam-active-title': 'mon02_title',
-                'map-mode-hint': 'map_click_hint'
+                'map-mode-hint': 'map_click_hint',
+                'btn-layers-all-on': 'btn_all_on',
+                'btn-layers-all-off': 'btn_all_off',
+                'btn-filter-real-cams': 'cam_real',
+                'btn-filter-telemetry-nodes': 'cam_telemetry',
+                'btn-filter-all-nodes': 'cam_all_streams',
+                'cam-telemetry-left': 'telemetry_footer_target',
+                'cam-weather-snippet': 'telemetry_footer_status',
+                'btn-slot-assign-tv': 'select_tv_station'
             };
             Object.entries(idToKey).forEach(([id, key]) => {
                 const el = document.getElementById(id);
@@ -9477,13 +9578,14 @@
                 }
             });
 
-            // 2. Bind buttons where the 2nd <span> holds the label
+            // 2. Buttons where the 2nd <span> holds the label
             const btnSecondSpanMap = {
                 'btn-weather-archive-modal': 'btn_weather_archive',
                 'btn-focus-noaa-usa': 'btn_noaa_usa_radar',
                 'btn-sector-stations-scan': 'btn_sector_scan',
                 'btn-weather-engines-modal': 'btn_weather_engines',
-                'btn-toggle-osint-tools': 'btn_osint_tools'
+                'btn-toggle-osint-tools': 'btn_osint_tools',
+                'btn-open-settings-modal': 'btn_settings'
             };
             Object.entries(btnSecondSpanMap).forEach(([id, key]) => {
                 const btn = document.getElementById(id);
@@ -9495,16 +9597,21 @@
                 }
             });
 
-            // 3. Bind single-span buttons (#btn-popout, #btn-reset-panels-layout)
-            const singleSpanMap = {
-                'btn-popout': 'btn_detach_window',
-                'btn-reset-panels-layout': 'btn_reset_layout'
+            // 3. Monitor headers (MON-01 through MON-06)
+            const monMap = {
+                '#card-map .monitor-header-left': 'mon01_title',
+                '#card-iss .monitor-header-left': 'mon03_title',
+                '#card-airspace-scope .monitor-header-left': 'mon04_title',
+                '#card-websdr .monitor-header-left': 'mon05_title',
+                '#card-intelligence-log .monitor-header-left': 'mon06_title'
             };
-            Object.entries(singleSpanMap).forEach(([id, key]) => {
-                const btn = document.getElementById(id);
-                if (btn) {
-                    const sp = btn.querySelector('span') || btn;
-                    if (!sp.hasAttribute('data-i18n')) sp.setAttribute('data-i18n', key);
+            Object.entries(monMap).forEach(([selector, key]) => {
+                const wrap = document.querySelector(selector);
+                if (wrap) {
+                    const spans = wrap.querySelectorAll('span');
+                    if (spans.length >= 2 && !spans[spans.length - 1].hasAttribute('data-i18n')) {
+                        spans[spans.length - 1].setAttribute('data-i18n', key);
+                    }
                 }
             });
 
@@ -9536,14 +9643,17 @@
                 const chk = document.getElementById(chkId);
                 if (chk && chk.parentElement && chk.parentElement.tagName === 'LABEL') {
                     const lbl = chk.parentElement;
-                    if (!lbl.querySelector('[data-i18n]')) {
+                    let span = lbl.querySelector('[data-i18n]');
+                    if (!span) {
                         const textNodes = Array.from(lbl.childNodes).filter(n => n.nodeType === Node.TEXT_NODE && n.textContent.trim());
                         if (textNodes.length > 0) {
-                            const span = document.createElement('span');
+                            span = document.createElement('span');
                             span.setAttribute('data-i18n', key);
                             span.textContent = textNodes[0].textContent;
                             lbl.replaceChild(span, textNodes[0]);
                         }
+                    } else {
+                        span.setAttribute('data-i18n', key);
                     }
                 }
             });
@@ -9563,50 +9673,69 @@
                 const chk = document.getElementById(chkId);
                 if (chk && chk.parentElement) {
                     const nameSpan = chk.parentElement.querySelector('.layer-name');
-                    if (nameSpan && !nameSpan.hasAttribute('data-i18n')) {
+                    if (nameSpan) {
                         nameSpan.setAttribute('data-i18n', key);
                     }
                 }
             });
 
-            // 6. Bind MON-01 & STORM titles
-            const mon01Left = document.querySelector('#card-map .monitor-header-left');
-            if (mon01Left) {
-                const spans = mon01Left.querySelectorAll('span');
-                if (spans.length >= 2 && !spans[1].hasAttribute('data-i18n')) {
-                    spans[1].setAttribute('data-i18n', 'mon01_title');
-                }
-            }
+            // 6. Bind Storm & Scrubber titles
             const stormTitle = document.querySelector('.storm-panel-title');
-            if (stormTitle && !stormTitle.hasAttribute('data-i18n')) {
-                stormTitle.setAttribute('data-i18n', 'storm_panel_title');
-            }
+            if (stormTitle) stormTitle.setAttribute('data-i18n', 'storm_panel_title');
             const stormActiveHdr = document.querySelector('.storm-list-section-header span:first-child');
-            if (stormActiveHdr && !stormActiveHdr.hasAttribute('data-i18n')) {
-                stormActiveHdr.setAttribute('data-i18n', 'storm_active_header');
-            }
+            if (stormActiveHdr) stormActiveHdr.setAttribute('data-i18n', 'storm_active_header');
             const masterTimelineSpan = document.querySelector('.master-timeline-ctrl > span:first-child');
-            if (masterTimelineSpan && !masterTimelineSpan.hasAttribute('data-i18n')) {
-                masterTimelineSpan.setAttribute('data-i18n', 'temporal_scrubber_header');
-            }
+            if (masterTimelineSpan) masterTimelineSpan.setAttribute('data-i18n', 'temporal_scrubber_header');
+            const routerLbl = document.querySelector('.slot-router-lbl');
+            if (routerLbl) routerLbl.setAttribute('data-i18n', 'target_monitor');
         }
 
         t(key, fallback = '') {
+            // 1. Primary 115-Language Dictionary
             const langData = this.translations[this.currentLang] || this.translations['en'] || {};
             if (langData[key]) return langData[key];
+
+            // 2. Auxilliary Keys for Multi-Monitor & Controls
+            const auxMap = {
+                'mon01_title': { de: 'GLOBALES TAKTISCHES RADAR & SATELLITEN-GRID', es: 'RADAR TÁCTICO GLOBAL Y RED SATELITAL', fr: 'RADAR TACTIQUE MONDIAL ET GRILLE SATELLITE', ru: 'ГЛОБАЛЬНЫЙ ТАКТИЧЕСКИЙ РАДАР И СПУТНИКОВАЯ СЕТЬ', zh: '全球战术雷达与卫星监测网', ja: 'グローバル戦術レーダー＆衛星監視網', en: 'GLOBAL TACTICAL RADAR & SATELLITE MAP' },
+                'mon03_title': { de: 'RAUMFAHRT & ORBIT // ISS LIVE NASA CAM', es: 'VIGILANCIA ESPACIAL // CÁMARA EN VIVO ISS NASA', fr: 'SURVEILLANCE SPATIALE // CAMÉRA EN DIRECT ISS NASA', ru: 'КОСМИЧЕСКОЕ НАБЛЮДЕНИЕ // ISS LIVE NASA CAM', zh: '太空轨道监视 // 国际空间站高清直播', ja: '宇宙軌道監視 // ISS 国際宇宙ステーション LIVE', en: 'SPACE SURVEILLANCE // ISS LIVE NASA CAM' },
+                'mon04_title': { de: 'LUFTRAUM-AUFKLÄRUNG // LIVE ADS-B FLUG-RADAR', es: 'RECONOCIMIENTO AÉREO // RADAR DE VUELOS ADS-B', fr: 'RECONNAISSANCE AÉRIENNE // RADAR DE VOLS ADS-B', ru: 'РАЗВЕДКА ВОЗДУШНОГО ПРОСТРАНСТВА // ADS-B РАДАР', zh: '全球空域监视 // ADS-B 实时航空雷达', ja: '航空宇宙偵察 // ADS-B リアルタイム飛行レーダー', en: 'GLOBAL AIRSPACE RECON // LIVE ADS-B RADAR' },
+                'mon05_title': { de: 'FERNMELDE-AUFKLÄRUNG // WEBSDR HF/VHF EMPFÄNGER', es: 'CUERPO DE SEÑALES // INTERCEPTOR HF/VHF WEBSDR', fr: 'CORPS DES TRANSMISSIONS // INTERCEPTION WEBSDR HF/VHF', ru: 'СИГНАЛЬНЫЙ КОРПУС // WEBSDR HF/VHF ПЕРЕХВАТЧИК', zh: '无线电侦听 // WEBSDR 高频/甚高频频谱', ja: '通信傍受 // WebSDR 短波・超短波受信機', en: 'SIGNAL CORPS // WEBSDR HF/VHF INTERCEPT' },
+                'mon06_title': { de: 'SENSOR-PROTOKOLL // OSINT LAGEBERICHT', es: 'REGISTRO DE SENSORES // FEED DE INTELIGENCIA OSINT', fr: 'JOURNAL DES CAPTEURS // FLUX D\'INTELLIGENCE OSINT', ru: 'ЖУРНАЛ ДАТЧИКОВ // OSINT ЛЕНТА СОБЫТИЙ', zh: '全球传感器日志 // 开源情报实时简报', ja: 'センサーログ // OSINT インテリジェンスフィード', en: 'GLOBAL SENSOR LOG // OSINT INTELLIGENCE FEED' },
+                'target_monitor': { de: '🎯 ZIEL-MONITOR:', es: '🎯 MONITOR OBJETIVO:', fr: '🎯 MONITEUR CIBLE :', ru: '🎯 ЦЕЛЕВОЙ МОНИТОР:', zh: '🎯 目标分屏:', ja: '🎯 ターゲットモニター:', en: '🎯 TARGET MONITOR:' },
+                'select_tv_station': { de: '📺 TV SENDER WÄHLEN', es: '📺 ELEGIR CANAL DE TV', fr: '📺 CHOISIR CHAÎNE TV', ru: '📺 ВЫБРАТЬ ТВ-КАНАЛ', zh: '📺 选择电视频道', ja: '📺 TVチャンネル選択', en: '📺 SELECT TV CHANNEL' },
+                'cam_real': { de: '🔵 ECHTE CAMS', es: '🔵 CÁMARAS REALES', fr: '🔵 VRAIES CAMÉRAS', ru: '🔵 РЕАЛЬНЫЕ КАМЕРЫ', zh: '🔵 真实摄像头', ja: '🔵 ライブカメラ実況', en: '🔵 REAL CAMS' },
+                'cam_telemetry': { de: '▲ VERKEHR & TELEMETRIE', es: '▲ TRÁFICO Y TELEMETRÍA', fr: '▲ TRAFIC & TÉLÉMÉTRIE', ru: '▲ ТРАФИК И ТЕЛЕМЕТРИЯ', zh: '▲ 交通与远程数据', ja: '▲ 交通・テレメトリ', en: '▲ TRAFFIC & TELEMETRY' },
+                'cam_all_streams': { de: 'ALLE LIVE-STREAMS', es: 'TODOS LOS TRANSMISIONES', fr: 'TOUS LES FLUX EN DIRECT', ru: 'ВСЕ LIVE-ПОТОКИ', zh: '全部实时流', ja: '全ライブストリーム', en: 'ALL LIVE STREAMS' },
+                'telemetry_footer_target': { de: 'ZIEL: GLOBAL SENSOR GRID // KNOTEN AUF DER KARTE WÄHLEN', es: 'OBJETIVO: RED GLOBAL DE SENSORES // SELECCIONE NODO EN MAPA', fr: 'CIBLE : GRILLE MONDIALE DE CAPTEURS // CHOISIR NŒUD SUR CARTE', ru: 'ЦЕЛЬ: ГЛОБАЛЬНАЯ СЕТЬ ДАТЧИКОВ // ВЫБЕРИТЕ УЗЕЛ НА КАРТЕ', zh: '目标: 全球传感器矩阵 // 点击地图选择节点', ja: '目標: グローバルセンサーグリッド // マップノードを選択', en: 'TARGET: GLOBAL SENSOR GRID // SELECT NODE ON MAP' },
+                'telemetry_footer_status': { de: 'STATUS: BEREIT // ECHTZEIT-DATEN VERFÜGBAR', es: 'ESTADO: LISTO // DATOS EN TIEMPO REAL DISPONIBLES', fr: 'STATUT : PRÊT // DONNÉES EN TEMPS RÉEL DISPONIBLES', ru: 'СТАТУС: ГОТОВ // ДАННЫЕ В РЕАЛЬНОМ ВРЕМЕНИ ДОСТУПНЫ', zh: '状态: 就绪 // 实时数据链路可用', ja: 'ステータス: 準備完了 // リアルタイムデータ利用可能', en: 'STATUS: READY // REAL-TIME DATA AVAILABLE' }
+            };
+            if (auxMap[key]) {
+                const entry = auxMap[key];
+                if (entry[this.currentLang]) return entry[this.currentLang];
+                if (entry['en']) return entry['en'];
+            }
+
             const enData = this.translations['en'] || {};
             if (enData[key]) return enData[key];
             return fallback || key;
         }
 
         setLanguage(langCode) {
-            if (!this.translations[langCode]) {
+            if (!this.translations[langCode] && !this.languages.some(l => l.code === langCode)) {
                 console.warn(`[i18n] Language '${langCode}' not available, defaulting to en`);
                 langCode = 'en';
             }
             this.currentLang = langCode;
-            localStorage.setItem('omniscope_lang', langCode);
+            try {
+                localStorage.setItem('omniscope_lang', langCode);
+            } catch (_) {}
             this.applyLanguage(langCode);
+
+            // Re-render settings grid to reflect the active checkmark immediately
+            const searchInput = document.getElementById('input-settings-lang-search');
+            const filterVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            this.renderLanguageGrid(filterVal);
 
             window.dispatchEvent(new CustomEvent('omniscope:language-changed', { detail: { lang: langCode } }));
         }
@@ -9650,7 +9779,7 @@
                 activeIndicator.innerHTML = `${langObj.flag} ${langObj.native} (${langObj.name})`;
             }
 
-            // 5. Translate remaining dynamic UI labels, sidebar hints, and modal labels via cached GTX neural fallback
+            // 5. Translate dynamic UI labels via cached offline phrases and instant fallback
             this.translateRemainingDomNodes(langCode);
         }
 
@@ -9680,50 +9809,58 @@
                 return;
             }
 
-            const cacheKey = `omniscope_dyn_i18n_${langCode}`;
-            let cachedMap = {};
-            try {
-                cachedMap = JSON.parse(localStorage.getItem(cacheKey) || '{}');
-            } catch (_) {}
+            // High-speed offline phrase replacement dictionary
+            const offlinePhrases = {
+                'de': {
+                    'WEATHER MODE:': 'WETTER-MODUS:',
+                    'TEMPORAL SCRUBBER (7 DAYS):': 'ZEITLEISTE (7 TAGE):',
+                    'MAP LAYERS & SENSORS': 'KARTEN-EBENEN & SENSOREN',
+                    'ALL ON': 'ALLE AN',
+                    'ALL OFF': 'ALLE AUS',
+                    'ACTIVE TORNADOES & SUPERCELLS': 'AKTIVE TORNADOS & SUPERZELLEN',
+                    'LIVE STORM INTERCEPT': 'LIVE UNWETTER-EINSATZ',
+                    'ACQUIRING LIVE FEED...': 'VERBINDE LIVE-FEED...',
+                    'CLICK ON MAP TO QUERY ACTIVE WEBCAMS': 'AUF KARTE KLICKEN FÜR WEBCAMS',
+                    'CLICK ANYWHERE ON MAP TO LOCK NEAREST WEBCAM & WEATHER': 'AUF KARTE KLICKEN UM WEBCAMS & WETTER ZU LADEN',
+                    'OSINT FIELD TOOLS': 'OSINT WERKZEUGE',
+                    'Sun & Shadow Azimuth Calculator': 'Sonnen- & Schatten-Rechner',
+                    'Coordinate Converter': 'Koordinaten-Konverter',
+                    'METAR Weather Decoder': 'Flugwetter METAR Dekoder',
+                    'Export Data (GeoJSON, KML, CSV)': 'Daten Exportieren (GeoJSON, CSV)'
+                },
+                'es': {
+                    'WEATHER MODE:': 'MODO METEOROLÓGICO:',
+                    'TEMPORAL SCRUBBER (7 DAYS):': 'LÍNEA TEMPORAL (7 DÍAS):',
+                    'MAP LAYERS & SENSORS': 'CAPAS DEL MAPA Y SENSORES',
+                    'ALL ON': 'TODAS ENCENDIDAS',
+                    'ALL OFF': 'TODAS APAGADAS',
+                    'ACTIVE TORNADOES & SUPERCELLS': 'TORNADOS Y SUPERCELESTES ACTIVOS',
+                    'LIVE STORM INTERCEPT': 'INTERCEPCIÓN DE TORMENTAS EN VIVO',
+                    'ACQUIRING LIVE FEED...': 'OBTENIENDO SEÑAL EN VIVO...',
+                    'CLICK ON MAP TO QUERY ACTIVE WEBCAMS': 'HAGA CLIC EN EL MAPA PARA CÁMARAS',
+                    'OSINT FIELD TOOLS': 'HERRAMIENTAS DE CAMPO OSINT'
+                },
+                'fr': {
+                    'WEATHER MODE:': 'MODE MÉTÉO :',
+                    'TEMPORAL SCRUBBER (7 DAYS):': 'CHRONOLOGIE (7 JOURS) :',
+                    'MAP LAYERS & SENSORS': 'COUCHES DE CARTE ET CAPTEURS',
+                    'ALL ON': 'TOUT ACTIVER',
+                    'ALL OFF': 'TOUT DÉSACTIVER',
+                    'ACTIVE TORNADOES & SUPERCELLS': 'TORNADES ET SUPERCYCLONES ACTIFS',
+                    'LIVE STORM INTERCEPT': 'INTERCEPTION D\'ORAGES EN DIRECT',
+                    'ACQUIRING LIVE FEED...': 'ACQUISITION DU FLUX EN DIRECT...',
+                    'CLICK ON MAP TO QUERY ACTIVE WEBCAMS': 'CLIQUER SUR LA CARTE POUR WEBCAMS',
+                    'OSINT FIELD TOOLS': 'OUTILS DE TERRAIN OSINT'
+                }
+            };
 
-            const missingNodes = [];
+            const dict = offlinePhrases[langCode] || {};
             nodes.forEach(n => {
                 const orig = n._origI18nText;
-                if (!orig) return;
-                if (cachedMap[orig]) {
-                    n.textContent = cachedMap[orig];
-                } else {
-                    missingNodes.push(n);
+                if (orig && dict[orig]) {
+                    n.textContent = dict[orig];
                 }
             });
-
-            if (!missingNodes.length) return;
-
-            try {
-                const uniqueTexts = Array.from(new Set(missingNodes.map(n => n._origI18nText)));
-                const joined = uniqueTexts.join('\n');
-                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${encodeURIComponent(langCode)}&dt=t&q=${encodeURIComponent(joined)}`;
-                const res = await fetch(url);
-                if (!res.ok) return;
-                const data = await res.json();
-                const fullTrans = (data[0] || []).map(seg => (seg && seg[0]) ? seg[0] : '').join('');
-                const lines = fullTrans.split('\n');
-                if (lines.length === uniqueTexts.length) {
-                    uniqueTexts.forEach((orig, i) => {
-                        cachedMap[orig] = lines[i].trim();
-                    });
-                    try {
-                        localStorage.setItem(cacheKey, JSON.stringify(cachedMap));
-                    } catch (_) {}
-                    missingNodes.forEach(n => {
-                        if (cachedMap[n._origI18nText]) {
-                            n.textContent = cachedMap[n._origI18nText];
-                        }
-                    });
-                }
-            } catch (err) {
-                // Silent fallback if offline
-            }
         }
 
         wireSettingsModal() {
@@ -9751,10 +9888,7 @@
                 const langCard = e.target.closest && e.target.closest('.lang-card[data-code]');
                 if (langCard) {
                     const code = langCard.getAttribute('data-code');
-                    const searchInput = document.getElementById('input-settings-lang-search');
-                    const filterVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
                     this.setLanguage(code);
-                    this.renderLanguageGrid(filterVal);
                     return;
                 }
 
@@ -9794,7 +9928,7 @@
                                 <div style="font-size:0.68rem;color:#94a3b8;">${l.name} [${l.code.toUpperCase()}]</div>
                             </div>
                         </div>
-                        ${isSelected ? '<span style="color:#38bdf8;font-weight:bold;font-size:0.85rem;">✓</span>' : ''}
+                        ${isSelected ? '<span style="color:#38bdf8;font-weight:bold;font-size:0.95rem;">✓</span>' : ''}
                     </div>
                 `;
             }).join('');

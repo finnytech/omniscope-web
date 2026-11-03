@@ -4669,108 +4669,60 @@ path.subsea-cable-path {
     z-index: 20 !important;
 }
 
-.mon02-multiview-root {
-    width: 100% !important;
-    height: 100% !important;
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    display: grid !important;
-    gap: 5px !important;
-    padding: 4px !important;
-    box-sizing: border-box !important;
-    background: #030712 !important;
-    overflow: hidden !important;
-}
+/* =========================================================================
+   OMNISCOPE MON-02 TACTICAL MULTIVIEW (1x / 2x / 3x / 4x)
+   Clean 2x2 Matrix, Zero UI Overlap, Full Visibility, Smooth Expansion
+   ========================================================================= */
 
-.mon02-multiview-root[data-layout="1x"] {
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) !important;
-}
-
-.mon02-multiview-root[data-layout="2x"] {
-    grid-template-columns: minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
-}
-
-.mon02-multiview-root[data-layout="3x"] {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1.08fr) minmax(0, 0.92fr) !important;
-}
-
-.mon02-multiview-root[data-layout="3x"] #mv-slot-cell-0 {
-    grid-column: 1 / -1 !important;
-}
-
-.mon02-multiview-root[data-layout="4x"] {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) !important;
-}
-
-.mv-submonitor-cell {
-    min-height: 0 !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
-.mv-cell-header {
-    padding: 2px 6px !important;
-    height: 22px !important;
-    min-height: 22px !important;
-    flex-shrink: 0 !important;
-}
-
-.mv-cell-body {
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    min-width: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-.mv-cell-dvr-bar {
-    padding: 2px 5px !important;
-    height: 23px !important;
-    min-height: 23px !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    flex-shrink: 0 !important;
-}
-
-/* MON-02 1x-4x Layout Architecture: Smooth Expansion, Zero Overlap, Full Visibility */
-#btn-mon02-tv-side-tab {
+/* Hide single-cam toolbars when in Multiview Mode to maximize screen space */
+#card-webcam.multiview-mode .cam-switcher-bar,
+#card-webcam.multiview-mode #cam-hybrid-provider-bar,
+#card-webcam.multiview-mode #cam-zoom-hud,
+#card-webcam.multiview-mode #available-cams-bar,
+#card-webcam.multiview-mode #cam-timeline-bar {
     display: none !important;
 }
 
-.top-monitors-row {
-    transition: height 0.3s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+/* Hide old or misplaced floating TV side tabs */
+#btn-mon02-tv-side-tab,
+.mon02-tv-side-tab-btn {
+    display: none !important;
 }
 
-.top-monitors-row[data-mv-layout="1x"] {
+/* Row & Card height scaling when multiview is active */
+.top-monitors-row {
+    transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1), min-height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.top-monitors-row[data-mv-layout="1x"],
+#card-webcam[data-mv-layout="1x"] {
     height: 590px !important;
     min-height: 590px !important;
 }
 
-.top-monitors-row[data-mv-layout="2x"] {
-    height: 690px !important;
-    min-height: 690px !important;
+.top-monitors-row[data-mv-layout="2x"],
+#card-webcam[data-mv-layout="2x"] {
+    height: 700px !important;
+    min-height: 700px !important;
 }
 
-.top-monitors-row[data-mv-layout="3x"] {
-    height: 770px !important;
-    min-height: 770px !important;
+.top-monitors-row[data-mv-layout="3x"],
+#card-webcam[data-mv-layout="3x"] {
+    height: 780px !important;
+    min-height: 780px !important;
 }
 
-.top-monitors-row[data-mv-layout="4x"] {
-    height: 850px !important;
-    min-height: 850px !important;
+.top-monitors-row[data-mv-layout="4x"],
+#card-webcam[data-mv-layout="4x"] {
+    height: 860px !important;
+    min-height: 860px !important;
 }
 
+/* Multiview Root Grid Container */
 .mon02-multiview-root {
     width: 100% !important;
     height: 100% !important;
-    flex: 1 1 auto !important;
+    flex: 1 1 0 !important;
     min-height: 0 !important;
     display: grid !important;
     gap: 6px !important;
@@ -4781,41 +4733,53 @@ path.subsea-cable-path {
 }
 
 /* 1x: 1 single full-size monitor */
-.mon02-multiview-root[data-layout="1x"] {
+.mon02-multiview-root[data-layout="1x"],
+#card-webcam[data-mv-layout="1x"] .mon02-multiview-root,
+.top-monitors-row[data-mv-layout="1x"] .mon02-multiview-root {
     grid-template-columns: 1fr !important;
     grid-template-rows: 1fr !important;
 }
-.mon02-multiview-root[data-layout="1x"] .mv-submonitor-cell {
-    height: 100% !important;
-    width: 100% !important;
+.mon02-multiview-root[data-layout="1x"] .mv-submonitor-cell,
+#card-webcam[data-mv-layout="1x"] .mv-submonitor-cell {
     grid-column: 1 / -1 !important;
     grid-row: 1 / -1 !important;
+    height: 100% !important;
+    width: 100% !important;
 }
 
-/* 2x: 2 monitors stacked vertically, each taking full width so both video streams are 100% wide */
-.mon02-multiview-root[data-layout="2x"] {
+/* 2x: 2 monitors stacked vertically (full width, equal 50% height) */
+.mon02-multiview-root[data-layout="2x"],
+#card-webcam[data-mv-layout="2x"] .mon02-multiview-root,
+.top-monitors-row[data-mv-layout="2x"] .mon02-multiview-root {
     grid-template-columns: 1fr !important;
     grid-template-rows: 1fr 1fr !important;
 }
 
 /* 3x: Top monitor full width, bottom 2 side-by-side */
-.mon02-multiview-root[data-layout="3x"] {
+.mon02-multiview-root[data-layout="3x"],
+#card-webcam[data-mv-layout="3x"] .mon02-multiview-root,
+.top-monitors-row[data-mv-layout="3x"] .mon02-multiview-root {
     grid-template-columns: 1fr 1fr !important;
     grid-template-rows: 1.15fr 0.85fr !important;
 }
-.mon02-multiview-root[data-layout="3x"] #mv-slot-cell-0 {
+.mon02-multiview-root[data-layout="3x"] #mv-slot-cell-0,
+#card-webcam[data-mv-layout="3x"] #mv-slot-cell-0 {
     grid-column: 1 / -1 !important;
 }
 
-/* 4x: Quad 2x2 matrix */
-.mon02-multiview-root[data-layout="4x"] {
+/* 4x: Perfect Quad 2x2 Matrix */
+.mon02-multiview-root[data-layout="4x"],
+#card-webcam[data-mv-layout="4x"] .mon02-multiview-root,
+.top-monitors-row[data-mv-layout="4x"] .mon02-multiview-root {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
 }
 
+/* Sub-Monitor Cell */
 .mv-submonitor-cell {
-    min-height: 135px !important;
+    min-height: 0 !important;
     min-width: 0 !important;
+    flex: 1 1 0 !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
@@ -4824,6 +4788,7 @@ path.subsea-cable-path {
     border-radius: 4px !important;
     box-sizing: border-box !important;
     position: relative !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .mv-submonitor-cell.active-target-slot {
@@ -4831,6 +4796,7 @@ path.subsea-cable-path {
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.4), inset 0 0 5px rgba(16, 185, 129, 0.15) !important;
 }
 
+/* Header bar inside each sub-monitor */
 .mv-cell-header {
     height: 24px !important;
     min-height: 24px !important;
@@ -4844,89 +4810,142 @@ path.subsea-cable-path {
     border-bottom: 1px solid #1e293b !important;
     overflow: hidden !important;
     min-width: 0 !important;
+    white-space: nowrap !important;
 }
 
 .mv-cell-title-wrap {
     display: flex !important;
     align-items: center !important;
-    gap: 5px !important;
+    gap: 4px !important;
     min-width: 0 !important;
     flex: 1 1 auto !important;
     overflow: hidden !important;
+    white-space: nowrap !important;
 }
 
 .mv-slot-badge {
     flex-shrink: 0 !important;
-    font-size: 0.62rem !important;
-    font-weight: 700 !important;
+    font-size: 0.60rem !important;
+    font-weight: 800 !important;
     color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+    border: 1px solid #0284c7 !important;
+    padding: 0 4px !important;
+    border-radius: 2px !important;
+    white-space: nowrap !important;
 }
 
 .mv-cell-title {
-    font-size: 0.64rem !important;
+    font-size: 0.62rem !important;
     color: #e2e8f0 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     min-width: 0 !important;
+    max-width: 140px !important;
 }
 
 .mv-cell-quick-btns {
     display: flex !important;
     align-items: center !important;
-    gap: 3px !important;
+    gap: 2px !important;
     flex-shrink: 0 !important;
+    flex-wrap: nowrap !important;
 }
 
 .mv-mini-btn {
+    font-size: 0.60rem !important;
     padding: 1px 4px !important;
-    font-size: 0.58rem !important;
-    background: rgba(30, 41, 59, 0.8) !important;
-    color: #94a3b8 !important;
-    border: 1px solid #334155 !important;
     border-radius: 2px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
     cursor: pointer !important;
+    background: #111b2e !important;
+    border: 1px solid #26354d !important;
+    color: #cbd5e1 !important;
 }
 
 .mv-mini-btn:hover {
+    border-color: #38bdf8 !important;
     color: #fff !important;
-    border-color: #0284c7 !important;
+    background: rgba(56, 189, 248, 0.25) !important;
 }
 
+/* Sub-monitor video & content body */
 .mv-cell-body {
     flex: 1 1 0 !important;
-    min-height: 80px !important;
+    min-height: 60px !important;
+    height: 100% !important;
     min-width: 0 !important;
     overflow: hidden !important;
     position: relative !important;
-    background: #000 !important;
+    background: #02050b !important;
     display: flex !important;
-    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-.mv-video-player {
+.mv-cell-body video,
+.mv-cell-body iframe {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important;
-    background: #000 !important;
-    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    object-fit: contain !important;
+    border: none !important;
 }
 
+/* Sub-monitor DVR control bar */
 .mv-cell-dvr-bar {
-    height: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
     flex-shrink: 0 !important;
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
-    padding: 2px 5px !important;
-    background: #080d1a !important;
+    gap: 3px !important;
+    padding: 0 4px !important;
+    background: #070d18 !important;
     border-top: 1px solid #1e293b !important;
     overflow-x: auto !important;
     font-family: var(--font-mono) !important;
-    font-size: 0.62rem !important;
+    font-size: 0.60rem !important;
     white-space: nowrap !important;
+    scrollbar-width: none !important;
+}
+
+.mv-cell-dvr-bar::-webkit-scrollbar {
+    display: none !important;
+}
+
+.mv-cell-dvr-bar .dvr-btn {
+    padding: 1px 4px !important;
+    font-size: 0.58rem !important;
+    height: 16px !important;
+    line-height: 14px !important;
+    flex-shrink: 0 !important;
+    cursor: pointer !important;
+    border: 1px solid #1e293b !important;
+    background: #0a1120 !important;
+    color: #94a3b8 !important;
+    border-radius: 2px !important;
+}
+
+.mv-cell-dvr-bar .dvr-btn:hover {
+    color: #38bdf8 !important;
+    border-color: #0284c7 !important;
+}
+
+.mv-cell-dvr-bar .dvr-vol-slider {
+    width: 45px !important;
+    flex-shrink: 0 !important;
+    height: 3px !important;
+    cursor: pointer !important;
+}
+
+.mv-cell-dvr-bar .dvr-status-lbl {
+    font-size: 0.55rem !important;
+    color: #64748b !important;
+    flex-shrink: 0 !important;
 }
 
 /* TV Side Panel: docked cleanly on right */
