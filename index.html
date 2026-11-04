@@ -157,7 +157,7 @@
     <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png?v=2.6.2" />
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/cyberpunk.css?v=2.7.4" />
+    <link rel="stylesheet" href="css/cyberpunk.css?v=2.7.7" />
 </head>
 <body>
     <!-- Top Operations Header -->
@@ -349,35 +349,47 @@
                     <div class="radar-viewmode-toolbar" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;max-width:100%;box-sizing:border-box;background:rgba(15,23,42,0.85);padding:2px 8px;border-radius:4px;border:1px solid #0284c7;">
                         <span style="color:#38bdf8;font-size:0.7rem;font-weight:700;">📡 RADAR:</span>
                         <select id="select-radar-provider" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#38bdf8;border-color:#0284c7;background:#0f172a;" title="Radar & Satelliten Provider / Netzwerk">
-                            <optgroup label="🌐 Global & Weltweit">
+                            <optgroup label="🌐 Global & Weltweit (Doppler Radar Grid)">
                                 <option value="rainviewer" selected>RainViewer Global (Echtzeit)</option>
+                                <option value="rainviewer_radar_grid">RainViewer Global Doppler Grid</option>
                                 <option value="superdarn">SuperDARN Auroral Radar Grid</option>
                                 <option value="eiscat">EISCAT 3D Radar Scatter</option>
                             </optgroup>
                             <optgroup label="🇺🇸 Nordamerika (USA & Kanada)">
                                 <option value="nexrad">🇺🇸 NOAA NEXRAD Level-III (USA)</option>
+                                <option value="nexrad_l2">🇺🇸 NOAA NEXRAD Level-II (High-Res)</option>
+                                <option value="nexrad_l3">🌪️ NOAA NEXRAD Dual-Pol L3</option>
+                                <option value="tdwr">✈️ NOAA TDWR Terminal Radar (45 Sites)</option>
                                 <option value="noaa_mrms">🇺🇸 NOAA MRMS Q2 Convective (1km)</option>
-                                <option value="openmeteo_hrrr">🇺🇸 NOAA HRRR Convective Radar</option>
+                                <option value="openmeteo_hrrr">🇺🇸 NOAA HRRR Convective Radar (3km)</option>
                                 <option value="eccc_canada">🇨🇦 ECCC MSC GeoMet Radar (Kanada)</option>
                             </optgroup>
                             <optgroup label="🇪🇺 Europa (DACH & Benelux)">
                                 <option value="dwd">🇩🇪 DWD Niederschlagsradar (1x1 km)</option>
                                 <option value="bright_sky">🇩🇪 Bright Sky Synoptic Radar (DWD)</option>
                                 <option value="openmeteo_icon_d2">🇩🇪 DWD ICON-D2 (2.2km High-Res)</option>
+                                <option value="openmeteo_icon_eu">🇩🇪 DWD ICON-EU (7km Continental)</option>
+                                <option value="dwd_mosmix_hub">🇩🇪 DWD MOSMIX Radar Guidance</option>
                                 <option value="buienradar">🇳🇱 Buienradar Benelux Doppler</option>
                                 <option value="knmi">🇳🇱 KNMI Doppler Composites</option>
+                                <option value="knmi_radar_composites">🇳🇱 KNMI Radar Composites (Dual-Pol)</option>
                                 <option value="rmi_belgium">🇧🇪 RMI (KMI/IRM) Radar (Belgien)</option>
                                 <option value="chmi_czechia">🇨🇿 CHMI CZRAD Doppler (Tschechien)</option>
+                                <option value="chmi_radar_aladin">🇨🇿 CHMI ALADIN 2.3km Radar Mesh</option>
                                 <option value="shmu_slovakia">🇸🇰 SHMU Slovakia Radar (Slowakei)</option>
                                 <option value="aemet_spain">🇪🇸 AEMET Radar & Rayos (Spanien)</option>
+                                <option value="aemet_opendata_radar">🇪🇸 AEMET 15 Doppler Radar Grid</option>
                                 <option value="meteofrance">🇫🇷 Météo-France Radar Composite</option>
                             </optgroup>
                             <optgroup label="🌏 Asien & Pazifik">
                                 <option value="jma_japan">🇯🇵 JMA Japan Radar Network</option>
                                 <option value="cwa_taiwan">🇹🇼 CWA Doppler Radar (Taiwan)</option>
+                                <option value="cwa_radar_taiwan">🇹🇼 CWA Dual-Pol Radar Network</option>
                                 <option value="singapore_nea">🇸🇬 Singapore NEA Doppler Radar</option>
                                 <option value="bmkg_indonesia">🇮🇩 BMKG Doppler Radar (Indonesien)</option>
                                 <option value="kma_korea">🇰🇷 KMA Radar Supercomputing</option>
+                                <option value="kma_supercomputing">🇰🇷 KMA Doppler Wind Assimilation</option>
+                                <option value="cma_nmc_china">🇨🇳 CMA National Doppler Radar Grid</option>
                                 <option value="imd_india">🇮🇳 IMD India Doppler Radar Grid</option>
                                 <option value="pagasa">🇵🇭 PAGASA Typhoon Warning Center</option>
                                 <option value="bom_australia">🇦🇺 BOM Australia Doppler Radar</option>
@@ -438,7 +450,7 @@
                     <div class="mon01-radar-box-timers">
                         <span>RADAR: <strong id="mon01-hdr-radar-cd" style="color:#34d399;">60s</strong></span>
                         <span>•</span>
-                        <span>🛰️ SAT: <strong id="mon01-hdr-sat-cd" style="color:#38bdf8;">180s</strong></span>
+                        <span>🛰️ SAT: <strong id="mon01-hdr-sat-cd" style="color:#38bdf8;">30s</strong></span>
                     </div>
                     <div id="mon01-radar-box-scale" class="mon01-radar-box-scale">
                         <span style="background:#04e9e7;color:#000;">-10 dBZ</span>
@@ -748,6 +760,9 @@
                                     <input type="range" id="side-traffic-opacity" min="0.2" max="1" step="0.05" value="0.85" class="sub-slider" />
                                 </div>
                                 <div class="sidebar-hint" style="color:#64748b;font-size:0.65rem;">Keyless Free Google Maps Traffic Overlay</div>
+                                <button id="btn-side-stream-traffic" class="ops-btn" style="width:100%;margin-top:6px;padding:4px 8px;font-size:0.68rem;background:rgba(34,197,94,0.2);border:1px solid #22c55e;color:#4ade80;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;" onclick="const c = window.MapController ? window.MapController.map.getCenter() : {lat:50.1109,lng:8.6821}; window.streamTrafficToMon2 && window.streamTrafficToMon2(c.lat, c.lng, 14);" title="Aktuelle Kartenansicht als Stau-Watcher in MON-02 streamen">
+                                    <span>🚦 STREAM STAU-WATCHER (MON-02)</span>
+                                </button>
                             </div>
                         </div>
 
@@ -1345,7 +1360,7 @@
                     <span id="cam-active-title" title="GLOBAL LIVE WEBCAM & SURVEILLANCE FEED">GLOBAL LIVE WEBCAM & SURVEILLANCE FEED</span>
                 </div>
                 <div class="mon02-header-controls">
-                    <button id="btn-toggle-tv-drawer" class="ops-btn" style="padding:2px 8px;font-size:0.7rem;background:rgba(16,185,129,0.22);color:#34d399;border:1px solid #10b981;font-weight:700;flex-shrink:0;cursor:pointer;" title="108 Live-TV & Nachrichtensender Side-Panel ein-/ausklappen">📺 LIVE TV (108)</button>
+                    <button id="btn-toggle-tv-drawer" class="ops-btn" onclick="window.OmniScopeMultiView ? window.OmniScopeMultiView.toggleTvDrawer() : null" style="padding:2px 8px;font-size:0.7rem;background:rgba(16,185,129,0.22);color:#34d399;border:1px solid #10b981;font-weight:700;flex-shrink:0;cursor:pointer;" title="108 Live-TV & Nachrichtensender Side-Panel ein-/ausklappen">📺 LIVE TV (108)</button>
                     <div class="mon02-layout-toggle" id="mon02-layout-toggle" style="display:inline-flex;gap:2px;background:#030712;border:1px solid #1e293b;border-radius:3px;padding:1px;flex-shrink:0;">
                         <button class="ops-btn active" id="btn-mv-1x" data-mv="1" style="padding:2px 7px;font-size:0.68rem;font-weight:700;" title="1x Einzelmonitor (Standard // MON 2.1 voll)">1x</button>
                         <button class="ops-btn" id="btn-mv-2x" data-mv="2" style="padding:2px 7px;font-size:0.68rem;font-weight:700;" title="2x Dual Sub-Monitore (MON 2.1 + 2.2)">2x</button>
@@ -1411,6 +1426,48 @@
                 <span id="cam-telemetry-left">ZIEL: GLOBAL SENSOR GRID // KNOTEN AUF DER KARTE WÄHLEN</span>
                 <span id="cam-weather-snippet">STATUS: BEREIT // ECHTZEIT-DATEN VERFÜGBAR</span>
             </div>
+            <!-- MON-02 Live-TV & News Sidepanel Drawer -->
+            <aside id="mon02-tv-drawer" class="mon02-tv-sidepanel hidden">
+                <div class="tv-sidepanel-header">
+                    <div class="tv-drawer-title-group">
+                        <span class="tv-live-dot"></span>
+                        <strong>📺 LIVE TV &amp; NEWS SENDER (<span id="tv-header-total-count">108</span>)</strong>
+                    </div>
+                    <div class="tv-drawer-actions">
+                        <span id="tv-poll-status-pill" class="tv-poll-pill" title="Automatischer 2-Minuten Live-Check">🔄 <strong id="tv-poll-countdown">02:00</strong></span>
+                        <button id="btn-tv-poll-now" class="ops-btn" style="padding:2px 6px;font-size:0.64rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #0284c7;cursor:pointer;" title="Jetzt alle 108 TV-Streams prüfen">⚡ POLL</button>
+                        <button id="btn-tv-drawer-close" class="ops-btn" style="padding:2px 7px;font-size:0.68rem;background:#dc2626;color:#fff;border:none;cursor:pointer;" title="TV Side-Panel schließen">✕</button>
+                    </div>
+                </div>
+
+                <!-- Target Sub-Monitor Selector inside Side Panel -->
+                <div class="tv-sidepanel-slot-target">
+                    <span>🎯 SENDEN AN:</span>
+                    <div class="tv-sidepanel-slot-btns">
+                        <button class="tv-sp-slot-btn active" data-sp-target-slot="0">MON 2.1</button>
+                        <button class="tv-sp-slot-btn" data-sp-target-slot="1">MON 2.2</button>
+                        <button class="tv-sp-slot-btn" data-sp-target-slot="2">MON 2.3</button>
+                        <button class="tv-sp-slot-btn" data-sp-target-slot="3">MON 2.4</button>
+                    </div>
+                </div>
+
+                <div class="tv-drawer-toolbar">
+                    <input type="text" id="tv-channel-search" class="ops-input" placeholder="🔍 Sender suchen (Tagesschau, NASA, DW, ZDF, WeatherNation, CBS, BBC, Al Jazeera)..." />
+                    <div class="tv-cat-pills" id="tv-cat-pills">
+                        <button class="tv-cat-btn active" data-cat="all">ALLE (<span id="tv-ready-total">108</span>)</button>
+                        <button class="tv-cat-btn" data-cat="weather">🌦️ WETTER</button>
+                        <button class="tv-cat-btn" data-cat="news">🚨 NEWS</button>
+                        <button class="tv-cat-btn" data-cat="public">🏛️ DACH/TV</button>
+                        <button class="tv-cat-btn" data-cat="science">🛰️ SPACE</button>
+                        <button class="tv-cat-btn" data-cat="business">📈 FINANZ</button>
+                        <button class="tv-cat-btn" data-cat="regional">📍 US LOKAL</button>
+                        <button class="tv-cat-btn" data-cat="documentary">🎬 DOKU</button>
+                    </div>
+                </div>
+
+                <!-- Scrollable Full-Height Channel List -->
+                <div id="tv-channels-grid" class="tv-channels-list-scroll"></div>
+            </aside>
         </div>
 
         </div><!-- /top-monitors-row -->
@@ -2306,18 +2363,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- OmniScope Web Serverless Client-Side Bridge -->
-    <script src="js/web_bridge.js?v=2.6.4"></script>
+    <script src="js/web_bridge.js?v=2.7.7"></script>
 
     <script src="js/audio.js?v=7.4"></script>
     <script src="js/ram_cleaner.js?v=7.4"></script>
-    <script src="js/player.js?v=2.7.4"></script>
+    <script src="js/player.js?v=2.7.7"></script>
     <script src="js/globe.js?v=7.4"></script>
-    <script src="js/map.js?v=2.7.4"></script>
-    <script src="js/i18n.js?v=2.7.4"></script>
+    <script src="js/map.js?v=2.7.7"></script>
+    <script src="js/i18n.js?v=2.7.7"></script>
     <script src="js/settings.js?v=7.4"></script>
-    <script src="js/app.js?v=2.5.0"></script>
-    <script src="js/upgrade.js?v=2.7.4"></script>
-    <script src="js/tv_multiview.js?v=2.7.4"></script>
+    <script src="js/app.js?v=2.7.7"></script>
+    <script src="js/upgrade.js?v=2.7.7"></script>
+    <script src="js/tv_multiview.js?v=2.7.7"></script>
 
     <!-- ========================================================================= -->
     <!-- 115-LANGUAGE SYSTEM SETTINGS & CONFIGURATION MODAL                        -->

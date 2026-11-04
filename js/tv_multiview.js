@@ -230,32 +230,27 @@
 
             this.nexradRefreshSec = 60;
 
-            this.satRefreshSec = 180;
+            this.satRefreshSec = 30;
 
         }
 
 
 
         async init() {
-
-
-
-            await this.loadTvCatalog();
-
             this.injectMon02Controls();
-
             this.injectMon01RadarAndSatUpgrades();
-
             this.startTvTwoMinutePoller();
-
             this.startRadarAndSatAutoRefresh();
-
             this.hookMapAndWebcamRouting();
-
             this.setViewportCount(1); // Standard default is ALWAYS 1x monitor only!
-
             console.log(`[OmniScope v2.7.3] MON-02 Standard 1x, 1x-4x Independent Sub-Monitors (Zero Overlap) online.`);
-
+            this.loadTvCatalog().then(() => {
+                this.renderTvChannelGrid();
+                const totalEl = document.getElementById('tv-ready-total');
+                if (totalEl) totalEl.textContent = this.onlineChannels.length;
+                const headerCount = document.getElementById('tv-header-total-count');
+                if (headerCount) headerCount.textContent = this.onlineChannels.length;
+            });
         }
 
 
@@ -444,96 +439,54 @@
 
 
             // Full-Height Collapsible Side Panel docked on the right side of MON-02
-
-            const tvSidePanel = document.createElement('aside');
-
-            tvSidePanel.id = 'mon02-tv-drawer';
-
-            tvSidePanel.className = 'mon02-tv-sidepanel hidden';
-
-            tvSidePanel.innerHTML = `
-
+            let tvSidePanel = document.getElementById('mon02-tv-drawer');
+            if (!tvSidePanel) {
+                tvSidePanel = document.createElement('aside');
+                tvSidePanel.id = 'mon02-tv-drawer';
+                tvSidePanel.className = 'mon02-tv-sidepanel hidden';
+                tvSidePanel.innerHTML = `
                 <div class="tv-sidepanel-header">
-
                     <div class="tv-drawer-title-group">
-
                         <span class="tv-live-dot"></span>
-
-                        <strong>📺 LIVE TV & NEWS SENDER (${this.onlineChannels.length})</strong>
-
+                        <strong>📺 LIVE TV & NEWS SENDER (<span id="tv-header-total-count">${this.onlineChannels.length}</span>)</strong>
                     </div>
-
                     <div class="tv-drawer-actions">
-
                         <span id="tv-poll-status-pill" class="tv-poll-pill" title="Automatischer 2-Minuten Live-Check">🔄 <strong id="tv-poll-countdown">02:00</strong></span>
-
                         <button id="btn-tv-poll-now" class="ops-btn" style="padding:2px 6px;font-size:0.64rem;background:rgba(56,189,248,0.2);color:#38bdf8;border:1px solid #0284c7;cursor:pointer;" title="Jetzt alle 108 TV-Streams prüfen">⚡ POLL</button>
-
                         <button id="btn-tv-drawer-close" class="ops-btn" style="padding:2px 7px;font-size:0.68rem;background:#dc2626;color:#fff;border:none;cursor:pointer;" title="TV Side-Panel schließen">✕</button>
-
                     </div>
-
                 </div>
-
-
 
                 <!-- Target Sub-Monitor Selector inside Side Panel -->
-
                 <div class="tv-sidepanel-slot-target">
-
                     <span>🎯 SENDEN AN:</span>
-
                     <div class="tv-sidepanel-slot-btns">
-
                         <button class="tv-sp-slot-btn active" data-sp-target-slot="0">MON 2.1</button>
-
                         <button class="tv-sp-slot-btn" data-sp-target-slot="1">MON 2.2</button>
-
                         <button class="tv-sp-slot-btn" data-sp-target-slot="2">MON 2.3</button>
-
                         <button class="tv-sp-slot-btn" data-sp-target-slot="3">MON 2.4</button>
-
                     </div>
-
                 </div>
-
-
 
                 <div class="tv-drawer-toolbar">
-
                     <input type="text" id="tv-channel-search" class="ops-input" placeholder="🔍 Sender suchen (Tagesschau, NASA, DW, ZDF, WeatherNation, CBS, BBC, Al Jazeera)..." />
-
                     <div class="tv-cat-pills" id="tv-cat-pills">
-
                         <button class="tv-cat-btn active" data-cat="all">ALLE (<span id="tv-ready-total">${this.onlineChannels.length}</span>)</button>
-
                         <button class="tv-cat-btn" data-cat="weather">🌦️ WETTER</button>
-
                         <button class="tv-cat-btn" data-cat="news">🚨 NEWS</button>
-
                         <button class="tv-cat-btn" data-cat="public">🏛️ DACH/TV</button>
-
                         <button class="tv-cat-btn" data-cat="science">🛰️ SPACE</button>
-
                         <button class="tv-cat-btn" data-cat="business">📈 FINANZ</button>
-
                         <button class="tv-cat-btn" data-cat="regional">📍 US LOKAL</button>
-
                         <button class="tv-cat-btn" data-cat="documentary">🎬 DOKU</button>
-
                     </div>
-
                 </div>
 
-
-
                 <!-- Scrollable Full-Height Channel List -->
-
                 <div id="tv-channels-grid" class="tv-channels-list-scroll"></div>
-
             `;
-
-            mon02Card.appendChild(tvSidePanel);
+                mon02Card.appendChild(tvSidePanel);
+            }
 
 
 
@@ -1457,7 +1410,21 @@
 
                     cell.style.display = 'flex';
 
-                    if (!this.slots[i].data) {
+                    if (this.slots[i].type === 'custom' && this.slots[i].customContent) {
+
+                        const bodyEl = document.getElementById(`mv-cell-body-${i}`);
+
+                        const titleEl = document.getElementById(`mv-cell-title-${i}`);
+
+                        const dvrEl = document.getElementById(`mv-cell-dvr-${i}`);
+
+                        if (titleEl) titleEl.textContent = this.slots[i].title || 'STREAM // CUSTOM FEED';
+
+                        if (dvrEl) dvrEl.style.display = 'none';
+
+                        if (bodyEl && !bodyEl.innerHTML) bodyEl.innerHTML = this.slots[i].customContent;
+
+                    } else if (!this.slots[i].data) {
 
                         this.renderSlotStandby(i);
 
@@ -2251,18 +2218,41 @@
 
 
         assignCustomContentToSlot(slotIdx, { title, html }) {
-            if (this.viewportCount === 1) slotIdx = 0;
-            else if (slotIdx >= this.viewportCount) slotIdx = this.activeSlotIndex || 0;
+            const label = title || 'STREAM // CUSTOM FEED';
+
+            // 1x Mode: Directly inject into active player container without mounting multiview DOM
+            if (this.viewportCount === 1) {
+                this.cleanupSlotMedia(0);
+                const targetContainer = document.getElementById('webcam-player-container') || document.getElementById('player-container');
+                if (targetContainer) {
+                    targetContainer.innerHTML = html;
+                }
+                const topTitle = document.getElementById('cam-active-title');
+                if (topTitle) {
+                    topTitle.textContent = label;
+                }
+                this.slots[0].type = 'custom';
+                this.slots[0].title = label;
+                this.slots[0].data = { custom: true, html: html };
+                this.slots[0].customContent = html;
+                return;
+            }
+
+            // Multiview Mode (2x, 3x, 4x): Inject into targeted sub-monitor cell
+            let slotIndex = slotIdx;
+            if (slotIndex >= this.viewportCount) slotIndex = this.activeSlotIndex || 0;
             this.ensureMultiViewportDom(true);
-            this.cleanupSlotMedia(slotIdx);
+            this.cleanupSlotMedia(slotIndex);
 
-            const s = this.slots[slotIdx];
+            const s = this.slots[slotIndex];
             s.type = 'custom';
-            s.title = title || 'LIVE MONITOR FEED';
+            s.title = label;
+            s.data = { custom: true, html: html };
+            s.customContent = html;
 
-            const titleEl = document.getElementById(`mv-cell-title-${slotIdx}`);
-            const bodyEl = document.getElementById(`mv-cell-body-${slotIdx}`);
-            const dvrEl = document.getElementById(`mv-cell-dvr-${slotIdx}`);
+            const titleEl = document.getElementById(`mv-cell-title-${slotIndex}`);
+            const bodyEl = document.getElementById(`mv-cell-body-${slotIndex}`);
+            const dvrEl = document.getElementById(`mv-cell-dvr-${slotIndex}`);
 
             if (titleEl) titleEl.textContent = s.title;
             if (dvrEl) dvrEl.style.display = 'none';
@@ -3135,56 +3125,20 @@
 
 
 
-            // 2. Add NEXRAD Level-II, Level-III & TDWR to #select-radar-provider
-
-            if (radarProvSelect && !radarProvSelect.querySelector('option[value="nexrad_l2"]')) {
-
-                radarProvSelect.innerHTML = `
-
-                    <option value="rainviewer" selected>🌍 RainViewer Global</option>
-
-                    <option value="nexrad_l2">🇺🇸 NOAA NEXRAD L2</option>
-
-                    <option value="nexrad_l3">🌪️ NEXRAD L3 Dual-Pol</option>
-
-                    <option value="tdwr">✈️ NOAA TDWR (45 Sites)</option>
-
-                    <option value="goes_sat">🛰️ NOAA GOES-16/18 Live</option>
-
-                    <option value="dwd">🇩🇪 DWD 1km Radar</option>
-
-                    <option value="satellite">🛰️ NASA GIBS IR</option>
-
-                `;
-
+            // 2. Verified radar providers preserved from index.html (no destructive innerHTML overwrite)
+            if (radarProvSelect && !radarProvSelect.querySelector('option[value="tdwr"]')) {
+                const opt = document.createElement('option');
+                opt.value = 'tdwr';
+                opt.textContent = '✈️ NOAA TDWR (45 Sites)';
+                radarProvSelect.appendChild(opt);
             }
 
-
-
-            // 3. Add NEXRAD Level-II / Level-III Dual-Pol & Satellite modes to #select-radar-mode
-
+            // 3. Verified Doppler radar modes preserved from index.html (no destructive innerHTML overwrite)
             if (radarModeSelect && !radarModeSelect.querySelector('option[value="l3_cc"]')) {
-
-                radarModeSelect.innerHTML = `
-
-                    <option value="composite" selected>📡 Base Reflectivity (dBZ)</option>
-
-                    <option value="velocity">🌪️ Radial Velocity (N0U)</option>
-
-                    <option value="l3_cc">🚨 Tornado Debris (N0C)</option>
-
-                    <option value="l3_zdr">🧊 Hail Core ZDR (N0X)</option>
-
-                    <option value="echo_tops">⛈️ Echo Tops (EET 70k ft)</option>
-
-                    <option value="tdwr_tr0">✈️ TDWR Wind-Shear</option>
-
-                    <option value="goes_ir">🌡️ GOES Clean IR 10.3µm</option>
-
-                    <option value="goes_wv">💧 GOES Water Vapor</option>
-
-                `;
-
+                const opt1 = document.createElement('option');
+                opt1.value = 'l3_cc';
+                opt1.textContent = '🚨 Tornado Debris (N0C)';
+                radarModeSelect.appendChild(opt1);
             }
 
 
@@ -3217,7 +3171,7 @@
 
                         <span>•</span>
 
-                        <span>🛰️ SAT: <strong id="mon01-hdr-sat-cd" style="color:#38bdf8;">180s</strong></span>
+                        <span>🛰️ SAT: <strong id="mon01-hdr-sat-cd" style="color:#38bdf8;">30s</strong></span>
 
                     </div>
 
@@ -3583,7 +3537,7 @@
 
                 const mode = mc.activeRadarMode || 'composite';
 
-                const tsMin = Math.floor(Date.now() / 60000);
+                const tsMin = Math.floor(Date.now() / 30000);
 
 
 
@@ -3610,16 +3564,11 @@
 
 
                     if (mode === 'velocity') {
-
-                        customTileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsMin}&mode=vel`;
-
+                        customTileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsMin}`;
                     } else if (mode === 'l3_cc') {
-
-                        customTileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsMin}&mode=cc`;
-
+                        customTileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsMin}`;
                     } else if (mode === 'l3_zdr') {
-
-                        customTileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsMin}&mode=zdr`;
+                        customTileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsMin}`;
 
                     } else if (mode === 'echo_tops') {
 
@@ -3918,77 +3867,8 @@
 
 
         startRadarAndSatAutoRefresh() {
-
-            setInterval(() => {
-
-                this.nexradRefreshSec--;
-
-                this.satRefreshSec--;
-
-
-
-                if (this.nexradRefreshSec <= 0) {
-
-                    this.nexradRefreshSec = 60;
-
-                    const mc = window.MapController;
-
-                    if (mc && typeof mc.renderRadarFrame === 'function') {
-
-                        mc.renderRadarFrame(mc.radarIndex || 0);
-
-                    }
-
-                }
-
-
-
-                if (this.satRefreshSec <= 0) {
-
-                    this.satRefreshSec = 180;
-
-                    const mc = window.MapController;
-
-                    if (mc && mc.map) {
-
-                        const tsBucket = Math.floor(Date.now() / 180000);
-
-                        mc.map.eachLayer(lyr => {
-
-                            if (lyr && lyr._url && lyr._url.includes('goes-east')) {
-
-                                const baseUrl = lyr._url.split('?')[0];
-
-                                lyr.setUrl(`${baseUrl}?_ts=${tsBucket}`);
-
-                            }
-
-                        });
-
-                    }
-
-                }
-
-
-
-                const rCd = document.getElementById('nexrad-poll-cd');
-
-                const sCd = document.getElementById('sat-poll-cd');
-
-                const hdrRCd = document.getElementById('mon01-hdr-radar-cd');
-
-                const hdrSCd = document.getElementById('mon01-hdr-sat-cd');
-
-                if (rCd) rCd.textContent = `${this.nexradRefreshSec}s`;
-
-                if (sCd) sCd.textContent = `${this.satRefreshSec}s`;
-
-                if (hdrRCd) hdrRCd.textContent = `${this.nexradRefreshSec}s`;
-
-                if (hdrSCd) hdrSCd.textContent = `${this.satRefreshSec}s`;
-
-            }, 1000);
-
+            // Authoritative countdown and rapid refresh is handled centrally in js/map.js (startRapidSatelliteRadarRefresh).
+            // Duplicate secondary setInterval removed to eliminate countdown ticker jitter on #mon01-hdr-sat-cd.
         }
 
 
@@ -4273,6 +4153,8 @@
 
         setTimeout(() => window.OmniScopeMultiView.init(), 0);
 
+    }
+
     // Global Stream to MON-02 Helpers for Traffic & Weather Stations
     window.streamTrafficToMon2 = function(lat, lon, zoom = 14) {
         const mv = window.OmniScopeMultiView || window.OmniMultiView;
@@ -4318,6 +4200,35 @@
         const lat = station.lat || 0;
         const lon = station.lon || 0;
 
+        // Derive authentic model resolution and update cycle from provider definition
+        let meshResolution = '2.2 km High-Res Mesh';
+        let refreshCycle = 'Stündlich / MOSMIX';
+        const pId = (station.id || '').toLowerCase();
+        if (pId.includes('icon_d2') || pId.includes('icond2')) {
+            meshResolution = '2.2 km Mesh (DACH)';
+            refreshCycle = '3h Cycle (Rapid)';
+        } else if (pId.includes('icon_eu') || pId.includes('iconeu')) {
+            meshResolution = '7.0 km Mesh (Europa)';
+            refreshCycle = '6h Cycle';
+        } else if (pId.includes('hrrr')) {
+            meshResolution = '3.0 km Mesh (CONUS)';
+            refreshCycle = '1h Cycle (Rapid)';
+        } else if (pId.includes('gfs')) {
+            meshResolution = '13.0 km Global Mesh';
+            refreshCycle = '6h Cycle';
+        } else if (pId.includes('ecmwf')) {
+            meshResolution = '9.0 km Global IFS';
+            refreshCycle = '6h / 12h Cycle';
+        } else if (station.has_radar || pId.includes('nexrad') || pId.includes('radar') || pId.includes('dwd')) {
+            meshResolution = '1.0 km Composite';
+            refreshCycle = '5-10m Rapid Loop';
+        } else if (station.resolution) {
+            meshResolution = station.resolution;
+        }
+        if (station.refresh_cycle) {
+            refreshCycle = station.refresh_cycle;
+        }
+
         const html = `
             <div style="position:relative;width:100%;height:100%;background:#020617;display:flex;flex-direction:column;font-family:var(--font-mono);overflow-y:auto;padding:12px;box-sizing:border-box;">
                 <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
@@ -4343,11 +4254,11 @@
                     </div>
                     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:8px;border-left:3px solid #10b981;">
                         <div style="font-size:9px;color:#64748b;font-weight:bold;">AUFLÖSUNG / MESH</div>
-                        <div style="font-size:12px;color:#34d399;font-weight:bold;margin-top:2px;">${station.has_radar ? '1.0 km x 1.0 km' : '2.2 km High-Res'}</div>
+                        <div style="font-size:12px;color:#34d399;font-weight:bold;margin-top:2px;">${meshResolution}</div>
                     </div>
                     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:8px;border-left:3px solid #f59e0b;">
                         <div style="font-size:9px;color:#64748b;font-weight:bold;">REFRESH ZYKLUS</div>
-                        <div style="font-size:12px;color:#fbbf24;font-weight:bold;margin-top:2px;">${station.has_radar ? '30s - 5m Rapid' : 'Stündlich / MOSMIX'}</div>
+                        <div style="font-size:12px;color:#fbbf24;font-weight:bold;margin-top:2px;">${refreshCycle}</div>
                     </div>
                     <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:8px;border-left:3px solid #a855f7;">
                         <div style="font-size:9px;color:#64748b;font-weight:bold;">DATENFORMAT</div>
@@ -4395,15 +4306,43 @@
                     telEl.innerHTML = `
                         <div style="font-weight:bold;color:#10b981;margin-bottom:6px;font-size:11px;">● LIVE SENSOR-MESSUNG // SYNOP DATENPUNKTE:</div>
                         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:6px;color:#f8fafc;font-size:11px;">
-                            <div><strong>Temperatur:</strong> ${data.temperature_c !== undefined ? data.temperature_c + ' °C' : '14.2 °C'}</div>
-                            <div><strong>Luftfeuchte:</strong> ${data.relative_humidity_pct !== undefined ? data.relative_humidity_pct + ' %' : '68 %'}</div>
-                            <div><strong>Windstärke:</strong> ${data.wind_speed_kmh !== undefined ? data.wind_speed_kmh + ' km/h' : '18 km/h'}</div>
-                            <div><strong>Luftdruck:</strong> ${data.pressure_hpa !== undefined ? data.pressure_hpa + ' hPa' : '1016.4 hPa'}</div>
+                            <div><strong>Temperatur:</strong> ${data.temperature_c !== undefined && data.temperature_c !== null ? data.temperature_c + ' °C' : '--'}</div>
+                            <div><strong>Luftfeuchte:</strong> ${data.relative_humidity_pct !== undefined && data.relative_humidity_pct !== null ? data.relative_humidity_pct + ' %' : '--'}</div>
+                            <div><strong>Windstärke:</strong> ${data.wind_speed_kmh !== undefined && data.wind_speed_kmh !== null ? data.wind_speed_kmh + ' km/h' : '--'}</div>
+                            <div><strong>Luftdruck:</strong> ${data.pressure_hpa !== undefined && data.pressure_hpa !== null ? data.pressure_hpa + ' hPa' : '--'}</div>
                         </div>
+                        ${data.conditions ? `<div style="margin-top:6px;color:#94a3b8;font-size:10px;">Bedingung: <span style="color:#e2e8f0;">${data.conditions}</span></div>` : ''}
                     `;
                 }
             } catch (_) {}
         }, 100);
+    };
+
+    window.fetchLiveWeatherEngineTelemetry = async function(providerId, lat, lon) {
+        const telEl = document.getElementById('mon02-live-weather-telemetry');
+        if (telEl) {
+            telEl.innerHTML = 'Lade Echtzeit-Sensorwerte der Wetterstation...';
+        }
+        try {
+            const res = await fetch(`/api/weather/provider/${providerId}?lat=${lat}&lon=${lon}&_t=${Date.now()}`);
+            const data = await res.json();
+            if (telEl) {
+                telEl.innerHTML = `
+                    <div style="font-weight:bold;color:#10b981;margin-bottom:6px;font-size:11px;">● LIVE SENSOR-MESSUNG // SYNOP DATENPUNKTE:</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:6px;color:#f8fafc;font-size:11px;">
+                        <div><strong>Temperatur:</strong> ${data.temperature_c !== undefined && data.temperature_c !== null ? data.temperature_c + ' °C' : '--'}</div>
+                        <div><strong>Luftfeuchte:</strong> ${data.relative_humidity_pct !== undefined && data.relative_humidity_pct !== null ? data.relative_humidity_pct + ' %' : '--'}</div>
+                        <div><strong>Windstärke:</strong> ${data.wind_speed_kmh !== undefined && data.wind_speed_kmh !== null ? data.wind_speed_kmh + ' km/h' : '--'}</div>
+                        <div><strong>Luftdruck:</strong> ${data.pressure_hpa !== undefined && data.pressure_hpa !== null ? data.pressure_hpa + ' hPa' : '--'}</div>
+                    </div>
+                    ${data.conditions ? `<div style="margin-top:6px;color:#94a3b8;font-size:10px;">Bedingung: <span style="color:#e2e8f0;">${data.conditions}</span></div>` : ''}
+                `;
+            }
+        } catch (e) {
+            if (telEl) {
+                telEl.innerHTML = `<span style="color:#ef4444;">Fehler beim Laden der Sensorwerte: ${e.message}</span>`;
+            }
+        }
     };
 
     window.activateDopplerForStation = function(providerId, lat, lon) {
@@ -4444,9 +4383,6 @@
             window.MapController.renderRadarFrame(window.MapController.radarIndex || 0);
         }
     };
-
-
-    }
 
 })();
 

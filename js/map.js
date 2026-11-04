@@ -565,7 +565,293 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
     }
 }
 
+
+// =========================================================================
+// PERSONALIZED DOPPLER RADAR MODES & TACTICAL COPY-PASTEABLE DROPDOWNS
+// =========================================================================
+
+const RADAR_PROVIDER_MODES = {
+    'rainviewer': ['composite', 'rain_rate', 'satellite_ir'],
+    'rainviewer_radar_grid': ['composite', 'velocity', 'rain_rate', 'echo_tops', 'satellite_ir'],
+    'superdarn': ['velocity', 'composite'],
+    'eiscat': ['velocity', 'composite'],
+    'nexrad': ['composite', 'velocity', 'echo_tops', 'dual_pol_cc', 'differential_z', 'rain_rate', 'satellite_ir', 'satellite_vis'],
+    'nexrad_l2': ['composite', 'velocity', 'echo_tops', 'dual_pol_cc', 'rain_rate'],
+    'nexrad_l3': ['composite', 'velocity', 'echo_tops', 'dual_pol_cc', 'differential_z', 'rain_rate'],
+    'tdwr': ['composite', 'velocity', 'echo_tops'],
+    'noaa_mrms': ['rain_rate', 'composite'],
+    'openmeteo_hrrr': ['composite', 'rain_rate'],
+    'eccc_canada': ['composite', 'rain_rate'],
+    'dwd': ['composite', 'rain_rate', 'satellite_vis', 'satellite_ir'],
+    'bright_sky': ['composite', 'rain_rate'],
+    'openmeteo_icon_d2': ['composite', 'rain_rate'],
+    'openmeteo_icon_eu': ['composite', 'rain_rate'],
+    'dwd_mosmix_hub': ['composite', 'rain_rate'],
+    'buienradar': ['composite', 'rain_rate', 'velocity'],
+    'knmi': ['composite', 'velocity', 'rain_rate'],
+    'knmi_radar_composites': ['composite', 'velocity', 'rain_rate', 'dual_pol_cc'],
+    'rmi_belgium': ['composite', 'rain_rate'],
+    'chmi_czechia': ['composite', 'velocity', 'echo_tops', 'rain_rate'],
+    'chmi_radar_aladin': ['composite', 'rain_rate', 'velocity'],
+    'shmu_slovakia': ['composite', 'rain_rate'],
+    'aemet_spain': ['composite', 'rain_rate', 'echo_tops'],
+    'aemet_opendata_radar': ['composite', 'rain_rate'],
+    'meteofrance': ['composite', 'rain_rate'],
+    'jma_japan': ['composite', 'velocity', 'rain_rate'],
+    'cwa_taiwan': ['composite', 'velocity', 'rain_rate'],
+    'cwa_radar_taiwan': ['composite', 'velocity', 'rain_rate', 'dual_pol_cc'],
+    'singapore_nea': ['composite', 'rain_rate'],
+    'bmkg_indonesia': ['composite', 'velocity', 'rain_rate'],
+    'kma_korea': ['composite', 'velocity', 'rain_rate'],
+    'kma_supercomputing': ['velocity', 'composite', 'rain_rate'],
+    'cma_nmc_china': ['composite', 'velocity', 'rain_rate'],
+    'imd_india': ['composite', 'velocity', 'rain_rate'],
+    'pagasa': ['composite', 'velocity', 'rain_rate'],
+    'bom_australia': ['composite', 'velocity', 'rain_rate'],
+    'saws_southafrica': ['composite', 'rain_rate'],
+    'ncm_uae': ['composite', 'rain_rate'],
+    'ncm_saudi': ['composite', 'rain_rate'],
+    'inumet': ['composite', 'rain_rate'],
+    'goes_east_vis': ['satellite_vis'],
+    'goes_east_ir': ['satellite_ir'],
+    'goes_west_vis': ['satellite_vis'],
+    'goes_west_ir': ['satellite_ir'],
+    'dwd_satellite': ['satellite_vis', 'satellite_ir'],
+    'nasa_gibs_truecolor': ['satellite_vis'],
+    'satellite': ['satellite_ir']
+};
+
+const RADAR_MODE_DEFINITIONS = {
+    'composite': { label: '📡 dBZ Reflektivität (Base Reflectivity)', title: 'Radar-Reflektivität in dBZ' },
+    'velocity': { label: '💨 Doppler Radial-Wind (Wind Velocity)', title: 'Doppler-Geschwindigkeit des Windes' },
+    'rain_rate': { label: '🌧️ Niederschlagsrate (mm/h)', title: 'Niederschlagsintensität in mm pro Stunde' },
+    'echo_tops': { label: '⚡ Echohöhe (Echo Tops TITAN)', title: 'Maximale Höhe der Radar-Echos in kft / km' },
+    'dual_pol_cc': { label: '🔬 Dual-Pol CC (Korrelationskoeffizient)', title: 'Korrelationskoeffizient zur Unterscheidung von Hydrometeoren' },
+    'differential_z': { label: '🔬 Dual-Pol ZDR (Diff. Reflektivität)', title: 'Differentielle Reflektivität (Tropfenform/Hagel)' },
+    'satellite_ir': { label: '🛰️ Infrarot Wolkenspitzen (Clean IR)', title: 'Infrarot-Satellitenkanal mit Wolkenspitzentemperaturen' },
+    'satellite_vis': { label: '🛰️ Ultra High-Res Sichtbar (Visible)', title: 'Sichtbares Licht / High-Res HRV Satellitenkanal' }
+};
+
+function makeSelectCopyPastable(selectEl, customOptions = {}) {
+    if (!selectEl || selectEl._copyPastableInitialized) return;
+    selectEl._copyPastableInitialized = true;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tactical-copyable-select-wrap ' + (customOptions.wrapperClass || '');
+    wrapper.style.display = 'inline-flex';
+    wrapper.style.position = 'relative';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.verticalAlign = 'middle';
+    wrapper.style.boxSizing = 'border-box';
+
+    selectEl.parentNode.insertBefore(wrapper, selectEl);
+    wrapper.appendChild(selectEl);
+
+    selectEl.style.position = 'absolute';
+    selectEl.style.opacity = '0';
+    selectEl.style.pointerEvents = 'none';
+    selectEl.style.width = '0px';
+    selectEl.style.height = '0px';
+    selectEl.style.margin = '0';
+    selectEl.style.padding = '0';
+    selectEl.style.border = 'none';
+    selectEl.setAttribute('tabindex', '-1');
+
+    const trigger = document.createElement('div');
+    trigger.className = 'tactical-copyable-trigger ' + (selectEl.className || 'ops-select');
+    trigger.setAttribute('tabindex', '0');
+    trigger.setAttribute('role', 'combobox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    if (selectEl.style.color) trigger.style.color = selectEl.style.color;
+    if (selectEl.style.borderColor) trigger.style.borderColor = selectEl.style.borderColor;
+    if (selectEl.style.background) trigger.style.background = selectEl.style.background;
+    if (selectEl.style.fontSize) trigger.style.fontSize = selectEl.style.fontSize;
+    if (selectEl.style.padding) trigger.style.padding = selectEl.style.padding;
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'tactical-copyable-trigger-text';
+
+    const chevron = document.createElement('span');
+    chevron.className = 'tactical-copyable-chevron';
+    chevron.innerHTML = '&#9662;'; // ▾
+
+    trigger.appendChild(textSpan);
+    trigger.appendChild(chevron);
+    wrapper.appendChild(trigger);
+
+    const menu = document.createElement('div');
+    menu.className = 'tactical-copyable-menu-panel';
+    menu.style.display = 'none';
+    wrapper.appendChild(menu);
+
+    let isOpen = false;
+
+    function updateTriggerText() {
+        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+        textSpan.textContent = selectedOpt ? selectedOpt.textContent : '';
+        trigger.title = selectedOpt ? (selectedOpt.title || selectedOpt.textContent) : '';
+    }
+
+    function renderMenuContent() {
+        menu.innerHTML = '';
+        const children = Array.from(selectEl.children);
+        
+        children.forEach(child => {
+            if (child.tagName === 'OPTGROUP') {
+                const groupHeader = document.createElement('div');
+                groupHeader.className = 'tactical-copyable-optgroup-label';
+                groupHeader.textContent = child.label;
+                menu.appendChild(groupHeader);
+
+                Array.from(child.children).forEach(opt => {
+                    renderOptionItem(opt);
+                });
+            } else if (child.tagName === 'OPTION') {
+                renderOptionItem(child);
+            }
+        });
+    }
+
+    function renderOptionItem(opt) {
+        const item = document.createElement('div');
+        item.className = 'tactical-copyable-item' + (opt.selected ? ' selected' : '');
+
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = opt.textContent;
+        item.appendChild(labelSpan);
+
+        if (opt.selected) {
+            const check = document.createElement('span');
+            check.innerHTML = '&#10003;'; // ✓
+            check.style.fontSize = '0.7rem';
+            check.style.color = '#38bdf8';
+            check.style.marginLeft = '8px';
+            check.style.userSelect = 'none';
+            item.appendChild(check);
+        }
+
+        item.addEventListener('mouseup', (e) => {
+            const selection = window.getSelection().toString().trim();
+            if (selection.length > 0) {
+                // User was dragging to highlight text to copy it manually!
+                return;
+            }
+            selectEl.value = opt.value;
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            updateTriggerText();
+            closeMenu();
+        });
+
+        menu.appendChild(item);
+    }
+
+    function openMenu() {
+        renderMenuContent();
+        menu.style.display = 'block';
+        trigger.setAttribute('aria-expanded', 'true');
+        isOpen = true;
+
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth - 10) {
+            menu.style.left = 'auto';
+            menu.style.right = '0';
+        } else {
+            menu.style.left = '0';
+            menu.style.right = 'auto';
+        }
+    }
+
+    function closeMenu() {
+        menu.style.display = 'none';
+        trigger.setAttribute('aria-expanded', 'false');
+        isOpen = false;
+    }
+
+    trigger.addEventListener('mouseup', (e) => {
+        const selection = window.getSelection().toString().trim();
+        if (selection.length > 0) return;
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+
+    document.addEventListener('pointerdown', (e) => {
+        if (isOpen && !wrapper.contains(e.target)) {
+            closeMenu();
+        }
+    });
+
+    trigger.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!isOpen) openMenu();
+        } else if (e.key === 'Escape') {
+            if (isOpen) {
+                e.preventDefault();
+                closeMenu();
+            }
+        }
+    });
+
+    selectEl.addEventListener('change', () => {
+        updateTriggerText();
+    });
+
+    const observer = new MutationObserver(() => {
+        updateTriggerText();
+        if (isOpen) renderMenuContent();
+    });
+    observer.observe(selectEl, { childList: true, subtree: true, attributes: true });
+
+    updateTriggerText();
+
+    selectEl.refreshCopyPastable = () => {
+        updateTriggerText();
+        if (isOpen) renderMenuContent();
+    };
+}
+
 class OperationsMap {
+
+    updateRadarModesForProvider(provId) {
+        const radarModeSelect = document.getElementById('select-radar-mode');
+        if (!radarModeSelect) return;
+        const supported = RADAR_PROVIDER_MODES[provId] || ['composite', 'rain_rate'];
+        const currentMode = radarModeSelect.value;
+
+        radarModeSelect.innerHTML = '';
+        supported.forEach(m => {
+            const meta = RADAR_MODE_DEFINITIONS[m] || { label: m, title: m };
+            const opt = document.createElement('option');
+            opt.value = m;
+            opt.textContent = meta.label;
+            opt.title = meta.title;
+            radarModeSelect.appendChild(opt);
+        });
+
+        if (supported.includes(currentMode)) {
+            radarModeSelect.value = currentMode;
+        } else {
+            radarModeSelect.value = supported[0];
+        }
+        this.activeRadarMode = radarModeSelect.value;
+        if (radarModeSelect.refreshCopyPastable) {
+            radarModeSelect.refreshCopyPastable();
+        }
+    }
+
+    initCopyPastableMenus() {
+        const mapSelect = document.getElementById('map-style-select');
+        const provSelect = document.getElementById('select-radar-provider');
+        const modeSelect = document.getElementById('select-radar-mode');
+
+        if (mapSelect) makeSelectCopyPastable(mapSelect);
+        if (provSelect) makeSelectCopyPastable(provSelect);
+        if (modeSelect) makeSelectCopyPastable(modeSelect);
+    }
     getDynamicNodeRadius(baseRadius = 5.0) {
         const zoom = this.map ? this.map.getZoom() : 4;
         let r = baseRadius;
@@ -777,6 +1063,8 @@ class OperationsMap {
         this.initCapabilities();
         this.initBaseLayers();
         this.initEventListeners();
+        this.updateRadarModesForProvider(this.activeRadarProvider || 'rainviewer');
+        this.initCopyPastableMenus();
         this.startRapidSatelliteRadarRefresh();
         this.initRadar();
         this.startLiveTelemetry();
@@ -1484,6 +1772,7 @@ class OperationsMap {
         if (radarProvSelect) {
             radarProvSelect.addEventListener('change', (e) => {
                 this.activeRadarProvider = e.target.value;
+                this.updateRadarModesForProvider(this.activeRadarProvider);
                 const topRadar = document.getElementById('layer-radar');
                 const sideRadar = document.getElementById('side-layer-radar');
                 if (topRadar) topRadar.checked = true;
@@ -2461,6 +2750,17 @@ class OperationsMap {
         });
 
         this.reticle = L.marker([lat, lng], { icon }).addTo(this.map);
+        const popupContent = `
+            <div style="font-family:var(--font-mono);font-size:11px;min-width:220px;padding:2px;">
+                <div style="font-weight:bold;color:#38bdf8;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px;">
+                    🎯 RETICLE LOCK [${lat.toFixed(4)}°, ${lng.toFixed(4)}°]
+                </div>
+                <button class="ops-btn" style="width:100%;margin-top:4px;padding:6px 8px;font-size:10px;background:rgba(34,197,94,0.22);border:1px solid #22c55e;color:#4ade80;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="window.streamTrafficToMon2 && window.streamTrafficToMon2(${lat}, ${lng}, 14)">
+                    🚦 STREAM STAU-WATCHER (MON-02)
+                </button>
+            </div>
+        `;
+        this.reticle.bindPopup(popupContent);
     }
 
     async lockProximityGroundStation(lat, lng, openInMon02 = true) {
@@ -2980,55 +3280,68 @@ class OperationsMap {
         }
 
         if (prov === 'nexrad') {
-            // Official NOAA Level-III NEXRAD Base Reflectivity (IEM / NOAA)
-            tileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png';
+            const tsBucket = Math.floor(Date.now() / 30000);
+            if (mode === 'echo_tops') {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '🇺🇸 NOAA NEXRAD ECHO TOPS (EET)';
+            } else if (mode === 'rain_rate') {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '🇺🇸 NOAA MRMS Q2 PRECIP RATE';
+            } else if (mode === 'satellite_ir') {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '🛰️ NOAA GOES-EAST IR (4km)';
+            } else if (mode === 'satellite_vis') {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '🛰️ NOAA GOES-EAST VIS (1km)';
+            } else {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '🇺🇸 NOAA NEXRAD LEVEL-III USA';
+            }
             maxNative = 11;
-            hudStatus = '🇺🇸 NOAA NEXRAD LEVEL-III USA';
         } else if (prov === 'noaa_mrms' || prov === 'openmeteo_hrrr') {
-            // NOAA MRMS Q2 High-Res Convective Multi-Radar (1km)
-            tileUrl = 'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png';
+            const tsBucket = Math.floor(Date.now() / 30000);
+            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 11;
             hudStatus = '🇺🇸 NOAA MRMS Q2 CONVECTIVE (1km)';
         } else if (prov === 'goes_east_vis') {
-            // NOAA GOES-16 East High-Rate Visible 1km (Rapid Scan)
-            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png?_ts=${Date.now()}`;
+            const tsBucket = Math.floor(Date.now() / 30000);
+            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 10;
             hudStatus = '🛰️ NOAA GOES-16 EAST VIS (1km RAPID)';
         } else if (prov === 'goes_east_ir') {
-            // NOAA GOES-16 East Band 13 Clean IR (Rapid Scan)
-            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png?_ts=${Date.now()}`;
+            const tsBucket = Math.floor(Date.now() / 30000);
+            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 9;
             hudStatus = '🛰️ NOAA GOES-16 EAST IR (BAND 13 RAPID)';
         } else if (prov === 'goes_west_vis') {
-            // NOAA GOES-18 West High-Rate Visible 1km (Rapid Scan)
-            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-vis-1km-900913/{z}/{x}/{y}.png?_ts=${Date.now()}`;
+            const tsBucket = Math.floor(Date.now() / 30000);
+            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 10;
             hudStatus = '🛰️ NOAA GOES-18 WEST VIS (1km RAPID)';
         } else if (prov === 'goes_west_ir') {
-            // NOAA GOES-18 West Band 13 Clean IR (Rapid Scan)
-            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-ir-4km-900913/{z}/{x}/{y}.png?_ts=${Date.now()}`;
+            const tsBucket = Math.floor(Date.now() / 30000);
+            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-ir-4km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 9;
             hudStatus = '🛰️ NOAA GOES-18 WEST IR (BAND 13 RAPID)';
         } else if (prov === 'dwd' || prov === 'bright_sky' || prov === 'openmeteo_icon_d2') {
-            // Official Native Deutscher Wetterdienst (DWD) 1km x 1km Niederschlagsradar WMS
+            const dwdLayer = (mode === 'satellite_vis' || mode === 'satellite_ir') ? 'dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h' : 'dwd:Niederschlagsradar';
             this.dwdNativeWms = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
-                layers: 'dwd:Niederschlagsradar',
+                layers: dwdLayer,
                 format: 'image/png',
                 transparent: true,
                 opacity: this.radarOpacity || 0.85,
                 maxZoom: 18,
                 zIndex: 600,
-                attribution: 'Deutscher Wetterdienst (DWD)'
+                attribution: dwdLayer.includes('Satellite') ? 'EUMETSAT / DWD' : 'Deutscher Wetterdienst (DWD)'
             });
             this.dwdNativeWms.addTo(this.map);
             this.activeWmsLayer = this.dwdNativeWms;
-            hudStatus = '🇩🇪 DWD NIEDERSCHLAGSRADAR (1x1 KM ECHTDATEN)';
+            hudStatus = dwdLayer.includes('Satellite') ? '🛰️ EUMETSAT / DWD HIGH-RES CLOUD TYPE' : '🇩🇪 DWD NIEDERSCHLAGSRADAR (1x1 KM ECHTDATEN)';
             this.updateDynamicRadarLegend(prov, mode, hudStatus);
             return;
         } else if (prov === 'dwd_satellite') {
-            // EUMETSAT / DWD High-Res Meteosat RGB Cloud Type WMS
             this.dwdNativeWms = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
-                layers: 'dwd:Satellite_Meteosat_RGB_CloudType',
+                layers: 'dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h',
                 format: 'image/png',
                 transparent: true,
                 opacity: this.radarOpacity || 0.85,

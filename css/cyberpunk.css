@@ -5115,3 +5115,130 @@ path.subsea-cable-path {
     text-align: center;
     font-style: italic;
 }
+
+/* =========================================================================
+   TACTICAL COPYABLE DROPDOWN MENUS (DOPPLER, RADAR MODE & MAP STYLE)
+   100% Selectable & Copy-Pasteable text - Zero extra buttons
+   ========================================================================= */
+
+.tactical-copyable-select-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.tactical-copyable-trigger {
+    background: var(--bg-card, #0f172a);
+    border: 1px solid var(--border-strong, #334155);
+    color: var(--text-main, #f8fafc);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: var(--font-mono, monospace);
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    cursor: pointer;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    white-space: nowrap;
+    max-width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tactical-copyable-trigger:hover,
+.tactical-copyable-trigger:focus-visible {
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    outline: none;
+}
+
+.tactical-copyable-trigger-text {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tactical-copyable-chevron {
+    font-size: 0.65rem;
+    color: currentColor;
+    opacity: 0.8;
+    pointer-events: none;
+    user-select: none;
+    transition: transform 0.2s ease;
+}
+
+.tactical-copyable-menu-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 250px;
+    max-width: 420px;
+    max-height: 380px;
+    overflow-y: auto;
+    background: rgba(10, 16, 30, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid #0284c7;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9), 0 0 20px rgba(2, 132, 199, 0.35);
+    border-radius: 4px;
+    z-index: 999999;
+    padding: 4px 0;
+    font-family: var(--font-mono, monospace);
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    box-sizing: border-box;
+}
+
+.tactical-copyable-optgroup-label {
+    padding: 6px 10px 4px 10px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    color: #38bdf8;
+    background: rgba(2, 132, 199, 0.15);
+    border-top: 1px solid rgba(2, 132, 199, 0.25);
+    border-bottom: 1px solid rgba(2, 132, 199, 0.25);
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text;
+    letter-spacing: 0.4px;
+}
+
+.tactical-copyable-item {
+    padding: 6px 12px;
+    font-size: 0.72rem;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.35);
+    cursor: text;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.tactical-copyable-item:hover {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+}
+
+.tactical-copyable-item.selected {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    font-weight: 700;
+}
+
+.tactical-copyable-item span {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text;
+}

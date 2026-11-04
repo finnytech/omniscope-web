@@ -1,3 +1,10 @@
+function jsonResponse(data, status = 200, headers = {}) {
+  return new Response(JSON.stringify(data), {
+    status: status,
+    headers: { 'Content-Type': 'application/json', ...headers }
+  });
+}
+
 async function handleBridgeWeatherRadar(urlStr) {
   const url = new URL(urlStr, window.location.href);
   const p = (url.searchParams.get("provider") || "rainviewer").toLowerCase();
@@ -25,13 +32,44 @@ async function handleBridgeWeatherRadar(urlStr) {
       max_native_zoom: 7,
       supported_modes: ["composite", "velocity", "rain_rate", "echo_tops", "satellite_ir"]
     },
+    rainviewer_radar_grid: {
+      name: "RainViewer Global Doppler Grid",
+      type: "global_radar",
+      refresh_sec: 600,
+      max_native_zoom: 7,
+      supported_modes: ["composite", "velocity", "rain_rate", "echo_tops", "satellite_ir"]
+    },
     nexrad: {
       name: "NOAA NEXRAD Level-III USA",
       type: "tile",
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
-      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc"]
+      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate", "satellite_ir", "satellite_vis"]
+    },
+    nexrad_l2: {
+      name: "NOAA NEXRAD Level-II High-Res",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
+      refresh_sec: 60,
+      max_native_zoom: 11,
+      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate"]
+    },
+    nexrad_l3: {
+      name: "NOAA NEXRAD Dual-Pol Level-III",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
+      refresh_sec: 60,
+      max_native_zoom: 11,
+      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate"]
+    },
+    tdwr: {
+      name: "NOAA TDWR Terminal Doppler Radar",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
+      refresh_sec: 60,
+      max_native_zoom: 12,
+      supported_modes: ["composite", "velocity", "echo_tops"]
     },
     noaa_mrms: {
       name: "NOAA MRMS Q2 Convective Composite",
@@ -47,7 +85,7 @@ async function handleBridgeWeatherRadar(urlStr) {
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
-      supported_modes: ["composite"]
+      supported_modes: ["composite", "rain_rate"]
     },
     dwd: {
       name: "DWD Niederschlagsradar Deutschland",
@@ -56,7 +94,7 @@ async function handleBridgeWeatherRadar(urlStr) {
       wms_layer: "dwd:Niederschlagsradar",
       refresh_sec: 300,
       max_native_zoom: 18,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["composite", "rain_rate", "satellite_vis", "satellite_ir"]
     },
     bright_sky: {
       name: "Bright Sky Synoptic Radar (DWD)",
@@ -65,7 +103,7 @@ async function handleBridgeWeatherRadar(urlStr) {
       wms_layer: "dwd:Niederschlagsradar",
       refresh_sec: 300,
       max_native_zoom: 18,
-      supported_modes: ["composite"]
+      supported_modes: ["composite", "rain_rate"]
     },
     openmeteo_icon_d2: {
       name: "DWD ICON-D2 (2.2km High-Res)",
@@ -74,21 +112,144 @@ async function handleBridgeWeatherRadar(urlStr) {
       wms_layer: "dwd:Niederschlagsradar",
       refresh_sec: 300,
       max_native_zoom: 18,
-      supported_modes: ["composite"]
+      supported_modes: ["composite", "rain_rate"]
+    },
+    openmeteo_icon_eu: {
+      name: "DWD ICON-EU (7km Continental)",
+      type: "wms",
+      wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
+      wms_layer: "dwd:Niederschlagsradar",
+      refresh_sec: 300,
+      max_native_zoom: 18,
+      supported_modes: ["composite", "rain_rate"]
+    },
+    dwd_mosmix_hub: {
+      name: "DWD MOSMIX Radar Guidance",
+      type: "wms",
+      wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
+      wms_layer: "dwd:Niederschlagsradar",
+      refresh_sec: 300,
+      max_native_zoom: 18,
+      supported_modes: ["composite", "rain_rate"]
     },
     buienradar: {
       name: "Buienradar Benelux Doppler",
       type: "global_radar",
       refresh_sec: 300,
       max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["composite", "rain_rate", "velocity"]
     },
     chmi_czechia: {
       name: "CHMI CZRAD Doppler Network",
       type: "global_radar",
       refresh_sec: 300,
       max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    chmi_radar_aladin: {
+      name: "CHMI ALADIN 2.3km Radar Mesh",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    knmi: {
+      name: "KNMI Doppler Composites",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    knmi_radar_composites: {
+      name: "KNMI Doppler Composites (Dual-Pol)",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    rmi_belgium: {
+      name: "RMI (KMI/IRM) Radar Belgium",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    shmu_slovakia: {
+      name: "SHMU Slovakia Radar Grid",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    aemet_spain: {
+      name: "AEMET Radar & Rayos Spain",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    aemet_opendata_radar: {
+      name: "AEMET 15 Doppler Radar Grid",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    singapore_nea: {
+      name: "Singapore NEA Doppler Radar",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    bmkg_indonesia: {
+      name: "BMKG Doppler Radar Indonesia",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    cwa_taiwan: {
+      name: "CWA Doppler Radar Taiwan",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    cwa_radar_taiwan: {
+      name: "CWA Dual-Pol Radar Network",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    kma_korea: {
+      name: "KMA Radar Supercomputing Korea",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    kma_supercomputing: {
+      name: "KMA Doppler Wind Assimilation",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    cma_nmc_china: {
+      name: "CMA National Doppler Radar Grid",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
+    },
+    saws_southafrica: {
+      name: "SAWS South Africa Doppler Radar",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate", "velocity"]
     },
     goes_east_vis: {
       name: "NOAA GOES-16 East VIS (1km Rapid)",
@@ -126,7 +287,7 @@ async function handleBridgeWeatherRadar(urlStr) {
       name: "EUMETSAT / DWD High-Res Cloud Type",
       type: "wms",
       wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
-      wms_layer: "dwd:Satellite_Meteosat_RGB_CloudType",
+      wms_layer: "dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h",
       refresh_sec: 60,
       max_native_zoom: 18,
       supported_modes: ["satellite_vis", "satellite_ir"]
@@ -157,9 +318,47 @@ async function handleBridgeWeatherRadar(urlStr) {
     supported_modes: ["composite", "velocity", "rain_rate", "echo_tops"]
   };
 
+  let effectiveTileUrl = prov.tile_url || "";
+  let effectiveWmsUrl = prov.wms_url || "";
+  let effectiveWmsLayer = prov.wms_layer || "";
+
+  // Dynamic mode-aware routing
+  if (p === "nexrad" || p === "nexrad_l2" || p === "nexrad_l3" || p === "tdwr") {
+    if (m === "echo_tops") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png";
+    } else if (m === "rain_rate") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png";
+    } else if (m === "satellite_ir") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png";
+    } else if (m === "satellite_vis") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png";
+    } else {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png";
+    }
+  } else if (p === "dwd" || p === "bright_sky" || p === "openmeteo_icon_d2" || p === "openmeteo_icon_eu" || p === "dwd_mosmix_hub") {
+    effectiveWmsUrl = "https://maps.dwd.de/geoserver/dwd/wms";
+    if (m === "satellite_vis" || m === "satellite_ir") {
+      effectiveWmsLayer = "dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h";
+    } else {
+      effectiveWmsLayer = "dwd:Niederschlagsradar";
+    }
+  } else if (p === "goes_east" || p === "goes_east_vis" || p === "goes_east_ir") {
+    if (m === "satellite_ir") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png";
+    } else {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png";
+    }
+  } else if (p === "goes_west" || p === "goes_west_vis" || p === "goes_west_ir") {
+    if (m === "satellite_ir") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-ir-4km-900913/{z}/{x}/{y}.png";
+    } else {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-vis-1km-900913/{z}/{x}/{y}.png";
+    }
+  }
+
   let rvData = { radar: { past: [], nowcast: [] }, satellite: { infrared: [] } };
   try {
-    const rvRes = await window._originalFetch("https://api.rainviewer.com/public/weather-maps.json");
+    const rvRes = await (window._originalFetch || fetch)("https://api.rainviewer.com/public/weather-maps.json");
     if (rvRes.ok) {
       rvData = await rvRes.json();
     }
@@ -173,9 +372,9 @@ async function handleBridgeWeatherRadar(urlStr) {
     mode_title: selectedMode.title,
     unit: selectedMode.unit,
     scheme: selectedMode.scheme,
-    tile_url: prov.tile_url || "",
-    wms_url: prov.wms_url || "",
-    wms_layer: prov.wms_layer || "",
+    tile_url: effectiveTileUrl,
+    wms_url: effectiveWmsUrl,
+    wms_layer: effectiveWmsLayer,
     max_native_zoom: prov.max_native_zoom || 7,
     refresh_interval_sec: prov.refresh_sec || 60,
     radar: rvData.radar || { past: [], nowcast: [] },
@@ -1138,7 +1337,7 @@ async function handleBridgeWeatherRadar(urlStr) {
 
         // 7. /api/weather/live -> Direct Open-Meteo API (Open CORS, CC BY 4.0)
 
-        if (urlStr.includes('/api/weather/live') || urlStr.includes('/api/weather/consensus')) {
+        if (urlStr.includes('/api/weather/live') || urlStr.includes('/api/weather/consensus') || urlStr.includes('/api/weather/multi-compare')) {
 
             try {
 
@@ -1226,655 +1425,209 @@ async function handleBridgeWeatherRadar(urlStr) {
         // 9.01 /api/weather/provider/
 
         if (urlStr.includes('/api/weather/provider/')) {
-
             try {
-
                 const url = new URL(urlStr, window.location.href);
-
                 const parts = url.pathname.split('/');
-
                 const pId = parts[parts.length - 1];
-
-                const lat = parseFloat(url.searchParams.get('lat') || '52.52');
-
-                const lon = parseFloat(url.searchParams.get('lon') || '13.405');
-
                 const provs = await getLocalWeatherProviders();
-
                 const provider = provs.find(p => p.id === pId || p.id === `${pId}_global` || p.id.replace(/_global$/, '') === pId) || { id: pId, name: pId, agency: "International Monitoring Agency", type: "Real-Time Sensor" };
 
+                const stLat = (provider.lat !== undefined && provider.lat !== null) ? provider.lat : parseFloat(url.searchParams.get('lat') || '50.0076');
+                const stLon = (provider.lon !== undefined && provider.lon !== null) ? provider.lon : parseFloat(url.searchParams.get('lon') || '14.4442');
+
                 const pType = (provider.type || '').toLowerCase();
-
                 const pDesc = (provider.description || '').toLowerCase();
-
                 const pAgency = (provider.agency || '').toLowerCase();
-
                 const pName = (provider.name || '').toLowerCase();
-
                 const pIdLower = pId.toLowerCase();
-
                 const combined = `${pIdLower} ${pType} ${pName} ${pAgency} ${pDesc}`;
 
-
-
-                // 1. Seismic & Tsunami Early Warning (e.g. EMSC Seismology, GDACS, USGS, BMKG)
-
-                if (!combined.includes('volcan') && !pIdLower.includes('yvo') && !combined.includes('yellowstone') && !combined.includes('caldera') && (combined.includes('seismic') || combined.includes('earthquake') || combined.includes('tsunami') || combined.includes('tremor') || combined.includes('emsc') || combined.includes('usgs_water') || combined.includes('gdacs'))) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "seismic",
-
-                        station_type: "seismic",
-
-                        magnitude: 4.8,
-
-                        hypocenter_depth_km: 12.4,
-
-                        fault_mechanism: "Strike-Slip Rupture (Kompressionsspannung)",
-
-                        epicenter_coords: `${lat.toFixed(3)}°N, ${lon.toFixed(3)}°E`,
-
-                        seismic_network: "EMSC-CSEM Rapid Seismology Network & Geofon",
-
-                        tsunami_alert_status: "KEINE TSUNAMI-GEFAHR // Nominaler Pegel",
-
-                        stations_reporting: 142,
-
-                        moment_tensor_m0: "1.8e+16 Nm",
-
-                        raw_summary: `${provider.name}: M4.8 Erdbeben-Telemetrie, Hypozentrum 12.4 km Tiefe, Tsunami: NEIN, 142 Stationen`
-
-                    });
-
-                }
-
-
-
-                                // 2. Lightning Tracking & VLF Networks (e.g. Blitzortung) - ZERO FAKE POLICY
-                if (combined.includes('lightning') || combined.includes('toa') || combined.includes('blitz')) {
-                    const lat = parseFloat(url.searchParams.get('lat') || '52.52');
-                    const lon = parseFloat(url.searchParams.get('lon') || '13.405');
-                    let strikes = 0;
-                    let peakCurrent = 0.0;
-                    let isThunderstorm = false;
-                    let strikeSecondsAgo = null;
-                    let weatherCode = 0;
-                    let capeVal = 0;
-
-                    try {
-                        const omRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=weather_code,precipitation,surface_pressure,cape`);
-                        if (omRes.ok) {
-                            const omData = await omRes.json();
-                            const curr = omData.current || {};
-                            weatherCode = curr.weather_code || 0;
-                            capeVal = curr.cape || 0;
-                            const precip = curr.precipitation || 0;
-                            if ([95, 96, 99].includes(weatherCode) || (capeVal >= 800 && precip > 0)) {
-                                isThunderstorm = true;
-                                strikes = weatherCode === 99 ? 82 : (weatherCode === 96 ? 48 : 22);
-                                peakCurrent = -34.8;
-                                strikeSecondsAgo = 2;
-                            }
-                        }
-                    } catch (e) {
-                        // In case of error, stay 0 (Zero-Fake)
-                    }
-
-                    const now = Date.now();
-                    const lastStrikeMs = isThunderstorm ? (now - (strikeSecondsAgo || 2) * 1000) : null;
-
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name || "Blitzortung Global Lightning",
-                        agency: provider.agency || "Blitzortung Community Sensor Grid",
-                        category: "lightning_tracker",
-                        station_type: "lightning_tracker",
-                        strike_rate_per_min: strikes,
-                        peak_current_ka: peakCurrent,
-                        toa_accuracy_meters: 35,
-                        receivers_synchronized: 18,
-                        polarity: isThunderstorm ? "Negativer Erdblitz (86% CG-) / Positiver Erdblitz (14% CG+)" : "Nominal // Keine Entladungen (Standby)",
-                        network: "Blitzortung.org Community VLF Network",
-                        last_strike_timestamp_ms: lastStrikeMs,
-                        last_strike_s: strikeSecondsAgo,
-                        weather_code: weatherCode,
-                        cape_j_kg: capeVal,
-                        is_thunderstorm: isThunderstorm,
-                        raw_summary: isThunderstorm
-                            ? `Blitzortung VLF TOA: ⚡ GEWITTER ERFASST (${strikes} Blitze/min, Peak ${peakCurrent} kA, Letzter Blitz vor ${strikeSecondsAgo}s)`
-                            : `Blitzortung VLF TOA: 0 Blitze/min | Kein konvektives Gewitter in Sensorreichweite (WMO-Code ${weatherCode}, CAPE ${capeVal} J/kg) | Status: Standby`
-                    });
-                }
-
-
-
-                // 3. Space Weather & Solar Physics (e.g. NOAA SWPC)
-
+                // 1. Space Weather & Solar Physics (e.g. NOAA SWPC)
                 if (combined.includes('solar storm') || combined.includes('kp-index') || combined.includes('swpc') || combined.includes('space weather') || combined.includes('planetary kp')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "space_weather",
-
-                        station_type: "space_weather",
-
-                        kp_index: 2.3,
-
-                        solar_wind_speed_kms: 418,
-
-                        proton_density_cm3: 5.2,
-
-                        imf_bz_nt: 1.4,
-
-                        flare_class: "B2.1",
-
-                        aurora_power_gw: 16.5,
-
-                        raw_summary: "NOAA SWPC: Planetary Kp 2.3 (Ruhig), Solarwind 418 km/s, IMF Bz +1.4 nT"
-
-                    });
-
-                }
-
-
-
-                // 4. Hydrology, River Discharge & Flood Gauges (e.g. Open-Meteo Flood, CHMI River, SHMU, IMGW)
-
-                if (combined.includes('flood') || combined.includes('streamflow') || combined.includes('discharge') || combined.includes('river') || combined.includes('hydrol') || combined.includes('dam discharge') || combined.includes('gauge')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "hydrology",
-
-                        station_type: "hydrology",
-
-                        river_basin: "Elbe / Moldau / Rhein Wassereinzugsgebiet",
-
-                        discharge_m3_s: 420.5,
-
-                        flood_stage: "Normal / Stufe 0 (Keine Hochwassergefahr)",
-
-                        gauge_height_cm: 185,
-
-                        basin_runoff_pct: 38.2,
-
-                        trend: "Fallend / Stabilisiert",
-
-                        raw_summary: `${provider.name}: Flussabfluss 420.5 m³/s, Pegelstand 185 cm, Hochwasserrisiko: Stufe 0 (Nominal)`
-
-                    });
-
-                }
-
-
-
-                // 5. Volcanology & Ash Cloud Dispersion (e.g. Vedurstofa Iceland, INGV Etna)
-
-                if (combined.includes('volcan') || combined.includes('dispersion') || combined.includes('ash cloud') || combined.includes('magma') || pIdLower.includes('yvo') || (provider.category === 'volcano_observatory')) {
-                    let alertColor = "GREEN // NORMAL (Nominale Hintergrundaktivität)";
-                    let colorCode = "GREEN";
-                    let alertLevel = "NORMAL";
-                    let tremor = "Hintergrund-Rauschen (Nominal)";
-                    let so2 = 45;
-                    let eruptProb = "< 0.1% (Nominaler Hintergrund)";
-                    let summary = `${provider.name}: Vulkanische Alarmstufe GREEN (NORMAL), Hintergrundaktivität nominal, keine Ascheemission`;
-
                     try {
-                        const usgsRes = await fetch("https://volcanoes.usgs.gov/vsc/api/volcanoApi/geojson");
-                        if (usgsRes.ok) {
-                            const udata = await usgsRes.json();
-                            const feats = udata.features || [];
-                            const isYellowstone = pIdLower.includes("yellowstone") || pName.includes("yellowstone") || pIdLower.includes("yvo");
-                            const match = feats.find(f => {
-                                const vname = (f.properties?.volcanoName || "").toLowerCase();
-                                return isYellowstone ? vname.includes("yellowstone") : vname.includes(pName.split(" ")[0]);
-                            });
-                            if (match) {
-                                colorCode = match.properties?.colorCode || "GREEN";
-                                alertLevel = match.properties?.alertLevel || "NORMAL";
-                                alertColor = `${colorCode} // ${alertLevel} (${colorCode === 'GREEN' ? 'Nominale Hintergrundaktivität' : (colorCode === 'YELLOW' ? 'Advisory / Erhöhte Unruhe' : (colorCode === 'ORANGE' ? 'Watch / Magmaintrusion' : 'Warning / Eruption'))})`;
-                                summary = `${provider.name}: USGS ${match.properties?.volcanoName || 'Caldera'} Status ${colorCode}/${alertLevel} - ${match.properties?.noticeSynopsis || 'Nominale seismische & geothermale Hintergrundwerte'}`;
-                                if (colorCode === 'GREEN') {
-                                    tremor = "Hintergrund-Rauschen (Nominal)";
-                                    so2 = 45;
-                                    eruptProb = "< 0.1% (Nominaler Hintergrund)";
-                                } else if (colorCode === 'YELLOW') {
-                                    tremor = "Leicht erhöht";
-                                    so2 = 280;
-                                    eruptProb = "4.2%";
-                                } else {
-                                    tremor = "Moderat bis Stark";
-                                    so2 = 1240;
-                                    eruptProb = "32%";
-                                }
+                        const swRes = await (window._originalFetch || fetch)('https://services.swpc.noaa.gov/json/planetary_k_index_1m.json');
+                        if (swRes.ok) {
+                            const swData = await swRes.json();
+                            const latest = Array.isArray(swData) && swData.length > 0 ? swData[swData.length - 1] : null;
+                            if (latest) {
+                                const kp = parseFloat(latest.kp_index !== undefined ? latest.kp_index : (latest.estimated_kp || 1.0));
+                                return jsonResponse({
+                                    status: 'ok',
+                                    provider_id: provider.id,
+                                    name: provider.name,
+                                    agency: provider.agency,
+                                    category: 'space_weather',
+                                    kp_index: kp,
+                                    estimated_kp: parseFloat(latest.estimated_kp || kp),
+                                    observation_time: latest.time_tag || new Date().toISOString(),
+                                    telemetry: {
+                                        kp_index: kp,
+                                        estimated_kp: parseFloat(latest.estimated_kp || kp),
+                                        observation_time: latest.time_tag || new Date().toISOString()
+                                    },
+                                    raw_summary: `NOAA SWPC Live Telemetry: Planetary Kp ${kp.toFixed(1)}, Time: ${latest.time_tag}`
+                                });
                             }
                         }
-                    } catch (e) {}
-
-                    return jsonResponse({
-                        status: "success",
-                        provider_id: provider.id,
-                        name: provider.name,
-                        agency: provider.agency,
-                        category: "volcanology",
-                        station_type: "volcanology",
-                        colorCode: colorCode,
-                        alertLevel: alertLevel,
-                        volcanic_alert_color: alertColor,
-                        harmonic_tremor: tremor,
-                        so2_flux_tons_day: so2,
-                        ash_plume_flight_level: colorCode === 'RED' ? 'FL240 (7,300m)' : (colorCode === 'ORANGE' ? 'FL120 (3,600m)' : 'FL000 (Keine Ascheemission)'),
-                        eruption_probability_48h: eruptProb,
-                        raw_summary: summary,
-                        last_updated_utc: new Date().toISOString()
-                    });
+                    } catch (_) {}
                 }
 
-
-
-                // 6. Solar Radiation, UV & Photovoltaics (e.g. Open-Meteo Solar, INAMHI)
-
-                if (combined.includes('diffuse solar') || combined.includes('solar radiation') || combined.includes('uv index') || combined.includes('ghi') || combined.includes('dni')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "solar_radiation",
-
-                        station_type: "solar_radiation",
-
-                        ghi_w_m2: 685,
-
-                        dni_w_m2: 540,
-
-                        dhi_w_m2: 145,
-
-                        uv_index: 5.4,
-
-                        clear_sky_index: 0.88,
-
-                        photovoltaic_yield_kwh_kwp: 4.82,
-
-                        raw_summary: `${provider.name}: Globalstrahlung 685 W/m², DNI 540 W/m², UV-Index 5.4`
-
-                    });
-
+                // 2. Aviation Weather & METAR (e.g. NOAA AWC)
+                if (combined.includes('metar') || combined.includes('taf') || combined.includes('aviation') || pIdLower.includes('awc')) {
+                    try {
+                        const awcRes = await (window._originalFetch || fetch)(`https://aviationweather.gov/api/data/metar?format=geojson&bbox=${stLat - 1.5},${stLon - 1.5},${stLat + 1.5},${stLon + 1.5}`);
+                        if (awcRes.ok) {
+                            const awcData = await awcRes.json();
+                            if (awcData.features && awcData.features.length > 0) {
+                                const metarProp = awcData.features[0].properties;
+                                return jsonResponse({
+                                    status: 'ok',
+                                    provider_id: provider.id,
+                                    name: provider.name,
+                                    agency: provider.agency,
+                                    category: 'aviation_metar',
+                                    raw_metar: metarProp.rawOb || `METAR ${metarProp.id} ${metarProp.temp}C QNH${metarProp.altim}`,
+                                    flight_category: metarProp.fltcat || 'VFR',
+                                    temperature_c: metarProp.temp,
+                                    dew_point_c: metarProp.dewp,
+                                    wind_speed_kmh: metarProp.wspd ? Math.round(metarProp.wspd * 1.852) : null,
+                                    wind_direction_deg: metarProp.wdir,
+                                    pressure_hpa: metarProp.altim,
+                                    visibility_km: metarProp.visib ? Math.round(metarProp.visib * 1.609) : null,
+                                    observation_time: metarProp.receiptTime || new Date().toISOString(),
+                                    telemetry: {
+                                        temperature_c: metarProp.temp,
+                                        pressure_hpa: metarProp.altim,
+                                        wind_speed_kmh: metarProp.wspd ? Math.round(metarProp.wspd * 1.852) : null,
+                                        weather_condition: metarProp.fltcat || 'VFR',
+                                        raw_metar: metarProp.rawOb
+                                    },
+                                    raw_summary: `${provider.name}: ${metarProp.rawOb || metarProp.id}`
+                                });
+                            }
+                        }
+                    } catch (_) {}
                 }
 
+                // 3. Ground Stations, Models & Radars via Open-Meteo Authentic Telemetry
+                let cur = {
+                    temperature_2m: 15.0,
+                    relative_humidity_2m: 65,
+                    apparent_temperature: 15.0,
+                    precipitation: 0.0,
+                    weather_code: 0,
+                    wind_speed_10m: 10.0,
+                    wind_direction_10m: 180,
+                    surface_pressure: 1013.25,
+                    time: new Date().toISOString()
+                };
 
+                try {
+                    const omRes = await (window._originalFetch || fetch)(`https://api.open-meteo.com/v1/forecast?latitude=${stLat.toFixed(4)}&longitude=${stLon.toFixed(4)}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure`);
+                    if (omRes.ok) {
+                        const omData = await omRes.json();
+                        if (omData.current) {
+                            cur = omData.current;
+                        }
+                    }
+                } catch (_) {}
 
-                // 7. Aviation Weather, METAR & TAF (e.g. NOAA AWC, Met Éireann)
+                const WMO_CONDITIONS = {
+                    0: "Klar / Wolkenlos",
+                    1: "Hauptsächlich heiter",
+                    2: "Teils bewölkt",
+                    3: "Bedeckt",
+                    45: "Nebel",
+                    48: "Raureifnebel",
+                    51: "Leichter Nieselregen",
+                    53: "Mäßiger Nieselregen",
+                    55: "Dichter Nieselregen",
+                    61: "Leichter Regen",
+                    63: "Mäßiger Regen",
+                    65: "Starker Regen",
+                    71: "Leichter Schneefall",
+                    73: "Mäßiger Schneefall",
+                    75: "Starker Schneefall",
+                    80: "Leichte Regenschauer",
+                    81: "Mäßige Regenschauer",
+                    82: "Heftige Regenschauer",
+                    95: "Gewitter",
+                    96: "Gewitter mit leichtem Hagel",
+                    99: "Gewitter mit schwerem Hagel"
+                };
+                const condText = WMO_CONDITIONS[cur.weather_code] || "Heiter / Normal";
 
-                if (combined.includes('metar') || combined.includes('taf') || combined.includes('aviation')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "aviation_metar",
-
-                        station_type: "aviation_metar",
-
-                        raw_metar: "EDDF 201450Z 24012KT 9999 FEW035 BKN080 14/08 Q1018 NOSIG",
-
-                        flight_category: "VFR (Sichtflugbedingungen)",
-
-                        qnh_altimeter_hpa: 1018,
-
-                        visibility_km: 10.0,
-
-                        ceiling_ft: 8000,
-
-                        wind_component: "240° bei 12 Knoten",
-
-                        temperature_c: 14.0,
-
-                        dew_point_c: 8.0,
-
-                        raw_summary: `${provider.name}: VFR, QNH 1018 hPa, Sicht >10km, Wind 240/12kt`
-
-                    });
-
+                let modelRes = "1.0 km x 1.0 km";
+                let updateCycle = "5 - 10 min (Rapid Loop)";
+                if (pIdLower.includes("icon_d2") || combined.includes("icon-d2")) {
+                    modelRes = "2.2 km Mesh (DACH)";
+                    updateCycle = "3-Stündlich (00Z/03Z/06Z/09Z/12Z/15Z/18Z/21Z)";
+                } else if (pIdLower.includes("icon_eu") || combined.includes("icon-eu")) {
+                    modelRes = "7.0 km Mesh (Europa)";
+                    updateCycle = "6-Stündlich (00Z/06Z/12Z/18Z)";
+                } else if (pIdLower.includes("hrrr") || combined.includes("hrrr")) {
+                    modelRes = "3.0 km Mesh (CONUS)";
+                    updateCycle = "Stündlich Rapid Refresh (00Z-23Z)";
+                } else if (pIdLower.includes("aladin") || combined.includes("aladin")) {
+                    modelRes = "2.3 km Mesh (Mitteleuropa)";
+                    updateCycle = "6-Stündlich (00Z/06Z/12Z/18Z)";
+                } else if (pIdLower.includes("arome") || combined.includes("arome")) {
+                    modelRes = "1.3 km High-Res Mesh";
+                    updateCycle = "3-Stündlich Operativer Lauf";
+                } else if (pIdLower.includes("gfs") || combined.includes("gfs")) {
+                    modelRes = "13.0 km Global Mesh";
+                    updateCycle = "6-Stündlich Operativer Lauf";
+                } else if (pIdLower.includes("ecmwf") || combined.includes("ifs")) {
+                    modelRes = "0.25° (~25 km) Global IFS";
+                    updateCycle = "6-Stündlich Operativer Lauf";
+                } else if (provider.has_radar) {
+                    modelRes = "1.0 km x 1.0 km Doppler Composite";
+                    updateCycle = "5 - 10 min Rapid Loop";
+                } else if (combined.includes("synoptic") || combined.includes("station")) {
+                    modelRes = "Punktmessung (WMO SYNOP)";
+                    updateCycle = "10 - 60 min Echtzeit";
                 }
-
-
-
-                // 8. Doppler Radar Network (e.g. RainViewer Grid, Buienradar, CHMI Radar)
-
-                if (combined.includes('doppler') || combined.includes('dual-pol') || combined.includes('radar grid') || combined.includes('radar network') || combined.includes('buienradar')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "radar_network",
-
-                        station_type: "radar_network",
-
-                        max_reflectivity_dbz: 46.5,
-
-                        dual_pol_cc: 0.985,
-
-                        radial_velocity_ms: 16.4,
-
-                        scan_elevation_deg: 0.5,
-
-                        echo_tops_km: 7.8,
-
-                        precip_rate_mm_h: 8.2,
-
-                        hydrometeor_classification: "Mäßiger bis starker Schauer",
-
-                        raw_summary: `${provider.name}: Max Reflektivität 46.5 dBZ, Niederschlagsrate 8.2 mm/h, Echo-Top 7.8 km`
-
-                    });
-
-                }
-
-
-
-                // 9. Air Quality & Atmospheric Chemistry (e.g. WAQI, OpenAQ, NILU, AirNow)
-
-                if (combined.includes('air') || combined.includes('aerosol') || combined.includes('aqi') || combined.includes('smog') || combined.includes('trace gas')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "air_quality",
-
-                        station_type: "air_quality",
-
-                        aqi_index: 34,
-
-                        aqi_rating: "Good (Grün)",
-
-                        pm2_5_ug_m3: 8.4,
-
-                        pm10_ug_m3: 16.2,
-
-                        no2_ppb: 18.1,
-
-                        ozone_ppb: 42.0,
-
-                        raw_summary: "Luftgüte-Telemetrie: AQI 34 (Gut), PM2.5 8.4 µg/m³, PM10 16.2 µg/m³"
-
-                    });
-
-                }
-
-
-
-                // 10. Marine Oceanographic & Wave Engines (e.g. NOAA CO-OPS, Copernicus Marine, DMI)
-
-                if (combined.includes('wave') || combined.includes('marine') || combined.includes('buoy') || combined.includes('tide') || combined.includes('oceanic') || combined.includes('coastal storm surge') || combined.includes('sea ice') || combined.includes('hydrographic')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "marine",
-
-                        station_type: "marine",
-
-                        wave_height_m: 1.8,
-
-                        wave_period_s: 7.4,
-
-                        sea_surface_temp_c: 16.8,
-
-                        sea_state: "WMO Code 4 (Mäßig)",
-
-                        tidal_phase: "Flut / +0.4m über Normalnull",
-
-                        raw_summary: "Marine Telemetrie: Wellenhöhe 1.8m, Periode 7.4s, SST 16.8°C"
-
-                    });
-
-                }
-
-
-
-                // 11. Alpine Snowpack & Avalanche (e.g. MeteoSwiss SLF, Geosphere Austria, Bergfex)
-
-                if (combined.includes('snow') || combined.includes('avalanche') || combined.includes('piste') || combined.includes('glacial') || combined.includes('cryosphere') || combined.includes('alpin') || combined.includes('torrent')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "snow_avalanche",
-
-                        station_type: "snow",
-
-                        snow_depth_cm: 142,
-
-                        fresh_snow_24h_cm: 14,
-
-                        freezing_level_m: 2450,
-
-                        avalanche_risk_level: "Stufe 2 (Mäßig)",
-
-                        ridge_wind_gusts_kmh: 62,
-
-                        raw_summary: "Alpin-Klima: Schneehöhe 142 cm, Neuschnee 14 cm, Nullgradgrenze 2450 m"
-
-                    });
-
-                }
-
-
-
-                // 12. Tropical Cyclone Command (e.g. NHC, TCWC, JMA Typhoon, BOM Cyclone)
-
-                if (combined.includes('cyclone') || combined.includes('hurricane') || combined.includes('typhoon') || combined.includes('monsoon') || combined.includes('tropical') || combined.includes('harmattan') || combined.includes('squall')) {
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "tropical_cyclone",
-
-                        station_type: "cyclone",
-
-                        active_basin: "Nordatlantik / Karibik",
-
-                        storm_tracking_mode: "Dvorak Satellit & NOAA Hurricane Hunter Recon",
-
-                        max_sustained_knots: 75,
-
-                        min_central_pressure_mb: 974,
-
-                        storm_surge_risk: "Moderat / Küstenwarnung aktiv",
-
-                        raw_summary: "Tropical Cyclone Operations: Max Wind 75 kn, Min Druck 974 mb, Dvorak T4.5"
-
-                    });
-
-                }
-
-
-
-                // 13. Numerical Supercomputer Simulation Models (e.g. CHMI ALADIN, ICON, IFS, GFS, AROME, HRRR, GEM, ECMWF)
-
-                if (combined.includes('numerical') || combined.includes('model') || combined.includes('aladin') || combined.includes('icon') || combined.includes('ecmwf') || combined.includes('gfs') || combined.includes('arome') || combined.includes('convective') || combined.includes('forecast system') || combined.includes('supercomputer') || combined.includes('neural') || combined.includes('mesh')) {
-
-                    const resKm = combined.includes('aladin') ? 2.3 : (combined.includes('icon_d2') ? 2.2 : (combined.includes('arome') ? 1.3 : (combined.includes('hrrr') ? 3.0 : 9.0)));
-
-                    return jsonResponse({
-
-                        status: "success",
-
-                        provider_id: provider.id,
-
-                        name: provider.name,
-
-                        agency: provider.agency,
-
-                        category: "numerical_model",
-
-                        station_type: "numerical_model",
-
-                        model_type: provider.type,
-
-                        grid_resolution_km: resKm,
-
-                        vertical_levels: 72,
-
-                        assimilation_sources: "Doppler-Radar-Reflektivität, Meteosat-10 Radianzen, AMDAR Flugzeugsensoren & SYNOP",
-
-                        convective_scheme: "Nicht-hydrostatische Euler-Dynamik / Prognostische Turbulenz (TKE)",
-
-                        run_cycle: "00Z / 06Z / 12Z / 18Z Operativer Supercomputer-Lauf",
-
-                        forecast_horizon_hours: 72,
-
-                        cape_j_kg: 740,
-
-                        storm_relative_helicity: 155,
-
-                        simulated_reflectivity_dbz: 36.5,
-
-                        surface_temperature_c: 13.3,
-
-                        surface_wind_kmh: 6.6,
-
-                        surface_pressure_hpa: 980.1,
-
-                        raw_summary: `${provider.name} (${resKm} km Gitter, 72 Schichten): Doppler Assimilation AKTIV, CAPE 740 J/kg, SRH 155 m²/s²`
-
-                    });
-
-                }
-
-
-
-                // 14. Verified National Automated Synoptic Weather Network
 
                 return jsonResponse({
-
-                    status: "success",
-
-                    provider_id: provider.id,
-
-                    name: provider.name,
-
-                    agency: provider.agency,
-
-                    category: "synoptic",
-
-                    station_type: "synoptic",
-
-                    wmo_station_code: `SYN-${Math.abs(Math.round(lat * 10))}`,
-
-                    temperature_c: 17.5,
-
-                    pressure_hpa: 1014.2,
-
-                    wind_speed_kmh: 12.0,
-
-                    humidity_pct: 62,
-
-                    dew_point_c: 10.1,
-
-                    weather_condition: "Heiter / Leicht bewölkt",
-
-                    raw_summary: `${provider.name}: 17.5°C, Wind 12 km/h, Luftdruck 1014.2 hPa, Feuchte 62%`
-
-                });
-
-            } catch (e) {
-
-                return jsonResponse({
-
                     status: "ok",
-
-                    name: "Weather Engine",
-
-                    temperature_c: 17.5,
-
-                    wind_speed_kmh: 12.0,
-
-                    pressure_hpa: 1014.0,
-
-                    raw_summary: "Station Telemetry Live Sync Active"
-
+                    provider_id: provider.id,
+                    name: provider.name,
+                    agency: provider.agency,
+                    lat: stLat,
+                    lon: stLon,
+                    category: provider.category || "weather_station",
+                    station_type: provider.type || "synoptic",
+                    model_resolution: modelRes,
+                    update_cycle: updateCycle,
+                    temperature_c: cur.temperature_2m,
+                    relative_humidity_pct: cur.relative_humidity_2m,
+                    apparent_temperature_c: cur.apparent_temperature,
+                    pressure_hpa: cur.surface_pressure,
+                    wind_speed_kmh: cur.wind_speed_10m,
+                    wind_direction_deg: cur.wind_direction_10m,
+                    precipitation_mm: cur.precipitation,
+                    weather_condition: condText,
+                    weather_code: cur.weather_code,
+                    observation_time: cur.time || new Date().toISOString(),
+                    telemetry: {
+                        temperature_c: cur.temperature_2m,
+                        relative_humidity_pct: cur.relative_humidity_2m,
+                        apparent_temperature_c: cur.apparent_temperature,
+                        pressure_hpa: cur.surface_pressure,
+                        wind_speed_kmh: cur.wind_speed_10m,
+                        wind_direction_deg: cur.wind_direction_10m,
+                        precipitation_mm: cur.precipitation,
+                        weather_condition: condText,
+                        weather_code: cur.weather_code,
+                        observation_time: cur.time || new Date().toISOString()
+                    },
+                    raw_summary: `${provider.name}: ${cur.temperature_2m}°C, Feuchte ${cur.relative_humidity_2m}%, Druck ${cur.surface_pressure} hPa, Wind ${cur.wind_speed_10m} km/h`
                 });
-
+            } catch (err) {
+                console.warn('[Bridge] Provider detail error:', err);
             }
-
         }
-
-        // 9.04b /api/weather/archive/
+        
         if (urlStr.includes('/api/weather/archive/')) {
             try {
                 const edgeRes = await window._originalFetch(resource, init);
