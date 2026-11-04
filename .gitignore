@@ -19,3 +19,9 @@ deploy.ps1
 deploy.bat
 *.ps1
 *.bat
+
+# Agent & Teamwork State
+.agents/
+agent.*/
+.agent/
+
