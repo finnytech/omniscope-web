@@ -4625,13 +4625,18 @@ path.subsea-cable-path {
 #card-map > .monitor-header {
     align-items: flex-start !important;
     gap: 8px !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 1005 !important;
 }
 
 .mon01-header-controls-col {
     flex: 1 1 400px !important;
     min-width: 0 !important;
     max-width: 100% !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 1005 !important;
 }
 
 .radar-viewmode-toolbar {
@@ -4639,6 +4644,9 @@ path.subsea-cable-path {
     flex-wrap: wrap !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 1006 !important;
 }
 
 #select-radar-provider,
@@ -5177,20 +5185,18 @@ path.subsea-cable-path {
 }
 
 .tactical-copyable-menu-panel {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    min-width: 250px;
-    max-width: 420px;
+    position: fixed !important;
+    min-width: 260px;
+    max-width: 440px;
     max-height: 380px;
     overflow-y: auto;
-    background: rgba(10, 16, 30, 0.98);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid #0284c7;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.9), 0 0 20px rgba(2, 132, 199, 0.35);
+    background: rgba(10, 16, 30, 0.98) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid #0284c7 !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95), 0 0 25px rgba(2, 132, 199, 0.45) !important;
     border-radius: 4px;
-    z-index: 999999;
+    z-index: 99999999 !important;
     padding: 4px 0;
     font-family: var(--font-mono, monospace);
     user-select: text !important;

@@ -680,10 +680,14 @@ function makeSelectCopyPastable(selectEl, customOptions = {}) {
     trigger.appendChild(chevron);
     wrapper.appendChild(trigger);
 
+    // Floating tactical dropdown menu portal appended directly to body
+    // This completely bypasses any parent overflow:hidden and Leaflet map z-index stacking context!
     const menu = document.createElement('div');
     menu.className = 'tactical-copyable-menu-panel';
     menu.style.display = 'none';
-    wrapper.appendChild(menu);
+    menu.style.position = 'fixed';
+    menu.style.zIndex = '99999999';
+    document.body.appendChild(menu);
 
     let isOpen = false;
 
@@ -746,27 +750,66 @@ function makeSelectCopyPastable(selectEl, customOptions = {}) {
         menu.appendChild(item);
     }
 
+    function positionMenu() {
+        if (!isOpen) return;
+        const rect = trigger.getBoundingClientRect();
+        const menuWidth = Math.max(260, Math.min(440, menu.offsetWidth || 300));
+        let left = rect.left;
+        if (left + menuWidth > window.innerWidth - 12) {
+            left = Math.max(8, window.innerWidth - menuWidth - 12);
+        }
+        menu.style.left = Math.max(8, left) + 'px';
+        menu.style.minWidth = Math.min(window.innerWidth - 20, Math.max(240, rect.width)) + 'px';
+
+        const spaceBelow = window.innerHeight - rect.bottom - 10;
+        const spaceAbove = rect.top - 10;
+        const naturalHeight = menu.scrollHeight || 300;
+
+        if (spaceBelow < 220 && spaceAbove > spaceBelow) {
+            // Flip upwards above the trigger button
+            const maxHeight = Math.min(380, spaceAbove);
+            menu.style.maxHeight = maxHeight + 'px';
+            const menuHeight = Math.min(naturalHeight, maxHeight);
+            menu.style.top = Math.max(8, rect.top - menuHeight - 4) + 'px';
+        } else {
+            // Drop downwards below the trigger button
+            const maxHeight = Math.min(380, Math.max(160, spaceBelow));
+            menu.style.maxHeight = maxHeight + 'px';
+            menu.style.top = (rect.bottom + 4) + 'px';
+        }
+    }
+
     function openMenu() {
+        // Close any other open tactical copyable menus
+        window.dispatchEvent(new CustomEvent('tactical-copyable-open', { detail: { selectId: selectEl.id || selectEl } }));
         renderMenuContent();
         menu.style.display = 'block';
         trigger.setAttribute('aria-expanded', 'true');
         isOpen = true;
-
-        const rect = menu.getBoundingClientRect();
-        if (rect.right > window.innerWidth - 10) {
-            menu.style.left = 'auto';
-            menu.style.right = '0';
-        } else {
-            menu.style.left = '0';
-            menu.style.right = 'auto';
-        }
+        positionMenu();
+        requestAnimationFrame(() => {
+            if (isOpen) positionMenu();
+        });
     }
 
     function closeMenu() {
+        if (!isOpen) return;
         menu.style.display = 'none';
         trigger.setAttribute('aria-expanded', 'false');
         isOpen = false;
     }
+
+    window.addEventListener('tactical-copyable-open', (ev) => {
+        if (ev.detail && ev.detail.selectId !== (selectEl.id || selectEl)) {
+            closeMenu();
+        }
+    });
+
+    const handleReposition = () => {
+        if (isOpen) positionMenu();
+    };
+    window.addEventListener('scroll', handleReposition, true);
+    window.addEventListener('resize', handleReposition);
 
     trigger.addEventListener('mouseup', (e) => {
         const selection = window.getSelection().toString().trim();
@@ -779,7 +822,7 @@ function makeSelectCopyPastable(selectEl, customOptions = {}) {
     });
 
     document.addEventListener('pointerdown', (e) => {
-        if (isOpen && !wrapper.contains(e.target)) {
+        if (isOpen && !wrapper.contains(e.target) && !menu.contains(e.target)) {
             closeMenu();
         }
     });
@@ -802,7 +845,10 @@ function makeSelectCopyPastable(selectEl, customOptions = {}) {
 
     const observer = new MutationObserver(() => {
         updateTriggerText();
-        if (isOpen) renderMenuContent();
+        if (isOpen) {
+            renderMenuContent();
+            positionMenu();
+        }
     });
     observer.observe(selectEl, { childList: true, subtree: true, attributes: true });
 
@@ -810,7 +856,10 @@ function makeSelectCopyPastable(selectEl, customOptions = {}) {
 
     selectEl.refreshCopyPastable = () => {
         updateTriggerText();
-        if (isOpen) renderMenuContent();
+        if (isOpen) {
+            renderMenuContent();
+            positionMenu();
+        }
     };
 }
 
