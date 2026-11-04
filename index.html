@@ -205,6 +205,10 @@
 
             <select id="map-style-select" class="ops-select" title="Map Tile Style">
                 <option value="esri-hybrid" selected>🛰️ ESRI Hybrid</option>
+                <option value="google-traffic">🚦 Google Maps Live Traffic</option>
+                <option value="google-hybrid">🛰️ Google Maps Hybrid + Traffic</option>
+                <option value="google-roads">🗺️ Google Maps Standard</option>
+                <option value="google-sat">🛰️ Google Maps Satellite</option>
                 <option value="esri-sat">🛰️ ESRI Satellite</option>
                 <option value="carto-dark">🗺️ CartoDB Dark</option>
                 <option value="nasa-night">🌙 NASA Night</option>
@@ -245,6 +249,7 @@
         <div class="layer-toggles">
             <span style="font-weight:700;color:#fff;" data-i18n="map_layers_header">MAP LAYERS:</span>
             <label><input type="checkbox" id="layer-radar" checked />Doppler Radar (RainViewer)</label>
+            <label style="color:#22c55e;font-weight:700;"><input type="checkbox" id="layer-traffic" checked />🚦 Live Traffic (Google Maps / Stau-Watcher)</label>
             <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-noaa-radar" checked />🇺🇸 NOAA NEXRAD USA Radar</label>
             <label style="color:#0284c7;font-weight:700;"><input type="checkbox" id="layer-noaa-stations" checked />🇺🇸 NOAA Live US Weather</label>
             <label style="color:#f87171;font-weight:700;"><input type="checkbox" id="layer-archive-events" checked />🏛️ Storm & Tornado Archive</label>
@@ -343,20 +348,65 @@
                     <!-- DOPPLER RADAR PROVIDER & VIEW MODE SELECTOR -->
                     <div class="radar-viewmode-toolbar" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;max-width:100%;box-sizing:border-box;background:rgba(15,23,42,0.85);padding:2px 8px;border-radius:4px;border:1px solid #0284c7;">
                         <span style="color:#38bdf8;font-size:0.7rem;font-weight:700;">📡 RADAR:</span>
-                        <select id="select-radar-provider" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#38bdf8;border-color:#0284c7;background:#0f172a;" title="Radar Provider / Netzwerk">
-                            <option value="rainviewer" selected>RainViewer Global</option>
-                            <option value="nexrad">🇺🇸 NOAA NEXRAD (USA)</option>
-                            <option value="dwd">🇩🇪 DWD (Deutschland)</option>
-                            <option value="owm_rain">🌧️ OWM Live Regen</option>
-                            <option value="owm_wind">💨 OWM Windströmung</option>
-                            <option value="satellite">🛰️ Infrarot Satellit</option>
+                        <select id="select-radar-provider" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#38bdf8;border-color:#0284c7;background:#0f172a;" title="Radar & Satelliten Provider / Netzwerk">
+                            <optgroup label="🌐 Global & Weltweit">
+                                <option value="rainviewer" selected>RainViewer Global (Echtzeit)</option>
+                                <option value="superdarn">SuperDARN Auroral Radar Grid</option>
+                                <option value="eiscat">EISCAT 3D Radar Scatter</option>
+                            </optgroup>
+                            <optgroup label="🇺🇸 Nordamerika (USA & Kanada)">
+                                <option value="nexrad">🇺🇸 NOAA NEXRAD Level-III (USA)</option>
+                                <option value="noaa_mrms">🇺🇸 NOAA MRMS Q2 Convective (1km)</option>
+                                <option value="openmeteo_hrrr">🇺🇸 NOAA HRRR Convective Radar</option>
+                                <option value="eccc_canada">🇨🇦 ECCC MSC GeoMet Radar (Kanada)</option>
+                            </optgroup>
+                            <optgroup label="🇪🇺 Europa (DACH & Benelux)">
+                                <option value="dwd">🇩🇪 DWD Niederschlagsradar (1x1 km)</option>
+                                <option value="bright_sky">🇩🇪 Bright Sky Synoptic Radar (DWD)</option>
+                                <option value="openmeteo_icon_d2">🇩🇪 DWD ICON-D2 (2.2km High-Res)</option>
+                                <option value="buienradar">🇳🇱 Buienradar Benelux Doppler</option>
+                                <option value="knmi">🇳🇱 KNMI Doppler Composites</option>
+                                <option value="rmi_belgium">🇧🇪 RMI (KMI/IRM) Radar (Belgien)</option>
+                                <option value="chmi_czechia">🇨🇿 CHMI CZRAD Doppler (Tschechien)</option>
+                                <option value="shmu_slovakia">🇸🇰 SHMU Slovakia Radar (Slowakei)</option>
+                                <option value="aemet_spain">🇪🇸 AEMET Radar & Rayos (Spanien)</option>
+                                <option value="meteofrance">🇫🇷 Météo-France Radar Composite</option>
+                            </optgroup>
+                            <optgroup label="🌏 Asien & Pazifik">
+                                <option value="jma_japan">🇯🇵 JMA Japan Radar Network</option>
+                                <option value="cwa_taiwan">🇹🇼 CWA Doppler Radar (Taiwan)</option>
+                                <option value="singapore_nea">🇸🇬 Singapore NEA Doppler Radar</option>
+                                <option value="bmkg_indonesia">🇮🇩 BMKG Doppler Radar (Indonesien)</option>
+                                <option value="kma_korea">🇰🇷 KMA Radar Supercomputing</option>
+                                <option value="imd_india">🇮🇳 IMD India Doppler Radar Grid</option>
+                                <option value="pagasa">🇵🇭 PAGASA Typhoon Warning Center</option>
+                                <option value="bom_australia">🇦🇺 BOM Australia Doppler Radar</option>
+                            </optgroup>
+                            <optgroup label="🌍 Afrika & Südamerika & Nahost">
+                                <option value="saws_southafrica">🇿🇦 SAWS South Africa Radar</option>
+                                <option value="ncm_uae">🇦🇪 NCM UAE National Radar</option>
+                                <option value="ncm_saudi">🇸🇦 NCM Saudi Arabia Weather Center</option>
+                                <option value="inumet">🇺🇾 INUMET Uruguay Radar</option>
+                            </optgroup>
+                            <optgroup label="🛰️ Ultra High-Res Satelliten (30s-15m Rapid)">
+                                <option value="goes_east_vis">🛰️ NOAA GOES-16 East VIS (1km Rapid)</option>
+                                <option value="goes_east_ir">🛰️ NOAA GOES-16 East IR (Band 13)</option>
+                                <option value="goes_west_vis">🛰️ NOAA GOES-18 West VIS (1km Rapid)</option>
+                                <option value="goes_west_ir">🛰️ NOAA GOES-18 West IR (Band 13)</option>
+                                <option value="dwd_satellite">🛰️ EUMETSAT / DWD High-Res Cloud Type</option>
+                                <option value="nasa_gibs_truecolor">🛰️ NASA GIBS 250m TrueColor</option>
+                                <option value="satellite">🛰️ NASA GIBS Infrarot Wolken</option>
+                            </optgroup>
                         </select>
-                        <select id="select-radar-mode" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#10b981;border-color:#10b981;background:#0f172a;" title="Radar Darstellungsmodus">
-                            <option value="composite" selected>dBZ Reflektivität</option>
-                            <option value="velocity">Doppler Radial-Wind</option>
-                            <option value="rain_rate">Niederschlagsrate</option>
-                            <option value="echo_tops">Echohöhe (Echo Tops)</option>
-                            <option value="infrared">IR Satelliten-Wolken</option>
+                        <select id="select-radar-mode" class="ops-select" style="font-size:0.72rem;padding:2px 6px;color:#10b981;border-color:#10b981;background:#0f172a;" title="Doppler Radar Darstellungsmodus">
+                            <option value="composite" selected>dBZ Reflektivität (Base Reflectivity)</option>
+                            <option value="velocity">Doppler Radial-Wind (Wind Velocity)</option>
+                            <option value="rain_rate">Niederschlagsrate (mm/h)</option>
+                            <option value="echo_tops">Echohöhe (Echo Tops TITAN)</option>
+                            <option value="dual_pol_cc">Dual-Pol CC (Korrelationskoeffizient)</option>
+                            <option value="differential_z">Dual-Pol ZDR (Diff. Reflektivität)</option>
+                            <option value="satellite_ir">Infrarot Wolkenspitzen (Clean IR)</option>
+                            <option value="satellite_vis">Ultra High-Res Sichtbar (Visible)</option>
                         </select>
                     </div>
                     <button id="btn-weather-engines-modal" class="ops-btn" style="background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid #38bdf8;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="140+ Open Weather Engines Inspector & Consensus Comparison">
@@ -680,6 +730,24 @@
                                     <span class="sub-lbl">OPACITY:</span>
                                     <input type="range" id="side-radar-opacity" min="0.1" max="1" step="0.05" value="0.75" class="sub-slider" />
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Group 1D: 🚦 Google Maps Live Traffic & Stau-Watcher -->
+                        <div class="sidebar-layer-group" style="border-left: 2px solid #22c55e;">
+                            <div class="sidebar-group-header">
+                                <label class="layer-switch-lbl">
+                                    <input type="checkbox" id="side-layer-traffic" checked />
+                                    <span class="switch-custom"></span>
+                                    <span class="layer-name" style="color:#22c55e;">🚦 LIVE TRAFFIC & STAU-WATCHER</span>
+                                </label>
+                            </div>
+                            <div class="sidebar-sub-panel">
+                                <div class="sub-ctrl-row">
+                                    <span class="sub-lbl">TRAFFIC OPACITY:</span>
+                                    <input type="range" id="side-traffic-opacity" min="0.2" max="1" step="0.05" value="0.85" class="sub-slider" />
+                                </div>
+                                <div class="sidebar-hint" style="color:#64748b;font-size:0.65rem;">Keyless Free Google Maps Traffic Overlay</div>
                             </div>
                         </div>
 

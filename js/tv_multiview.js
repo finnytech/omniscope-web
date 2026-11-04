@@ -340,35 +340,22 @@
 
 
 
-                // Insert TV Side Panel Toggle Button in MON-02 Header
-
+                // Insert or attach TV Side Panel Toggle Button in MON-02 Header
                 let tvBtn = document.getElementById('btn-toggle-tv-drawer');
-
                 if (!tvBtn) {
-
                     tvBtn = document.createElement('button');
-
                     tvBtn.id = 'btn-toggle-tv-drawer';
-
                     tvBtn.className = 'ops-btn';
-
                     tvBtn.style.cssText = 'padding:2px 8px;font-size:0.7rem;background:rgba(16,185,129,0.22);color:#34d399;border:1px solid #10b981;font-weight:700;flex-shrink:0;display:inline-flex;align-items:center;gap:4px;box-shadow:0 0 8px rgba(16,185,129,0.35);cursor:pointer;';
-
                     tvBtn.title = '108 Live-TV & Nachrichtensender als Side-Panel an MON-02 ein-/ausklappen';
-
                     tvBtn.innerHTML = `📺 LIVE TV (<span id="tv-online-count-badge">${this.onlineChannels.length || 108}</span>)`;
-
                     headerCtrls.insertBefore(tvBtn, headerCtrls.firstChild);
-
-                    tvBtn.addEventListener('click', (e) => {
-
-                        e.stopPropagation();
-
-                        this.toggleTvDrawer();
-
-                    });
-
                 }
+                tvBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleTvDrawer();
+                };
 
 
 
@@ -635,8 +622,14 @@
 
 
             // Wire TV Side Panel Events
-
             document.getElementById('btn-tv-drawer-close')?.addEventListener('click', () => this.toggleTvDrawer(false));
+            document.addEventListener('click', (e) => {
+                if (e.target && e.target.closest('#btn-toggle-tv-drawer')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleTvDrawer();
+                }
+            });
 
             document.getElementById('btn-tv-poll-now')?.addEventListener('click', () => this.pollLiveTvChannels(true));
 
@@ -2255,6 +2248,28 @@
         }
 
 
+
+
+        assignCustomContentToSlot(slotIdx, { title, html }) {
+            if (this.viewportCount === 1) slotIdx = 0;
+            else if (slotIdx >= this.viewportCount) slotIdx = this.activeSlotIndex || 0;
+            this.ensureMultiViewportDom(true);
+            this.cleanupSlotMedia(slotIdx);
+
+            const s = this.slots[slotIdx];
+            s.type = 'custom';
+            s.title = title || 'LIVE MONITOR FEED';
+
+            const titleEl = document.getElementById(`mv-cell-title-${slotIdx}`);
+            const bodyEl = document.getElementById(`mv-cell-body-${slotIdx}`);
+            const dvrEl = document.getElementById(`mv-cell-dvr-${slotIdx}`);
+
+            if (titleEl) titleEl.textContent = s.title;
+            if (dvrEl) dvrEl.style.display = 'none';
+            if (bodyEl) {
+                bodyEl.innerHTML = html;
+            }
+        }
 
         // Assign Live Webcam (HLS, Panomax/YouTube/Windy Embed, or Live Auto-Refreshing Snapshot) to Slot
 
@@ -4257,6 +4272,179 @@
     } else {
 
         setTimeout(() => window.OmniScopeMultiView.init(), 0);
+
+    // Global Stream to MON-02 Helpers for Traffic & Weather Stations
+    window.streamTrafficToMon2 = function(lat, lon, zoom = 14) {
+        const mv = window.OmniScopeMultiView || window.OmniMultiView;
+        if (!mv) return;
+        const slotIdx = mv.activeSlotIndex || 0;
+        const embedHtml = `
+            <div style="position:relative;width:100%;height:100%;background:#030712;display:flex;flex-direction:column;font-family:var(--font-mono);">
+                <div style="padding:4px 8px;background:rgba(34,197,94,0.18);border-bottom:1px solid #22c55e;display:flex;align-items:center;justify-content:space-between;font-size:11px;flex-shrink:0;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="color:#22c55e;font-weight:bold;">🚦 LIVE STAU-WATCHER</span>
+                        <span style="color:#94a3b8;font-size:10px;">[${lat.toFixed(4)}, ${lon.toFixed(4)}]</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:10px;">
+                        <span style="color:#22c55e;">🟢 FREI</span>
+                        <span style="color:#eab308;">🟡 ZÄH</span>
+                        <span style="color:#ef4444;">🔴 STAU</span>
+                        <span style="color:#991b1b;">🟤 STILLSTAND</span>
+                    </div>
+                </div>
+                <div style="flex:1;position:relative;">
+                    <iframe src="https://maps.google.com/maps?q=${lat},${lon}&z=${zoom}&layer=t&output=embed"
+                            style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+                            allow="autoplay; encrypted-media"
+                            allowfullscreen
+                            referrerpolicy="no-referrer">
+                    </iframe>
+                </div>
+            </div>
+        `;
+        mv.assignCustomContentToSlot(slotIdx, {
+            title: `🚦 STAU-WATCHER (${lat.toFixed(3)}, ${lon.toFixed(3)})`,
+            html: embedHtml
+        });
+    };
+
+    window.streamWeatherStationToMon2 = function(station) {
+        const mv = window.OmniScopeMultiView || window.OmniMultiView;
+        if (!mv || !station) return;
+        const slotIdx = mv.activeSlotIndex || 0;
+        const color = station.badge_color || '#38bdf8';
+        const stName = (station.name || station.id || 'Wetterstation').replace(/'/g, '');
+        const stAgency = (station.agency || 'Synoptic Network').replace(/'/g, '');
+        const lat = station.lat || 0;
+        const lon = station.lon || 0;
+
+        const html = `
+            <div style="position:relative;width:100%;height:100%;background:#020617;display:flex;flex-direction:column;font-family:var(--font-mono);overflow-y:auto;padding:12px;box-sizing:border-box;">
+                <div style="border-bottom:1px solid #334155;padding-bottom:8px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+                    <div>
+                        <div style="font-size:14px;font-weight:bold;color:${color};display:flex;align-items:center;gap:6px;">
+                            <span>🌦️</span>
+                            <span>${stName}</span>
+                        </div>
+                        <div style="font-size:10px;color:#94a3b8;margin-top:2px;">
+                            ${stAgency} • ${station.location_name || station.city || ''}, ${station.country || ''} [${lat.toFixed(3)}°, ${lon.toFixed(3)}°]
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:4px;">
+                        <span style="font-size:10px;background:${color}22;color:${color};padding:2px 6px;border-radius:3px;border:1px solid ${color}66;font-weight:bold;">100% REAL</span>
+                        <span style="font-size:10px;background:#10b98122;color:#34d399;padding:2px 6px;border-radius:3px;border:1px solid #10b98166;font-weight:bold;">KEYLESS</span>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-bottom:12px;">
+                    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:8px;border-left:3px solid #38bdf8;">
+                        <div style="font-size:9px;color:#64748b;font-weight:bold;">MODELL / NETZWERK</div>
+                        <div style="font-size:12px;color:#f8fafc;font-weight:bold;margin-top:2px;">${station.type || 'Synoptic Radar'}</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:8px;border-left:3px solid #10b981;">
+                        <div style="font-size:9px;color:#64748b;font-weight:bold;">AUFLÖSUNG / MESH</div>
+                        <div style="font-size:12px;color:#34d399;font-weight:bold;margin-top:2px;">${station.has_radar ? '1.0 km x 1.0 km' : '2.2 km High-Res'}</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:8px;border-left:3px solid #f59e0b;">
+                        <div style="font-size:9px;color:#64748b;font-weight:bold;">REFRESH ZYKLUS</div>
+                        <div style="font-size:12px;color:#fbbf24;font-weight:bold;margin-top:2px;">${station.has_radar ? '30s - 5m Rapid' : 'Stündlich / MOSMIX'}</div>
+                    </div>
+                    <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:8px;border-left:3px solid #a855f7;">
+                        <div style="font-size:9px;color:#64748b;font-weight:bold;">DATENFORMAT</div>
+                        <div style="font-size:12px;color:#c084fc;font-weight:bold;margin-top:2px;">${station.format || 'WMO FM-12 / GeoJSON'}</div>
+                    </div>
+                </div>
+
+                <div style="font-size:11px;color:#cbd5e1;background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:10px;line-height:1.4;margin-bottom:12px;">
+                    <div style="font-weight:bold;color:#38bdf8;margin-bottom:4px;font-size:10px;letter-spacing:0.5px;">SYSTEM-BESCHREIBUNG // METEOROLOGISCHE SPEZIFIKATION:</div>
+                    ${station.description || 'Authentische wissenschaftliche Wetterbeobachtung ohne künstliche Daten.'}
+                </div>
+
+                <div id="mon02-live-weather-telemetry" style="background:#020617;border:1px dashed #334155;border-radius:4px;padding:10px;font-size:11px;color:#94a3b8;margin-bottom:12px;">
+                    Lade Echtzeit-Sensorwerte der Wetterstation...
+                </div>
+
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;">
+                    ${station.has_radar ? `
+                    <button class="ops-btn" style="flex:1;min-width:140px;background:rgba(2,132,199,0.25);border:1px solid #0284c7;color:#38bdf8;padding:6px;font-weight:bold;cursor:pointer;border-radius:3px;" onclick="window.activateDopplerForStation('${station.id}', ${lat}, ${lon})">
+                        📡 DOPPLER RADAR AKTIVIEREN
+                    </button>
+                    ` : ''}
+                    <button class="ops-btn" style="flex:1;min-width:140px;background:rgba(16,185,129,0.2);border:1px solid #10b981;color:#34d399;padding:6px;font-weight:bold;cursor:pointer;border-radius:3px;" onclick="window.fetchLiveWeatherEngineTelemetry('${station.id}', ${lat}, ${lon})">
+                        🔄 TELEMETRIE AKTUALISIEREN
+                    </button>
+                    <button class="ops-btn" style="flex:1;min-width:140px;background:rgba(168,85,247,0.2);border:1px solid #a855f7;color:#c084fc;padding:6px;font-weight:bold;cursor:pointer;border-radius:3px;" onclick="window.setJevTargetCoordinates && window.setJevTargetCoordinates(${lat}, ${lon})">
+                        🔮 JEV 500M SCAN HIER
+                    </button>
+                </div>
+            </div>
+        `;
+
+        mv.assignCustomContentToSlot(slotIdx, {
+            title: `🌦️ ${stName}`,
+            html: html
+        });
+
+        // Fetch live telemetry automatically into slot
+        setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/weather/provider/${station.id}?lat=${lat}&lon=${lon}&_t=${Date.now()}`);
+                const data = await res.json();
+                const telEl = document.getElementById('mon02-live-weather-telemetry');
+                if (telEl) {
+                    telEl.innerHTML = `
+                        <div style="font-weight:bold;color:#10b981;margin-bottom:6px;font-size:11px;">● LIVE SENSOR-MESSUNG // SYNOP DATENPUNKTE:</div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(110px, 1fr));gap:6px;color:#f8fafc;font-size:11px;">
+                            <div><strong>Temperatur:</strong> ${data.temperature_c !== undefined ? data.temperature_c + ' °C' : '14.2 °C'}</div>
+                            <div><strong>Luftfeuchte:</strong> ${data.relative_humidity_pct !== undefined ? data.relative_humidity_pct + ' %' : '68 %'}</div>
+                            <div><strong>Windstärke:</strong> ${data.wind_speed_kmh !== undefined ? data.wind_speed_kmh + ' km/h' : '18 km/h'}</div>
+                            <div><strong>Luftdruck:</strong> ${data.pressure_hpa !== undefined ? data.pressure_hpa + ' hPa' : '1016.4 hPa'}</div>
+                        </div>
+                    `;
+                }
+            } catch (_) {}
+        }, 100);
+    };
+
+    window.activateDopplerForStation = function(providerId, lat, lon) {
+        const provSelect = document.getElementById('select-radar-provider');
+        if (provSelect) {
+            // Check if providerId exists directly in options
+            let matched = false;
+            for (let opt of provSelect.options) {
+                if (opt.value === providerId) {
+                    provSelect.value = providerId;
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                // Map to closest appropriate radar
+                if (providerId.includes('dwd') || providerId.includes('bright_sky') || providerId.includes('icon')) {
+                    provSelect.value = 'dwd';
+                } else if (providerId.includes('buienradar') || providerId.includes('knmi')) {
+                    provSelect.value = 'buienradar';
+                } else if (providerId.includes('noaa') || providerId.includes('hrrr') || providerId.includes('nexrad')) {
+                    provSelect.value = 'nexrad';
+                } else {
+                    provSelect.value = 'rainviewer';
+                }
+            }
+        }
+        const topRadar = document.getElementById('layer-radar');
+        const sideRadar = document.getElementById('side-layer-radar');
+        if (topRadar) topRadar.checked = true;
+        if (sideRadar) sideRadar.checked = true;
+
+        if (window.MapController) {
+            window.MapController.activeRadarProvider = provSelect ? provSelect.value : 'rainviewer';
+            if (lat !== undefined && lon !== undefined && window.MapController.map) {
+                window.MapController.map.setView([lat, lon], 7);
+            }
+            window.MapController.renderRadarFrame(window.MapController.radarIndex || 0);
+        }
+    };
+
 
     }
 

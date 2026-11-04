@@ -1,3 +1,189 @@
+async function handleBridgeWeatherRadar(urlStr) {
+  const url = new URL(urlStr, window.location.href);
+  const p = (url.searchParams.get("provider") || "rainviewer").toLowerCase();
+  const m = (url.searchParams.get("mode") || "composite").toLowerCase();
+
+  const MODE_METADATA = {
+    composite: { title: "dBZ Reflektivität (Base Reflectivity)", unit: "dBZ", scheme: 2, scale_range: [5, 75] },
+    dbz: { title: "dBZ Reflektivität (Base Reflectivity)", unit: "dBZ", scheme: 2, scale_range: [5, 75] },
+    velocity: { title: "Doppler Radial-Wind (Radial Velocity)", unit: "kt", scheme: 6, scale_range: [-64, 64] },
+    rain_rate: { title: "Niederschlagsrate (Rain Rate)", unit: "mm/h", scheme: 7, scale_range: [0.1, 100] },
+    echo_tops: { title: "Echohöhe (Echo Tops TITAN)", unit: "kft", scheme: 3, scale_range: [5, 65] },
+    dual_pol_cc: { title: "Dual-Pol Korrelationskoeffizient (CC)", unit: "ρ_hv", scheme: 6, scale_range: [0.7, 1.05] },
+    differential_z: { title: "Differenzielle Reflektivität (ZDR)", unit: "dB", scheme: 2, scale_range: [-2, 8] },
+    satellite_ir: { title: "Infrarot Wolkenspitzen (Clean IR)", unit: "°C", scheme: 0, scale_range: [-80, 40] },
+    satellite_vis: { title: "Ultra High-Res Sichtbar (Visible)", unit: "Albedo %", scheme: 1, scale_range: [0, 100] }
+  };
+
+  const selectedMode = MODE_METADATA[m] || MODE_METADATA.composite;
+
+  const PROVIDER_METADATA = {
+    rainviewer: {
+      name: "RainViewer Global Doppler",
+      type: "global_radar",
+      refresh_sec: 600,
+      max_native_zoom: 7,
+      supported_modes: ["composite", "velocity", "rain_rate", "echo_tops", "satellite_ir"]
+    },
+    nexrad: {
+      name: "NOAA NEXRAD Level-III USA",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
+      refresh_sec: 60,
+      max_native_zoom: 11,
+      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc"]
+    },
+    noaa_mrms: {
+      name: "NOAA MRMS Q2 Convective Composite",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png",
+      refresh_sec: 60,
+      max_native_zoom: 11,
+      supported_modes: ["composite", "rain_rate"]
+    },
+    openmeteo_hrrr: {
+      name: "NOAA HRRR 3km Convective Radar",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png",
+      refresh_sec: 60,
+      max_native_zoom: 11,
+      supported_modes: ["composite"]
+    },
+    dwd: {
+      name: "DWD Niederschlagsradar Deutschland",
+      type: "wms",
+      wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
+      wms_layer: "dwd:Niederschlagsradar",
+      refresh_sec: 300,
+      max_native_zoom: 18,
+      supported_modes: ["composite", "rain_rate"]
+    },
+    bright_sky: {
+      name: "Bright Sky Synoptic Radar (DWD)",
+      type: "wms",
+      wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
+      wms_layer: "dwd:Niederschlagsradar",
+      refresh_sec: 300,
+      max_native_zoom: 18,
+      supported_modes: ["composite"]
+    },
+    openmeteo_icon_d2: {
+      name: "DWD ICON-D2 (2.2km High-Res)",
+      type: "wms",
+      wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
+      wms_layer: "dwd:Niederschlagsradar",
+      refresh_sec: 300,
+      max_native_zoom: 18,
+      supported_modes: ["composite"]
+    },
+    buienradar: {
+      name: "Buienradar Benelux Doppler",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate"]
+    },
+    chmi_czechia: {
+      name: "CHMI CZRAD Doppler Network",
+      type: "global_radar",
+      refresh_sec: 300,
+      max_native_zoom: 9,
+      supported_modes: ["composite", "rain_rate"]
+    },
+    goes_east_vis: {
+      name: "NOAA GOES-16 East VIS (1km Rapid)",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png",
+      refresh_sec: 30,
+      max_native_zoom: 10,
+      supported_modes: ["satellite_vis"]
+    },
+    goes_east_ir: {
+      name: "NOAA GOES-16 East IR Band 13 (Rapid)",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png",
+      refresh_sec: 30,
+      max_native_zoom: 9,
+      supported_modes: ["satellite_ir"]
+    },
+    goes_west_vis: {
+      name: "NOAA GOES-18 West VIS (1km Rapid)",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-vis-1km-900913/{z}/{x}/{y}.png",
+      refresh_sec: 30,
+      max_native_zoom: 10,
+      supported_modes: ["satellite_vis"]
+    },
+    goes_west_ir: {
+      name: "NOAA GOES-18 West IR Band 13 (Rapid)",
+      type: "tile",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-ir-4km-900913/{z}/{x}/{y}.png",
+      refresh_sec: 30,
+      max_native_zoom: 9,
+      supported_modes: ["satellite_ir"]
+    },
+    dwd_satellite: {
+      name: "EUMETSAT / DWD High-Res Cloud Type",
+      type: "wms",
+      wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
+      wms_layer: "dwd:Satellite_Meteosat_RGB_CloudType",
+      refresh_sec: 60,
+      max_native_zoom: 18,
+      supported_modes: ["satellite_vis", "satellite_ir"]
+    },
+    nasa_gibs_truecolor: {
+      name: "NASA GIBS 250m TrueColor Satellite",
+      type: "tile",
+      tile_url: "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+      refresh_sec: 180,
+      max_native_zoom: 9,
+      supported_modes: ["satellite_vis"]
+    },
+    satellite: {
+      name: "NASA GIBS Global Infrared Clouds",
+      type: "tile",
+      tile_url: "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+      refresh_sec: 180,
+      max_native_zoom: 9,
+      supported_modes: ["satellite_ir"]
+    }
+  };
+
+  const prov = PROVIDER_METADATA[p] || {
+    name: p.toUpperCase() + " Doppler Network",
+    type: "global_radar",
+    refresh_sec: 300,
+    max_native_zoom: 8,
+    supported_modes: ["composite", "velocity", "rain_rate", "echo_tops"]
+  };
+
+  let rvData = { radar: { past: [], nowcast: [] }, satellite: { infrared: [] } };
+  try {
+    const rvRes = await window._originalFetch("https://api.rainviewer.com/public/weather-maps.json");
+    if (rvRes.ok) {
+      rvData = await rvRes.json();
+    }
+  } catch (_) {}
+
+  return jsonResponse({
+    status: "ok",
+    provider: p,
+    provider_name: prov.name,
+    mode: m,
+    mode_title: selectedMode.title,
+    unit: selectedMode.unit,
+    scheme: selectedMode.scheme,
+    tile_url: prov.tile_url || "",
+    wms_url: prov.wms_url || "",
+    wms_layer: prov.wms_layer || "",
+    max_native_zoom: prov.max_native_zoom || 7,
+    refresh_interval_sec: prov.refresh_sec || 60,
+    radar: rvData.radar || { past: [], nowcast: [] },
+    satellite: rvData.satellite || { infrared: [] },
+    host: rvData.host || "https://tilecache.rainviewer.com"
+  });
+}
+
 /**
 
  * OmniScope Web - Client-Side Serverless Bridge
@@ -1008,25 +1194,12 @@
 
 
 
-        // 8. /api/weather/radar -> RainViewer Public Maps
-
-        if (urlStr.includes('/api/weather/radar')) {
-
-            try {
-
-                const rvRes = await window._originalFetch('https://api.rainviewer.com/public/weather-maps.json');
-
-                const rvData = await rvRes.json();
-
-                return jsonResponse(rvData);
-
-            } catch (e) {
-
-                return jsonResponse({ radar: { past: [], nowcast: [] } });
-
-            }
-
+        // 8. /api/weather/radar & /api/radar/modes
+        if (urlStr.includes('/api/weather/radar') || urlStr.includes('/api/radar/modes')) {
+            return await handleBridgeWeatherRadar(urlStr);
         }
+
+        
 
 
 
