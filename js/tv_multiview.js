@@ -3329,45 +3329,35 @@
 
                     if (!mc) return;
 
-                    if (val === 'rainviewer') {
-
-                        mc.activeRadarProvider = 'rainviewer';
-
-                        mc.activeRadarMode = 'composite';
-
-                    } else if (val === 'nexrad_n0q') {
-
-                        mc.activeRadarProvider = 'nexrad_l2';
-
-                        mc.activeRadarMode = 'composite';
-
-                    } else if (val === 'nexrad_vel') {
-
-                        mc.activeRadarProvider = 'nexrad_l3';
-
-                        mc.activeRadarMode = 'velocity';
-
-                    } else if (val === 'nexrad_cc') {
-
-                        mc.activeRadarProvider = 'nexrad_l3';
-
-                        mc.activeRadarMode = 'l3_cc';
-
-                    } else if (val === 'nexrad_zdr') {
-
-                        mc.activeRadarProvider = 'nexrad_l3';
-
-                        mc.activeRadarMode = 'l3_zdr';
-
-                    } else if (val === 'nexrad_eet') {
-
-                        mc.activeRadarProvider = 'nexrad_l3';
-
-                        mc.activeRadarMode = 'echo_tops';
-
+                    if (mc.setRadarProvider) {
+                        if (val === 'rainviewer') mc.setRadarProvider('rainviewer', 'composite');
+                        else if (val === 'nexrad_n0q') mc.setRadarProvider('nexrad_l2', 'composite');
+                        else if (val === 'nexrad_vel') mc.setRadarProvider('nexrad_l3', 'velocity');
+                        else if (val === 'nexrad_cc') mc.setRadarProvider('nexrad_l3', 'dual_pol_cc');
+                        else if (val === 'nexrad_zdr') mc.setRadarProvider('nexrad_l3', 'differential_z');
+                        else if (val === 'nexrad_eet') mc.setRadarProvider('nexrad_l3', 'echo_tops');
+                    } else {
+                        if (val === 'rainviewer') {
+                            mc.activeRadarProvider = 'rainviewer';
+                            mc.activeRadarMode = 'composite';
+                        } else if (val === 'nexrad_n0q') {
+                            mc.activeRadarProvider = 'nexrad_l2';
+                            mc.activeRadarMode = 'composite';
+                        } else if (val === 'nexrad_vel') {
+                            mc.activeRadarProvider = 'nexrad_l3';
+                            mc.activeRadarMode = 'velocity';
+                        } else if (val === 'nexrad_cc') {
+                            mc.activeRadarProvider = 'nexrad_l3';
+                            mc.activeRadarMode = 'dual_pol_cc';
+                        } else if (val === 'nexrad_zdr') {
+                            mc.activeRadarProvider = 'nexrad_l3';
+                            mc.activeRadarMode = 'differential_z';
+                        } else if (val === 'nexrad_eet') {
+                            mc.activeRadarProvider = 'nexrad_l3';
+                            mc.activeRadarMode = 'echo_tops';
+                        }
+                        mc.renderRadarFrame(mc.radarIndex || 0);
                     }
-
-                    mc.renderRadarFrame(mc.radarIndex || 0);
 
                 });
 
@@ -4376,11 +4366,16 @@
         if (sideRadar) sideRadar.checked = true;
 
         if (window.MapController) {
-            window.MapController.activeRadarProvider = provSelect ? provSelect.value : 'rainviewer';
+            const targetProv = provSelect ? provSelect.value : 'rainviewer';
+            if (window.MapController.setRadarProvider) {
+                window.MapController.setRadarProvider(targetProv, 'composite', false);
+            } else {
+                window.MapController.activeRadarProvider = targetProv;
+                window.MapController.renderRadarFrame(0);
+            }
             if (lat !== undefined && lon !== undefined && window.MapController.map) {
                 window.MapController.map.setView([lat, lon], 7);
             }
-            window.MapController.renderRadarFrame(window.MapController.radarIndex || 0);
         }
     };
 

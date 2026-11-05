@@ -572,42 +572,42 @@ if (typeof L !== 'undefined' && !L.SquareMarker) {
 
 const RADAR_PROVIDER_MODES = {
     'rainviewer': ['composite', 'rain_rate', 'satellite_ir'],
-    'rainviewer_radar_grid': ['composite', 'velocity', 'rain_rate', 'echo_tops', 'satellite_ir'],
-    'superdarn': ['velocity', 'composite'],
-    'eiscat': ['velocity', 'composite'],
+    'rainviewer_radar_grid': ['composite', 'rain_rate', 'satellite_ir'],
+    'superdarn': ['composite', 'velocity'],
+    'eiscat': ['composite', 'velocity'],
     'nexrad': ['composite', 'velocity', 'echo_tops', 'dual_pol_cc', 'differential_z', 'rain_rate', 'satellite_ir', 'satellite_vis'],
     'nexrad_l2': ['composite', 'velocity', 'echo_tops', 'dual_pol_cc', 'rain_rate'],
     'nexrad_l3': ['composite', 'velocity', 'echo_tops', 'dual_pol_cc', 'differential_z', 'rain_rate'],
     'tdwr': ['composite', 'velocity', 'echo_tops'],
     'noaa_mrms': ['rain_rate', 'composite'],
     'openmeteo_hrrr': ['composite', 'rain_rate'],
-    'eccc_canada': ['composite', 'rain_rate'],
+    'eccc_canada': ['composite', 'rain_rate', 'satellite_vis'],
     'dwd': ['composite', 'rain_rate', 'satellite_vis', 'satellite_ir'],
     'bright_sky': ['composite', 'rain_rate'],
     'openmeteo_icon_d2': ['composite', 'rain_rate'],
     'openmeteo_icon_eu': ['composite', 'rain_rate'],
     'dwd_mosmix_hub': ['composite', 'rain_rate'],
-    'buienradar': ['composite', 'rain_rate', 'velocity'],
-    'knmi': ['composite', 'velocity', 'rain_rate'],
-    'knmi_radar_composites': ['composite', 'velocity', 'rain_rate', 'dual_pol_cc'],
+    'buienradar': ['composite', 'rain_rate'],
+    'knmi': ['composite', 'rain_rate'],
+    'knmi_radar_composites': ['composite', 'rain_rate', 'dual_pol_cc'],
     'rmi_belgium': ['composite', 'rain_rate'],
-    'chmi_czechia': ['composite', 'velocity', 'echo_tops', 'rain_rate'],
-    'chmi_radar_aladin': ['composite', 'rain_rate', 'velocity'],
+    'chmi_czechia': ['composite', 'rain_rate'],
+    'chmi_radar_aladin': ['composite', 'rain_rate'],
     'shmu_slovakia': ['composite', 'rain_rate'],
-    'aemet_spain': ['composite', 'rain_rate', 'echo_tops'],
+    'aemet_spain': ['composite', 'rain_rate'],
     'aemet_opendata_radar': ['composite', 'rain_rate'],
     'meteofrance': ['composite', 'rain_rate'],
-    'jma_japan': ['composite', 'velocity', 'rain_rate'],
-    'cwa_taiwan': ['composite', 'velocity', 'rain_rate'],
-    'cwa_radar_taiwan': ['composite', 'velocity', 'rain_rate', 'dual_pol_cc'],
+    'jma_japan': ['composite', 'rain_rate'],
+    'cwa_taiwan': ['composite', 'rain_rate'],
+    'cwa_radar_taiwan': ['composite', 'rain_rate', 'dual_pol_cc'],
     'singapore_nea': ['composite', 'rain_rate'],
-    'bmkg_indonesia': ['composite', 'velocity', 'rain_rate'],
-    'kma_korea': ['composite', 'velocity', 'rain_rate'],
-    'kma_supercomputing': ['velocity', 'composite', 'rain_rate'],
-    'cma_nmc_china': ['composite', 'velocity', 'rain_rate'],
-    'imd_india': ['composite', 'velocity', 'rain_rate'],
-    'pagasa': ['composite', 'velocity', 'rain_rate'],
-    'bom_australia': ['composite', 'velocity', 'rain_rate'],
+    'bmkg_indonesia': ['composite', 'rain_rate'],
+    'kma_korea': ['composite', 'rain_rate'],
+    'kma_supercomputing': ['composite', 'rain_rate'],
+    'cma_nmc_china': ['composite', 'rain_rate'],
+    'imd_india': ['composite', 'rain_rate'],
+    'pagasa': ['composite', 'rain_rate'],
+    'bom_australia': ['composite', 'rain_rate'],
     'saws_southafrica': ['composite', 'rain_rate'],
     'ncm_uae': ['composite', 'rain_rate'],
     'ncm_saudi': ['composite', 'rain_rate'],
@@ -892,6 +892,104 @@ class OperationsMap {
         }
     }
 
+    setRadarProvider(provId, mode = null, shouldSetView = false) {
+        this.activeRadarProvider = provId;
+        this.updateRadarModesForProvider(provId);
+
+        const radarModeSelect = document.getElementById('select-radar-mode');
+        if (mode) {
+            this.activeRadarMode = mode;
+            if (radarModeSelect) {
+                radarModeSelect.value = mode;
+                if (radarModeSelect.refreshCopyPastable) radarModeSelect.refreshCopyPastable();
+            }
+        } else {
+            this.activeRadarMode = radarModeSelect ? radarModeSelect.value : 'composite';
+        }
+
+        const radarProvSelect = document.getElementById('select-radar-provider');
+        if (radarProvSelect) {
+            radarProvSelect.value = provId;
+            if (radarProvSelect.refreshCopyPastable) radarProvSelect.refreshCopyPastable();
+        }
+
+        const topRadar = document.getElementById('layer-radar');
+        const sideRadar = document.getElementById('side-layer-radar');
+        if (topRadar) topRadar.checked = true;
+        if (sideRadar) sideRadar.checked = true;
+
+        this.cleanRadarLayers();
+
+        const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(provId);
+        if (isMulti) {
+            if (this.radarPlaying) this.playRadarLoop();
+        } else {
+            if (this.radarTimer) {
+                clearInterval(this.radarTimer);
+                this.radarTimer = null;
+            }
+            const timeLabel = document.getElementById('radar-time-label');
+            if (timeLabel) timeLabel.innerText = 'LIVE (ECHTZEIT)';
+            const timeline = document.getElementById('radar-timeline');
+            if (timeline) timeline.value = 100;
+        }
+
+        if (shouldSetView && this.map) {
+            const pv = provId;
+            if (pv === 'dwd' || pv === 'bright_sky' || pv === 'openmeteo_icon_d2' || pv === 'openmeteo_icon_eu' || pv === 'dwd_mosmix_hub') {
+                this.map.setView([51.16, 10.45], 6);
+            } else if (pv === 'nexrad' || pv === 'nexrad_l2' || pv === 'nexrad_l3' || pv === 'tdwr' || pv === 'noaa_mrms' || pv === 'openmeteo_hrrr') {
+                this.map.setView([38.8, -97.0], 5);
+            } else if (pv === 'eccc_canada') {
+                this.map.setView([56.1, -106.3], 4);
+            } else if (pv === 'buienradar' || pv === 'knmi' || pv === 'knmi_radar_composites') {
+                this.map.setView([52.13, 5.29], 7);
+            } else if (pv === 'rmi_belgium') {
+                this.map.setView([50.85, 4.35], 8);
+            } else if (pv === 'chmi_czechia' || pv === 'chmi_radar_aladin' || pv === 'shmu_slovakia') {
+                this.map.setView([49.8, 15.5], 7);
+            } else if (pv === 'aemet_spain' || pv === 'aemet_opendata_radar') {
+                this.map.setView([40.4, -3.7], 6);
+            } else if (pv === 'meteofrance') {
+                this.map.setView([46.6, 2.4], 6);
+            } else if (pv === 'jma_japan') {
+                this.map.setView([36.2, 138.2], 6);
+            } else if (pv === 'cwa_taiwan' || pv === 'cwa_radar_taiwan') {
+                this.map.setView([23.7, 120.9], 7);
+            } else if (pv === 'singapore_nea') {
+                this.map.setView([1.35, 103.8], 10);
+            } else if (pv === 'bmkg_indonesia') {
+                this.map.setView([-0.78, 113.92], 5);
+            } else if (pv === 'kma_korea' || pv === 'kma_supercomputing') {
+                this.map.setView([36.5, 127.8], 7);
+            } else if (pv === 'cma_nmc_china') {
+                this.map.setView([35.8, 104.1], 4);
+            } else if (pv === 'imd_india') {
+                this.map.setView([22.5, 78.9], 5);
+            } else if (pv === 'pagasa') {
+                this.map.setView([12.8, 121.7], 6);
+            } else if (pv === 'bom_australia') {
+                this.map.setView([-25.3, 133.8], 5);
+            } else if (pv === 'saws_southafrica') {
+                this.map.setView([-29.0, 24.0], 5);
+            } else if (pv === 'ncm_uae') {
+                this.map.setView([24.2, 54.3], 7);
+            } else if (pv === 'ncm_saudi') {
+                this.map.setView([23.8, 45.0], 5);
+            } else if (pv === 'inumet') {
+                this.map.setView([-32.5, -55.7], 7);
+            } else if (pv === 'superdarn' || pv === 'eiscat') {
+                this.map.setView([65.0, 15.0], 4);
+            } else if (pv === 'goes_east_vis' || pv === 'goes_east_ir') {
+                this.map.setView([33.0, -85.0], 4);
+            } else if (pv === 'goes_west_vis' || pv === 'goes_west_ir') {
+                this.map.setView([35.0, -125.0], 4);
+            }
+        }
+
+        this.renderRadarFrame(0);
+    }
+
     initCopyPastableMenus() {
         const mapSelect = document.getElementById('map-style-select');
         const provSelect = document.getElementById('select-radar-provider');
@@ -1015,6 +1113,12 @@ class OperationsMap {
 
         // Overlay layers
         this.radarLayer = null;
+        this.radarLayerPrev = null;
+        this.dwdNativeWms = null;
+        this.activeWmsLayer = null;
+        this.geometNativeWms = null;
+        this.noaaRadarLayer = null;
+        this.historicalRadarLayer = null;
         this.radarFrames = [];
         this.radarIndex = 0;
         this.radarTimer = null;
@@ -1050,6 +1154,7 @@ class OperationsMap {
             maxZoom: 20,
             zIndex: 450,
             opacity: 0.85,
+            className: 'traffic-tile-layer',
             attribution: 'Google Maps Traffic'
         }).addTo(this.map);
         this.weatherEnginesLayer = L.layerGroup().addTo(this.map);
@@ -1625,14 +1730,13 @@ class OperationsMap {
 
                 if (mapping.isRadar) {
                     if (isChecked) {
-                        this.renderRadarFrame(this.radarIndex);
+                        this.renderRadarFrame(this.radarIndex || 0);
+                        const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(this.activeRadarProvider);
+                        if (isMulti && this.radarPlaying) this.playRadarLoop();
                     } else {
-                        if (this.radarLayer && this.map.hasLayer(this.radarLayer)) {
-                            this.map.removeLayer(this.radarLayer);
-                        }
-                        if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) {
-                            this.map.removeLayer(this.radarLayerPrev);
-                        }
+                        this.cleanRadarLayers();
+                        clearInterval(this.radarTimer);
+                        this.radarTimer = null;
                     }
                 } else if (mapping.isNoaaRadar) {
                     this.enableNoaaRadar(isChecked);
@@ -1734,10 +1838,13 @@ class OperationsMap {
 
                 if (m.isRadar) {
                     if (enable) {
-                        this.renderRadarFrame(this.radarIndex);
+                        this.renderRadarFrame(this.radarIndex || 0);
+                        const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(this.activeRadarProvider);
+                        if (isMulti && this.radarPlaying) this.playRadarLoop();
                     } else {
-                        if (this.radarLayer && this.map.hasLayer(this.radarLayer)) this.map.removeLayer(this.radarLayer);
-                        if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) this.map.removeLayer(this.radarLayerPrev);
+                        this.cleanRadarLayers();
+                        clearInterval(this.radarTimer);
+                        this.radarTimer = null;
                     }
                 } else if (m.isNoaaRadar) {
                     this.enableNoaaRadar(enable);
@@ -1820,53 +1927,7 @@ class OperationsMap {
         const radarProvSelect = document.getElementById('select-radar-provider');
         if (radarProvSelect) {
             radarProvSelect.addEventListener('change', (e) => {
-                this.activeRadarProvider = e.target.value;
-                this.updateRadarModesForProvider(this.activeRadarProvider);
-                const topRadar = document.getElementById('layer-radar');
-                const sideRadar = document.getElementById('side-layer-radar');
-                if (topRadar) topRadar.checked = true;
-                if (sideRadar) sideRadar.checked = true;
-                if (this.radarLayer && this.map.hasLayer(this.radarLayer)) {
-                    this.map.removeLayer(this.radarLayer);
-                    this.radarLayer = null;
-                }
-                if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) {
-                    this.map.removeLayer(this.radarLayerPrev);
-                    this.radarLayerPrev = null;
-                }
-                if (this.noaaRadarLayer && this.map.hasLayer(this.noaaRadarLayer)) {
-                    this.map.removeLayer(this.noaaRadarLayer);
-                    this.noaaRadarLayer = null;
-                }
-                const pv = e.target.value;
-                if (pv === 'dwd' || pv === 'bright_sky' || pv === 'openmeteo_icon_d2') {
-                    this.map.setView([51.16, 10.45], 6);
-                } else if (pv === 'nexrad' || pv === 'noaa_mrms' || pv === 'openmeteo_hrrr') {
-                    this.map.setView([38.8, -97.0], 5);
-                } else if (pv === 'eccc_canada') {
-                    this.map.setView([56.1, -106.3], 4);
-                } else if (pv === 'buienradar' || pv === 'knmi') {
-                    this.map.setView([52.13, 5.29], 7);
-                } else if (pv === 'chmi_czechia' || pv === 'shmu_slovakia') {
-                    this.map.setView([49.8, 15.5], 7);
-                } else if (pv === 'aemet_spain') {
-                    this.map.setView([40.4, -3.7], 6);
-                } else if (pv === 'meteofrance') {
-                    this.map.setView([46.6, 2.4], 6);
-                } else if (pv === 'jma_japan') {
-                    this.map.setView([36.2, 138.2], 6);
-                } else if (pv === 'cwa_taiwan') {
-                    this.map.setView([23.7, 120.9], 7);
-                } else if (pv === 'singapore_nea') {
-                    this.map.setView([1.35, 103.8], 10);
-                } else if (pv === 'bom_australia') {
-                    this.map.setView([-25.3, 133.8], 5);
-                } else if (pv === 'goes_east_vis' || pv === 'goes_east_ir') {
-                    this.map.setView([33.0, -85.0], 4);
-                } else if (pv === 'goes_west_vis' || pv === 'goes_west_ir') {
-                    this.map.setView([35.0, -125.0], 4);
-                }
-                this.renderRadarFrame(this.radarIndex || 0);
+                this.setRadarProvider(e.target.value, this.activeRadarMode || 'composite', true);
             });
         }
 
@@ -1878,18 +1939,8 @@ class OperationsMap {
                 const sideRadar = document.getElementById('side-layer-radar');
                 if (topRadar) topRadar.checked = true;
                 if (sideRadar) sideRadar.checked = true;
-                if (this.radarLayer && this.map.hasLayer(this.radarLayer)) {
-                    this.map.removeLayer(this.radarLayer);
-                    this.radarLayer = null;
-                }
-                if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) {
-                    this.map.removeLayer(this.radarLayerPrev);
-                    this.radarLayerPrev = null;
-                }
-                if (this.noaaRadarLayer && this.map.hasLayer(this.noaaRadarLayer)) {
-                    this.map.removeLayer(this.noaaRadarLayer);
-                    this.noaaRadarLayer = null;
-                }
+
+                this.cleanRadarLayers();
                 this.renderRadarFrame(this.radarIndex || 0);
             });
         }
@@ -1912,6 +1963,9 @@ class OperationsMap {
             if (hudOpacity) hudOpacity.value = this.radarOpacity;
             if (this.radarLayer) this.radarLayer.setOpacity(this.radarOpacity);
             if (this.radarLayerPrev) this.radarLayerPrev.setOpacity(this.radarOpacity);
+            if (this.dwdNativeWms) this.dwdNativeWms.setOpacity(this.radarOpacity);
+            if (this.activeWmsLayer) this.activeWmsLayer.setOpacity(this.radarOpacity);
+            if (this.geometNativeWms) this.geometNativeWms.setOpacity(this.radarOpacity);
         };
         if (sideOpacity) sideOpacity.addEventListener('input', (e) => updateOpacity(e.target.value));
         if (hudOpacity) hudOpacity.addEventListener('input', (e) => updateOpacity(e.target.value));
@@ -1973,12 +2027,19 @@ class OperationsMap {
         const playBtn = document.getElementById('radar-play');
         if (playBtn) {
             playBtn.addEventListener('click', () => {
+                const prov = this.activeRadarProvider || 'rainviewer';
+                const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(prov);
+                if (!isMulti) {
+                    this.renderRadarFrame(this.radarIndex || 0);
+                    return;
+                }
                 this.radarPlaying = !this.radarPlaying;
                 playBtn.innerText = this.radarPlaying ? 'PAUSE' : 'PLAY';
                 if (this.radarPlaying) {
                     this.playRadarLoop();
                 } else {
                     clearInterval(this.radarTimer);
+                    this.radarTimer = null;
                 }
             });
         }
@@ -1988,13 +2049,19 @@ class OperationsMap {
             opacitySlider.addEventListener('input', (e) => {
                 this.radarOpacity = parseFloat(e.target.value);
                 if (this.radarLayer) this.radarLayer.setOpacity(this.radarOpacity);
+                if (this.dwdNativeWms) this.dwdNativeWms.setOpacity(this.radarOpacity);
+                if (this.geometNativeWms) this.geometNativeWms.setOpacity(this.radarOpacity);
+                if (this.activeWmsLayer) this.activeWmsLayer.setOpacity(this.radarOpacity);
             });
         }
 
         const timeline = document.getElementById('radar-timeline');
         if (timeline) {
             timeline.addEventListener('input', (e) => {
-                if (this.radarFrames.length > 0) {
+                const prov = this.activeRadarProvider || 'rainviewer';
+                const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(prov);
+                if (!isMulti) return;
+                if (this.radarFrames && this.radarFrames.length > 0) {
                     const idx = Math.min(
                         Math.floor((parseInt(e.target.value) / 100) * (this.radarFrames.length - 1)),
                         this.radarFrames.length - 1
@@ -2442,6 +2509,15 @@ class OperationsMap {
             if (this.radarLayer && this.map.hasLayer(this.radarLayer)) {
                 this.radarLayer.setOpacity(0.0);
             }
+            if (this.dwdNativeWms && this.map.hasLayer(this.dwdNativeWms)) {
+                this.dwdNativeWms.setOpacity(0.0);
+            }
+            if (this.geometNativeWms && this.map.hasLayer(this.geometNativeWms)) {
+                this.geometNativeWms.setOpacity(0.0);
+            }
+            if (this.activeWmsLayer && this.map.hasLayer(this.activeWmsLayer)) {
+                this.activeWmsLayer.setOpacity(0.0);
+            }
 
             // Render NASA GIBS Global True-Color Satellite Imagery for the historical date
             const gibsUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${isoDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
@@ -2804,8 +2880,8 @@ class OperationsMap {
                 <div style="font-weight:bold;color:#38bdf8;border-bottom:1px solid #334155;padding-bottom:4px;margin-bottom:6px;">
                     🎯 RETICLE LOCK [${lat.toFixed(4)}°, ${lng.toFixed(4)}°]
                 </div>
-                <button class="ops-btn" style="width:100%;margin-top:4px;padding:6px 8px;font-size:10px;background:rgba(34,197,94,0.22);border:1px solid #22c55e;color:#4ade80;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="window.streamTrafficToMon2 && window.streamTrafficToMon2(${lat}, ${lng}, 14)">
-                    🚦 STREAM STAU-WATCHER (MON-02)
+                <button class="ops-btn" style="width:100%;margin-top:4px;padding:6px 8px;font-size:10px;background:rgba(239,68,68,0.22);border:1px solid #ef4444;color:#f87171;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="window.focusTrafficJamOnMap && window.focusTrafficJamOnMap(${lat}, ${lng}, 15)">
+                    🔴 STAU-FOKUS // ROTE STRASSEN AUF KARTE
                 </button>
             </div>
         `;
@@ -3300,11 +3376,57 @@ class OperationsMap {
                     this.radarFrames = this.radarFrames.concat(nowcast);
                 }
                 this.radarIndex = this.radarFrames.length - 1;
-                this.renderRadarFrame(this.radarIndex);
-                this.playRadarLoop();
+                const prov = this.activeRadarProvider || 'rainviewer';
+                if (['rainviewer', 'rainviewer_radar_grid'].includes(prov)) {
+                    this.renderRadarFrame(this.radarIndex);
+                    this.playRadarLoop();
+                }
             }
         } catch (e) {
             console.warn("RainViewer Radar error:", e);
+        }
+    }
+
+    cleanRadarLayers() {
+        if (this.radarTimer) {
+            clearInterval(this.radarTimer);
+            this.radarTimer = null;
+        }
+        if (this.radarLayer && this.map) {
+            if (this.map.hasLayer(this.radarLayer)) {
+                this.map.removeLayer(this.radarLayer);
+            }
+            this.radarLayer = null;
+        }
+        if (this.radarLayerPrev && this.map) {
+            if (this.map.hasLayer(this.radarLayerPrev)) {
+                this.map.removeLayer(this.radarLayerPrev);
+            }
+            this.radarLayerPrev = null;
+        }
+        if (this.noaaRadarLayer && this.map) {
+            if (this.map.hasLayer(this.noaaRadarLayer)) {
+                this.map.removeLayer(this.noaaRadarLayer);
+            }
+            this.noaaRadarLayer = null;
+        }
+        if (this.dwdNativeWms && this.map) {
+            if (this.map.hasLayer(this.dwdNativeWms)) {
+                this.map.removeLayer(this.dwdNativeWms);
+            }
+            this.dwdNativeWms = null;
+        }
+        if (this.geometNativeWms && this.map) {
+            if (this.map.hasLayer(this.geometNativeWms)) {
+                this.map.removeLayer(this.geometNativeWms);
+            }
+            this.geometNativeWms = null;
+        }
+        if (this.activeWmsLayer && this.map) {
+            if (this.map.hasLayer(this.activeWmsLayer)) {
+                this.map.removeLayer(this.activeWmsLayer);
+            }
+            this.activeWmsLayer = null;
         }
     }
 
@@ -3312,168 +3434,288 @@ class OperationsMap {
         this.radarIndex = index || 0;
         const frame = (this.radarFrames && this.radarFrames[this.radarIndex]) || {};
 
+        const radarTopCb = document.getElementById('layer-radar');
+        const radarSideCb = document.getElementById('side-layer-radar');
+        const isEnabled = (radarTopCb && radarTopCb.checked) || (radarSideCb && radarSideCb.checked);
+        if (!isEnabled) {
+            this.cleanRadarLayers();
+            return;
+        }
+
         const prov = this.activeRadarProvider || 'rainviewer';
         const mode = this.activeRadarMode || 'composite';
+        const tsBucket = Math.floor(Date.now() / 30000);
 
         let tileUrl = '';
         let maxNative = 7;
         let hudStatus = 'GLOBAL RADAR [dBZ]';
+        let layerAttribution = 'RainViewer.com';
 
-        const host = this.radarHost || "https://tilecache.rainviewer.com";
-        const path = frame.path || (this.radarFrames && this.radarFrames[0] ? this.radarFrames[0].path : '/v2/radar/nowcast');
+        // 1. DWD & CENTRAL EUROPE WMS
+        if (prov === 'dwd' || prov === 'bright_sky' || prov === 'openmeteo_icon_d2' || prov === 'openmeteo_icon_eu' || prov === 'dwd_mosmix_hub' || prov === 'dwd_satellite') {
+            if (this.radarLayer || this.radarLayerPrev || this.geometNativeWms || this.noaaRadarLayer || (this.activeWmsLayer && this.activeWmsLayer !== this.dwdNativeWms)) {
+                this.cleanRadarLayers();
+            }
 
-        // 1. Comprehensive Authentic Doppler Radar & Satellite Provider Routing
+            const isSat = (mode === 'satellite_vis' || mode === 'satellite_ir' || prov === 'dwd_satellite');
+            let dwdLayerName = 'dwd:Niederschlagsradar';
+            if (isSat) {
+                dwdLayerName = 'dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h';
+            } else if (mode === 'rain_rate' || prov === 'openmeteo_icon_d2') {
+                dwdLayerName = 'dwd:Radar_rv_product_1x1km_ger';
+            }
+
+            if (this.dwdNativeWms && this.map.hasLayer(this.dwdNativeWms) && this.dwdNativeWms._currentLayerName === dwdLayerName) {
+                this.dwdNativeWms.setParams({ _ts: tsBucket });
+            } else {
+                if (this.dwdNativeWms && this.map.hasLayer(this.dwdNativeWms)) {
+                    this.map.removeLayer(this.dwdNativeWms);
+                }
+                this.dwdNativeWms = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
+                    layers: dwdLayerName,
+                    format: 'image/png',
+                    transparent: true,
+                    opacity: this.radarOpacity || 0.85,
+                    maxZoom: 18,
+                    zIndex: 600,
+                    attribution: isSat ? 'EUMETSAT / DWD' : 'Deutscher Wetterdienst (DWD)'
+                });
+                this.dwdNativeWms._currentLayerName = dwdLayerName;
+                this.dwdNativeWms.addTo(this.map);
+            }
+            this.activeWmsLayer = this.dwdNativeWms;
+
+            hudStatus = isSat ? '🛰️ EUMETSAT / DWD HIGH-RES SATELLITE' : (mode === 'rain_rate' ? '🇩🇪 DWD RAIN RATE (1x1 KM RV)' : '🇩🇪 DWD NIEDERSCHLAGSRADAR (1x1 KM ECHTDATEN)');
+            this.updateDynamicRadarLegend(prov, mode, hudStatus);
+
+            const timeLabel = document.getElementById('radar-time-label');
+            if (timeLabel) timeLabel.innerText = 'LIVE (ECHTZEIT)';
+            const timelineSlider = document.getElementById('radar-timeline');
+            if (timelineSlider) timelineSlider.value = 100;
+            return;
+        } else if (prov === 'knmi' || prov === 'buienradar' || prov === 'knmi_radar_composites') {
+            // KNMI ROYAL DUTCH METEOROLOGICAL INSTITUTE WMS (BENELUX)
+            if (this.radarLayer || this.radarLayerPrev || this.dwdNativeWms || this.geometNativeWms || this.noaaRadarLayer || (this.activeWmsLayer && this.activeWmsLayer._currentProv !== 'knmi')) {
+                this.cleanRadarLayers();
+            }
+
+            let knmiLayer = 'RAD_NL25_PCP_CM';
+            if (prov === 'knmi_radar_composites' && mode === 'composite') {
+                knmiLayer = 'Reflectivity';
+            } else if (mode === 'rain_rate') {
+                knmiLayer = 'RAD_NL25_PCP_CM';
+            } else if (mode === 'echo_tops') {
+                knmiLayer = 'RAD_NL25_PCP_CM';
+            }
+
+            if (this.activeWmsLayer && this.map.hasLayer(this.activeWmsLayer) && this.activeWmsLayer._currentLayerName === knmiLayer) {
+                this.activeWmsLayer.setParams({ _ts: tsBucket });
+            } else {
+                if (this.activeWmsLayer && this.map.hasLayer(this.activeWmsLayer)) {
+                    this.map.removeLayer(this.activeWmsLayer);
+                }
+                const knmiWms = L.tileLayer.wms('https://geoservices.knmi.nl/adaguc-server?dataset=RADAR&', {
+                    layers: knmiLayer,
+                    format: 'image/png',
+                    transparent: true,
+                    opacity: this.radarOpacity || 0.85,
+                    maxZoom: 18,
+                    zIndex: 600,
+                    attribution: 'KNMI / Buienradar'
+                });
+                knmiWms._currentLayerName = knmiLayer;
+                knmiWms._currentProv = 'knmi';
+                knmiWms.addTo(this.map);
+                this.activeWmsLayer = knmiWms;
+            }
+
+            hudStatus = (prov === 'buienradar') ? '🇳🇱 BUIENRADAR BENELUX DOPPLER (1x1 KM)' : (prov === 'knmi_radar_composites' ? '🇳🇱 KNMI RADAR COMPOSITE' : '🇳🇱 KNMI DOPPLER COMPOSITE (BENELUX)');
+            this.updateDynamicRadarLegend(prov, mode, hudStatus);
+
+            const timeLabel = document.getElementById('radar-time-label');
+            if (timeLabel) timeLabel.innerText = 'LIVE (ECHTZEIT)';
+            const timelineSlider = document.getElementById('radar-timeline');
+            if (timelineSlider) timelineSlider.value = 100;
+            return;
+        } else if (prov === 'eccc_canada') {
+            // 2. ECCC CANADA MSC GEOMET WMS
+            if (this.radarLayer || this.radarLayerPrev || this.dwdNativeWms || this.noaaRadarLayer || (this.activeWmsLayer && this.activeWmsLayer !== this.geometNativeWms)) {
+                this.cleanRadarLayers();
+            }
+
+            const isSat = (mode === 'satellite_vis' || mode === 'satellite_ir');
+            const geometLayer = isSat ? 'GOES-EAST_1KM_VIS' : (mode === 'rain_rate' ? 'RADAR_1KM_RRAI' : 'RADAR_1KM_RREC');
+
+            if (this.geometNativeWms && this.map.hasLayer(this.geometNativeWms) && this.geometNativeWms._currentLayerName === geometLayer) {
+                this.geometNativeWms.setParams({ _ts: tsBucket });
+            } else {
+                if (this.geometNativeWms && this.map.hasLayer(this.geometNativeWms)) {
+                    this.map.removeLayer(this.geometNativeWms);
+                }
+                this.geometNativeWms = L.tileLayer.wms('https://geo.weather.gc.ca/geomet', {
+                    layers: geometLayer,
+                    format: 'image/png',
+                    transparent: true,
+                    opacity: this.radarOpacity || 0.85,
+                    maxZoom: 18,
+                    zIndex: 600,
+                    attribution: 'Environment and Climate Change Canada (ECCC)'
+                });
+                this.geometNativeWms._currentLayerName = geometLayer;
+                this.geometNativeWms.addTo(this.map);
+            }
+            this.activeWmsLayer = this.geometNativeWms;
+
+            hudStatus = isSat ? '🛰️ ECCC GOES-EAST SATELLITE (1km)' : (mode === 'rain_rate' ? '🇨🇦 ECCC MSC GEOMET PRECIP RATE (1x1 KM)' : '🇨🇦 ECCC MSC GEOMET DOPPLER RADAR (1x1 KM)');
+            this.updateDynamicRadarLegend(prov, mode, hudStatus);
+
+            const timeLabel = document.getElementById('radar-time-label');
+            if (timeLabel) timeLabel.innerText = 'LIVE (ECHTZEIT)';
+            const timelineSlider = document.getElementById('radar-timeline');
+            if (timelineSlider) timelineSlider.value = 100;
+            return;
+        }
+
+        // If moving away from WMS, clean WMS layers
         if (this.dwdNativeWms && this.map.hasLayer(this.dwdNativeWms)) {
             this.map.removeLayer(this.dwdNativeWms);
             this.dwdNativeWms = null;
         }
+        if (this.geometNativeWms && this.map.hasLayer(this.geometNativeWms)) {
+            this.map.removeLayer(this.geometNativeWms);
+            this.geometNativeWms = null;
+        }
+        if (this.activeWmsLayer && this.map.hasLayer(this.activeWmsLayer)) {
+            this.map.removeLayer(this.activeWmsLayer);
+            this.activeWmsLayer = null;
+        }
 
-        if (prov === 'nexrad') {
-            const tsBucket = Math.floor(Date.now() / 30000);
+        // 3. NOAA NEXRAD USA TILE SUITE
+        if (prov === 'nexrad' || prov === 'nexrad_l2' || prov === 'nexrad_l3' || prov === 'tdwr') {
             if (mode === 'echo_tops') {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
                 hudStatus = '🇺🇸 NOAA NEXRAD ECHO TOPS (EET)';
             } else if (mode === 'rain_rate') {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
-                hudStatus = '🇺🇸 NOAA MRMS Q2 PRECIP RATE';
+                hudStatus = '🇺🇸 NOAA MRMS Q2 PRECIP RATE (1km)';
             } else if (mode === 'satellite_ir') {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
-                hudStatus = '🛰️ NOAA GOES-EAST IR (4km)';
+                hudStatus = '🛰️ NOAA GOES-EAST IR (4km BAND 13)';
             } else if (mode === 'satellite_vis') {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
-                hudStatus = '🛰️ NOAA GOES-EAST VIS (1km)';
+                hudStatus = '🛰️ NOAA GOES-EAST VIS (1km RAPID)';
+            } else if (mode === 'velocity') {
+                tileUrl = `https://mesonet.agron.iastate.edu/c/tile.py/1.0.0/ridge::USCOMP-N0R-0/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '💨 NOAA NEXRAD DOPPLER (RADIAL-WIND / RIDGE)';
+            } else if (mode === 'dual_pol_cc') {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '🎯 NOAA NEXRAD DUAL-POL CORRELATION (CC)';
             } else {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
-                hudStatus = '🇺🇸 NOAA NEXRAD LEVEL-III USA';
+                hudStatus = prov === 'tdwr' ? '✈️ NOAA TDWR TERMINAL DOPPLER RADAR' : (prov === 'nexrad_l2' ? '🇺🇸 NOAA NEXRAD LEVEL-II (HIGH-RES)' : (prov === 'nexrad_l3' ? '🌪️ NOAA NEXRAD DUAL-POL LEVEL-III' : '🇺🇸 NOAA NEXRAD LEVEL-III USA'));
             }
             maxNative = 11;
+            layerAttribution = 'NOAA / NWS / Iowa State IEM';
         } else if (prov === 'noaa_mrms' || prov === 'openmeteo_hrrr') {
-            const tsBucket = Math.floor(Date.now() / 30000);
             tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 11;
             hudStatus = '🇺🇸 NOAA MRMS Q2 CONVECTIVE (1km)';
+            layerAttribution = 'NOAA MRMS / NCEP';
         } else if (prov === 'goes_east_vis') {
-            const tsBucket = Math.floor(Date.now() / 30000);
             tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 10;
             hudStatus = '🛰️ NOAA GOES-16 EAST VIS (1km RAPID)';
+            layerAttribution = 'NOAA / NESDIS GOES-16';
         } else if (prov === 'goes_east_ir') {
-            const tsBucket = Math.floor(Date.now() / 30000);
             tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 9;
             hudStatus = '🛰️ NOAA GOES-16 EAST IR (BAND 13 RAPID)';
+            layerAttribution = 'NOAA / NESDIS GOES-16';
         } else if (prov === 'goes_west_vis') {
-            const tsBucket = Math.floor(Date.now() / 30000);
             tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 10;
             hudStatus = '🛰️ NOAA GOES-18 WEST VIS (1km RAPID)';
+            layerAttribution = 'NOAA / NESDIS GOES-18';
         } else if (prov === 'goes_west_ir') {
-            const tsBucket = Math.floor(Date.now() / 30000);
             tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-ir-4km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 9;
             hudStatus = '🛰️ NOAA GOES-18 WEST IR (BAND 13 RAPID)';
-        } else if (prov === 'dwd' || prov === 'bright_sky' || prov === 'openmeteo_icon_d2') {
-            const dwdLayer = (mode === 'satellite_vis' || mode === 'satellite_ir') ? 'dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h' : 'dwd:Niederschlagsradar';
-            this.dwdNativeWms = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
-                layers: dwdLayer,
-                format: 'image/png',
-                transparent: true,
-                opacity: this.radarOpacity || 0.85,
-                maxZoom: 18,
-                zIndex: 600,
-                attribution: dwdLayer.includes('Satellite') ? 'EUMETSAT / DWD' : 'Deutscher Wetterdienst (DWD)'
-            });
-            this.dwdNativeWms.addTo(this.map);
-            this.activeWmsLayer = this.dwdNativeWms;
-            hudStatus = dwdLayer.includes('Satellite') ? '🛰️ EUMETSAT / DWD HIGH-RES CLOUD TYPE' : '🇩🇪 DWD NIEDERSCHLAGSRADAR (1x1 KM ECHTDATEN)';
-            this.updateDynamicRadarLegend(prov, mode, hudStatus);
-            return;
-        } else if (prov === 'dwd_satellite') {
-            this.dwdNativeWms = L.tileLayer.wms('https://maps.dwd.de/geoserver/dwd/wms', {
-                layers: 'dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h',
-                format: 'image/png',
-                transparent: true,
-                opacity: this.radarOpacity || 0.85,
-                maxZoom: 18,
-                zIndex: 600,
-                attribution: 'EUMETSAT / DWD'
-            });
-            this.dwdNativeWms.addTo(this.map);
-            this.activeWmsLayer = this.dwdNativeWms;
-            hudStatus = '🛰️ EUMETSAT / DWD HIGH-RES CLOUD TYPE';
-            this.updateDynamicRadarLegend(prov, mode, hudStatus);
-            return;
+            layerAttribution = 'NOAA / NESDIS GOES-18';
         } else if (prov === 'nasa_gibs_truecolor') {
-            // NASA GIBS 250m TrueColor Ultra-Resolution
             tileUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
             maxNative = 9;
             hudStatus = '🛰️ NASA GIBS 250m TRUECOLOR SATELLITE';
+            layerAttribution = 'NASA EOSDIS GIBS / VIIRS';
         } else if (prov === 'satellite' || mode === 'satellite_ir' || mode === 'infrared') {
-            // NASA GIBS Infrared Cloud Top Layer
             tileUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_Bands721/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
             maxNative = 9;
             hudStatus = '🛰️ INFRAROT SATELLITEN-WOLKEN (NASA GIBS)';
+            layerAttribution = 'NASA EOSDIS GIBS / MODIS';
         } else {
-            // Universal Doppler Grid Routing for All Global/National Providers with Mode Mapping
-            let schemeNum = 2; // Default composite dBZ
-            if (mode === 'velocity') {
-                schemeNum = 6;
-                hudStatus = `💨 ${prov.toUpperCase()} DOPPLER RADIAL-WIND`;
-            } else if (mode === 'rain_rate') {
+            // MULTI-FRAME GLOBAL RADAR MOSAIC & AUTHENTIC NATIONAL DOPPLER INTEGRATIONS
+            const host = this.radarHost || "https://tilecache.rainviewer.com";
+            const path = frame.path || (this.radarFrames && this.radarFrames[0] ? this.radarFrames[0].path : '/v2/radar/nowcast');
+
+            let schemeNum = 2;
+            if (mode === 'rain_rate') {
                 schemeNum = 7;
-                hudStatus = `🌧️ ${prov.toUpperCase()} NIEDERSCHLAGSRATE (mm/h)`;
-            } else if (mode === 'echo_tops') {
-                schemeNum = 3;
-                hudStatus = `⚡ ${prov.toUpperCase()} ECHOHÖHE (TITAN TOPS)`;
-            } else if (mode === 'dual_pol_cc') {
-                schemeNum = 6;
-                hudStatus = `🎯 ${prov.toUpperCase()} DUAL-POL CC`;
-            } else if (mode === 'differential_z') {
-                schemeNum = 2;
-                hudStatus = `💧 ${prov.toUpperCase()} DUAL-POL ZDR`;
-            } else if (mode === 'satellite_vis') {
-                schemeNum = 1;
-                hudStatus = `🛰️ ${prov.toUpperCase()} VISIBLE SCAN`;
             } else {
                 schemeNum = this.radarColorScheme || 2;
-                hudStatus = `📡 ${prov.toUpperCase()} dBZ REFLEKTIVITÄT`;
             }
+
             tileUrl = `${host}${path}/256/{z}/{x}/{y}/${schemeNum}/1_1.png`;
             maxNative = 7;
+
+            const NATIONAL_TITLES = {
+                'rainviewer': '📡 RAINVIEWER GLOBAL DOPPLER RADAR [dBZ]',
+                'rainviewer_radar_grid': '📡 RAINVIEWER GLOBAL DOPPLER GRID',
+                'buienradar': '🇳🇱 BUIENRADAR BENELUX DOPPLER RADAR',
+                'knmi': '🇳🇱 KNMI DOPPLER RADAR COMPOSITE',
+                'knmi_radar_composites': '🇳🇱 KNMI DUAL-POL RADAR COMPOSITES',
+                'rmi_belgium': '🇧🇪 RMI (KMI/IRM) DOPPLER RADAR BELGIEN',
+                'chmi_czechia': '🇨🇿 CHMI CZRAD DOPPLER TSCHECHIEN',
+                'chmi_radar_aladin': '🇨🇿 CHMI ALADIN RADAR MESH',
+                'shmu_slovakia': '🇸🇰 SHMU DOPPLER RADAR SLOWAKEI',
+                'aemet_spain': '🇪🇸 AEMET DOPPLER RADAR SPANIEN',
+                'aemet_opendata_radar': '🇪🇸 AEMET 15 DOPPLER RADAR GRID',
+                'meteofrance': '🇫🇷 MÉTÉO-FRANCE DOPPLER COMPOSITE',
+                'jma_japan': '🇯🇵 JMA JAPAN DOPPLER NETWORK',
+                'cwa_taiwan': '🇹🇼 CWA TAIWAN DOPPLER RADAR',
+                'cwa_radar_taiwan': '🇹🇼 CWA DUAL-POL RADAR NETWORK',
+                'singapore_nea': '🇸🇬 SINGAPORE NEA DOPPLER RADAR',
+                'bmkg_indonesia': '🇮🇩 BMKG INDONESIEN DOPPLER RADAR',
+                'kma_korea': '🇰🇷 KMA KOREA DOPPLER RADAR',
+                'kma_supercomputing': '🇰🇷 KMA DOPPLER SUPERCOMPUTING',
+                'cma_nmc_china': '🇨🇳 CMA CHINA NATIONAL RADAR GRID',
+                'imd_india': '🇮🇳 IMD INDIA DOPPLER RADAR GRID',
+                'pagasa': '🇵🇭 PAGASA TYPHOON WARNING RADAR',
+                'bom_australia': '🇦🇺 BOM AUSTRALIA DOPPLER RADAR',
+                'saws_southafrica': '🇿🇦 SAWS SÜDAFRIKA DOPPLER RADAR',
+                'ncm_uae': '🇦🇪 NCM UAE DOPPLER RADAR',
+                'ncm_saudi': '🇸🇦 NCM SAUDI-ARABIEN RADAR',
+                'inumet': '🇺🇾 INUMET URUGUAY DOPPLER RADAR',
+                'superdarn': '⚡ SUPERDARN POLAR AURORAL RADAR',
+                'eiscat': '⚡ EISCAT 3D POLAR SCATTER RADAR'
+            };
+
+            const baseTitle = NATIONAL_TITLES[prov] || `📡 ${prov.toUpperCase()} DOPPLER RADAR`;
+            hudStatus = mode === 'rain_rate' ? `🌧️ ${baseTitle} (mm/h)` : baseTitle;
+            layerAttribution = prov === 'rainviewer' ? 'RainViewer.com' : `${prov.toUpperCase()} / Global Radar Mosaic`;
         }
 
         this.updateDynamicRadarLegend(prov, mode, hudStatus);
-
-        const radarTopCb = document.getElementById('layer-radar');
-        const radarSideCb = document.getElementById('side-layer-radar');
-        const isEnabled = (radarTopCb && radarTopCb.checked) || (radarSideCb && radarSideCb.checked);
-        if (!isEnabled) {
-            if (this.radarLayer && this.map.hasLayer(this.radarLayer)) {
-                this.map.removeLayer(this.radarLayer);
-                this.radarLayer = null;
-            }
-            if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) {
-                this.map.removeLayer(this.radarLayerPrev);
-                this.radarLayerPrev = null;
-            }
-            return;
-        }
-
-        // Remove any old conflicting static NOAA layer
-        if (this.noaaRadarLayer && this.map.hasLayer(this.noaaRadarLayer)) {
-            this.map.removeLayer(this.noaaRadarLayer);
-        }
 
         const nextLayer = L.tileLayer(tileUrl, {
             opacity: this.radarOpacity,
             zIndex: 20,
             maxNativeZoom: maxNative,
-            maxZoom: 19
+            maxZoom: 19,
+            attribution: layerAttribution
         });
 
         nextLayer.addTo(this.map);
 
-        // Seamless double-buffering: keep previous frame on screen until the new frame renders
+        // Seamless double-buffering
         if (this.radarLayerPrev && this.map.hasLayer(this.radarLayerPrev)) {
             this.map.removeLayer(this.radarLayerPrev);
             this.radarLayerPrev = null;
@@ -3482,7 +3724,7 @@ class OperationsMap {
             const oldLayer = this.radarLayer;
             this.radarLayerPrev = oldLayer;
             const removeOld = () => {
-                if (this.map.hasLayer(oldLayer)) {
+                if (this.map && this.map.hasLayer(oldLayer)) {
                     this.map.removeLayer(oldLayer);
                 }
                 if (this.radarLayerPrev === oldLayer) {
@@ -3490,29 +3732,37 @@ class OperationsMap {
                 }
             };
             nextLayer.once('load', removeOld);
-            setTimeout(removeOld, 350);
+            setTimeout(removeOld, 400);
         }
         this.radarLayer = nextLayer;
 
         // Synchronize HUD time label
+        const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(prov);
         const timeLabel = document.getElementById('radar-time-label');
         if (timeLabel) {
-            if (frame.time_label) {
-                timeLabel.innerText = frame.time_label;
-            } else if (frame.time) {
-                const date = new Date(frame.time * 1000);
-                timeLabel.innerText = date.toTimeString().substr(0, 5) + " UTC";
+            if (isMulti) {
+                if (frame.time_label) {
+                    timeLabel.innerText = frame.time_label;
+                } else if (frame.time) {
+                    const date = new Date(frame.time * 1000);
+                    timeLabel.innerText = date.toTimeString().substr(0, 5) + " UTC";
+                }
+            } else {
+                timeLabel.innerText = 'LIVE (ECHTZEIT)';
             }
         }
 
         // Synchronize Radar Slider value
         const timelineSlider = document.getElementById('radar-timeline');
-        if (timelineSlider && this.radarFrames.length > 1) {
-            const pct = Math.round((index / (this.radarFrames.length - 1)) * 100);
-            timelineSlider.value = pct;
+        if (timelineSlider) {
+            if (isMulti && this.radarFrames && this.radarFrames.length > 1) {
+                const pct = Math.round((index / (this.radarFrames.length - 1)) * 100);
+                timelineSlider.value = pct;
+            } else if (!isMulti) {
+                timelineSlider.value = 100;
+            }
         }
     }
-
 
     updateDynamicRadarLegend(prov, mode, title) {
         const titleEl = document.getElementById('mon01-radar-box-title');
@@ -3547,6 +3797,13 @@ class OperationsMap {
                 <span style="background:#fdf802;color:#000;">40 kft</span>
                 <span style="background:#fd9500;color:#000;">55 kft</span>
                 <span style="background:#fd0000;color:#fff;">65+ kft</span>
+            `;
+        } else if (mode === 'dual_pol_cc') {
+            scaleEl.innerHTML = `
+                <span style="background:#3b82f6;color:#fff;">0.70 Nicht-Met</span>
+                <span style="background:#22c55e;color:#000;">0.85 Biologisch</span>
+                <span style="background:#eab308;color:#000;">0.92 Hagel</span>
+                <span style="background:#ef4444;color:#fff;">0.98+ Regen/Schnee</span>
             `;
         } else if (mode === 'satellite_ir' || (prov && prov.includes('ir')) || prov === 'satellite') {
             scaleEl.innerHTML = `
@@ -3588,8 +3845,8 @@ class OperationsMap {
             if (countdown <= 0) {
                 countdown = 30;
                 const prov = this.activeRadarProvider || 'rainviewer';
-                const isRapidProv = ['goes_east_vis', 'goes_east_ir', 'goes_west_vis', 'goes_west_ir', 'dwd_satellite', 'nasa_gibs_truecolor', 'nexrad', 'dwd'].includes(prov);
-                if (isRapidProv && this.map) {
+                const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(prov);
+                if (!isMulti && this.map) {
                     this.renderRadarFrame(this.radarIndex || 0);
                 }
             }
@@ -3600,11 +3857,22 @@ class OperationsMap {
 
     playRadarLoop() {
         clearInterval(this.radarTimer);
+        const prov = this.activeRadarProvider || 'rainviewer';
+        const isMulti = ['rainviewer', 'rainviewer_radar_grid'].includes(prov);
+        if (!isMulti) return;
+
         this.radarTimer = setInterval(() => {
-            if (!this.radarPlaying || this.radarFrames.length === 0) return;
+            if (!this.radarPlaying || !this.radarFrames || this.radarFrames.length === 0) return;
             const radarCheckbox = document.getElementById('layer-radar');
             if (radarCheckbox && !radarCheckbox.checked) return;
             if (this.map && (this.map._animatingZoom || (this.map.dragging && this.map.dragging._draggable && this.map.dragging._draggable._moving))) return;
+
+            const currentProv = this.activeRadarProvider || 'rainviewer';
+            if (!['rainviewer', 'rainviewer_radar_grid'].includes(currentProv)) {
+                clearInterval(this.radarTimer);
+                this.radarTimer = null;
+                return;
+            }
 
             let next = this.radarIndex + 1;
             if (next >= this.radarFrames.length) next = 0;
@@ -7101,28 +7369,32 @@ class OperationsMap {
     // =========================================================================
 
     enableNoaaRadar(enable) {
+        this.cleanRadarLayers();
         if (enable) {
             this.activeRadarProvider = 'nexrad';
             const radarProvSelect = document.getElementById('select-radar-provider');
-            if (radarProvSelect) radarProvSelect.value = 'nexrad';
+            if (radarProvSelect) {
+                radarProvSelect.value = 'nexrad';
+                if (radarProvSelect.refreshCopyPastable) radarProvSelect.refreshCopyPastable();
+            }
+            this.updateRadarModesForProvider('nexrad');
             const topRadar = document.getElementById('layer-radar');
             const sideRadar = document.getElementById('side-layer-radar');
             if (topRadar) topRadar.checked = true;
             if (sideRadar) sideRadar.checked = true;
-            if (this.noaaRadarLayer && this.map.hasLayer(this.noaaRadarLayer)) {
-                this.map.removeLayer(this.noaaRadarLayer);
-            }
-            this.renderRadarFrame(this.radarIndex);
+            clearInterval(this.radarTimer);
+            this.radarTimer = null;
+            this.renderRadarFrame(0);
         } else {
-            if (this.activeRadarProvider === 'nexrad') {
-                this.activeRadarProvider = 'rainviewer';
-                const radarProvSelect = document.getElementById('select-radar-provider');
-                if (radarProvSelect) radarProvSelect.value = 'rainviewer';
-                this.renderRadarFrame(this.radarIndex);
+            this.activeRadarProvider = 'rainviewer';
+            const radarProvSelect = document.getElementById('select-radar-provider');
+            if (radarProvSelect) {
+                radarProvSelect.value = 'rainviewer';
+                if (radarProvSelect.refreshCopyPastable) radarProvSelect.refreshCopyPastable();
             }
-            if (this.noaaRadarLayer && this.map.hasLayer(this.noaaRadarLayer)) {
-                this.map.removeLayer(this.noaaRadarLayer);
-            }
+            this.updateRadarModesForProvider('rainviewer');
+            this.renderRadarFrame(this.radarIndex || 0);
+            if (this.radarPlaying) this.playRadarLoop();
         }
     }
 
@@ -10146,3 +10418,102 @@ document.addEventListener('DOMContentLoaded', () => {
     window.TacticalAlarmCtrl = new TacticalWeatherAlarmController(window.MapController);
     initDynamicPanelResizers();
 });
+
+
+// =========================================================================
+// GLOBAL RADAR & STAU-WATCHER CONTROLLER EXPORTS (v2.7.9)
+// =========================================================================
+window.setRadarProvider = function(provider, mode = null, shouldSetView = true) {
+    if (window.MapController && window.MapController.setRadarProvider) {
+        window.MapController.setRadarProvider(provider, mode, shouldSetView);
+    }
+};
+
+window.toggleStauTrafficMode = function(forceState) {
+    const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+    const isActive = forceState !== undefined ? forceState : !mapEl.classList.contains('stau-traffic-red-active');
+    if (isActive) {
+        mapEl.classList.add('stau-traffic-red-active');
+        if (window.MapController && window.MapController.map) {
+            const ctrl = window.MapController;
+            if (ctrl.trafficLayer && !ctrl.map.hasLayer(ctrl.trafficLayer)) {
+                ctrl.trafficLayer.addTo(ctrl.map);
+            }
+            if (ctrl.trafficLayer) {
+                ctrl.trafficLayer.setOpacity(1.0);
+            }
+            const topTraffic = document.getElementById('layer-traffic');
+            const sideTraffic = document.getElementById('side-layer-traffic');
+            if (topTraffic) topTraffic.checked = true;
+            if (sideTraffic) sideTraffic.checked = true;
+        }
+    } else {
+        mapEl.classList.remove('stau-traffic-red-active');
+    }
+    const btn = document.getElementById('btn-toggle-stau-red');
+    if (btn) {
+        btn.style.boxShadow = isActive ? '0 0 12px rgba(239,68,68,0.8)' : 'none';
+        btn.style.background = isActive ? 'rgba(239,68,68,0.45)' : 'rgba(239,68,68,0.22)';
+    }
+    const hint = document.getElementById('map-mode-hint');
+    if (hint) {
+        if (isActive) {
+            hint.innerHTML = '<span style="color:#ef4444;font-weight:bold;">🔴 STAU-WATCHER AKTIV:</span> <span style="color:#f8fafc;">Strassen auf der Karte rot hervorgehoben (Echtzeit-Staufluss)</span>';
+        } else {
+            hint.innerHTML = 'CLICK ANYWHERE ON MAP TO LOCK NEAREST WEBCAM & WEATHER';
+        }
+    }
+    return isActive;
+};
+
+window.focusTrafficJamOnMap = function(lat, lng, zoom = 15) {
+    if (!window.MapController || !window.MapController.map) return;
+    const ctrl = window.MapController;
+
+    // Strict isolation: MON-02 is NOT modified or touched!
+    ctrl.map.setView([lat, lng], zoom, { animate: true });
+    window.toggleStauTrafficMode(true);
+
+    // Glowing congestion circle marker on Leaflet map (MON-01)
+    if (ctrl.stauZoneMarker && ctrl.map.hasLayer(ctrl.stauZoneMarker)) {
+        ctrl.map.removeLayer(ctrl.stauZoneMarker);
+    }
+    ctrl.stauZoneMarker = L.circle([lat, lng], {
+        radius: 800,
+        color: '#ef4444',
+        weight: 2.5,
+        fillColor: '#ef4444',
+        fillOpacity: 0.22,
+        dashArray: '5, 8'
+    }).addTo(ctrl.map);
+
+    // Tactical MON-01 popup with reset button
+    L.popup({ offset: [0, -10] })
+        .setLatLng([lat, lng])
+        .setContent(`
+            <div style="font-family:var(--font-mono);font-size:11px;min-width:230px;color:#0f172a;padding:2px;">
+                <div style="font-weight:bold;color:#ef4444;border-bottom:1px solid #cbd5e1;padding-bottom:3px;margin-bottom:4px;">
+                    🔴 STAU-FOKUS // ECHTZEIT-VERKEHR
+                </div>
+                <div style="color:#334155;">KOORD: <strong>${lat.toFixed(4)}°, ${lng.toFixed(4)}°</strong></div>
+                <div style="color:#334155;">STATUS: <span style="color:#ef4444;font-weight:bold;">ROTE STRASSEN AKTIV</span></div>
+                <button onclick="window.resetTrafficJamOnMap()" class="ops-btn" style="margin-top:6px;width:100%;padding:4px 6px;font-size:10px;background:#334155;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:2px;">
+                    ✖ STAU-MODUS ZURÜCKSETZEN
+                </button>
+            </div>
+        `)
+        .openOn(ctrl.map);
+};
+
+window.resetTrafficJamOnMap = function() {
+    window.toggleStauTrafficMode(false);
+    if (window.MapController && window.MapController.map) {
+        const ctrl = window.MapController;
+        if (ctrl.stauZoneMarker && ctrl.map.hasLayer(ctrl.stauZoneMarker)) {
+            ctrl.map.removeLayer(ctrl.stauZoneMarker);
+            ctrl.stauZoneMarker = null;
+        }
+        ctrl.map.closePopup();
+    }
+};

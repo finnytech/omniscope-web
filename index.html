@@ -157,7 +157,7 @@
     <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png?v=2.6.2" />
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/cyberpunk.css?v=2.7.8" />
+    <link rel="stylesheet" href="css/cyberpunk.css?v=2.7.9" />
 </head>
 <body>
     <!-- Top Operations Header -->
@@ -340,6 +340,10 @@
                     <button id="btn-focus-noaa-usa" class="ops-btn" style="background:rgba(2,132,199,0.22);color:#38bdf8;border:1px solid #0284c7;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Direkt auf USA / CONUS zentrieren & NOAA NEXRAD Doppler Radar fokussieren">
                         <span>🇺🇸</span>
                         <span>NOAA USA RADAR</span>
+                    </button>
+                    <button id="btn-toggle-stau-red" class="ops-btn" onclick="window.toggleStauTrafficMode && window.toggleStauTrafficMode()" style="background:rgba(239,68,68,0.22);color:#f87171;border:1px solid #ef4444;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Stau-Watcher: Schaltet die Straßen auf der Karte rot (Echtzeit-Staufluss statt Standardfarbe)">
+                        <span>🔴</span>
+                        <span>STAU-WATCHER (ROTE STRASSEN)</span>
                     </button>
                     <button id="btn-sector-stations-scan" class="ops-btn" style="background:#059669;color:#ffffff;border:1.5px solid #34d399;box-shadow:0 0 10px rgba(16,185,129,0.5);padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:6px;" title="Bereich / Box auf der Karte ziehen: Kontaktiert alle echten Wetterstationen im Sektor und öffnet die Rohdaten-Liste in MON-02">
                         <span>📐</span>
@@ -2363,18 +2367,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- OmniScope Web Serverless Client-Side Bridge -->
-    <script src="js/web_bridge.js?v=2.7.8"></script>
+    <script src="js/web_bridge.js?v=2.7.9"></script>
 
     <script src="js/audio.js?v=7.4"></script>
     <script src="js/ram_cleaner.js?v=7.4"></script>
-    <script src="js/player.js?v=2.7.8"></script>
+    <script src="js/player.js?v=2.7.9"></script>
     <script src="js/globe.js?v=7.4"></script>
-    <script src="js/map.js?v=2.7.8"></script>
-    <script src="js/i18n.js?v=2.7.8"></script>
+    <script src="js/map.js?v=2.7.9"></script>
+    <script src="js/i18n.js?v=2.7.9"></script>
     <script src="js/settings.js?v=7.4"></script>
-    <script src="js/app.js?v=2.7.8"></script>
-    <script src="js/upgrade.js?v=2.7.8"></script>
-    <script src="js/tv_multiview.js?v=2.7.8"></script>
+    <script src="js/app.js?v=2.7.9"></script>
+    <script src="js/upgrade.js?v=2.7.9"></script>
+    <script src="js/tv_multiview.js?v=2.7.9"></script>
 
     <!-- ========================================================================= -->
     <!-- 115-LANGUAGE SYSTEM SETTINGS & CONFIGURATION MODAL                        -->

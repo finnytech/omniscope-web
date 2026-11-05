@@ -22,14 +22,14 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       type: "global_radar",
       refresh_sec: 600,
       max_native_zoom: 7,
-      supported_modes: ["composite", "velocity", "rain_rate", "echo_tops", "satellite_ir"]
+      supported_modes: ["composite", "rain_rate", "satellite_ir"]
     },
     rainviewer_radar_grid: {
       name: "RainViewer Global Doppler Grid",
       type: "global_radar",
       refresh_sec: 600,
       max_native_zoom: 7,
-      supported_modes: ["composite", "velocity", "rain_rate", "echo_tops", "satellite_ir"]
+      supported_modes: ["composite", "velocity", "rain_rate", "echo_tops", "dual_pol_cc"]
     },
     nexrad: {
       name: "NOAA NEXRAD Level-III USA",
@@ -40,12 +40,12 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate", "satellite_ir", "satellite_vis"]
     },
     nexrad_l2: {
-      name: "NOAA NEXRAD Level-II High-Res",
+      name: "NOAA NEXRAD Level-II High-Res RIDGE",
       type: "tile",
-      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
+      tile_url: "https://mesonet.agron.iastate.edu/c/tile.py/1.0.0/ridge::USCOMP-N0R-0/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
-      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate"]
+      supported_modes: ["composite", "velocity", "echo_tops", "rain_rate"]
     },
     nexrad_l3: {
       name: "NOAA NEXRAD Dual-Pol Level-III",
@@ -66,7 +66,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
     noaa_mrms: {
       name: "NOAA MRMS Q2 Convective Composite",
       type: "tile",
-      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-hsr-900913/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
       supported_modes: ["composite", "rain_rate"]
@@ -74,9 +74,18 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
     openmeteo_hrrr: {
       name: "NOAA HRRR 3km Convective Radar",
       type: "tile",
-      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png",
+      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/hrrr::REFD-F0000-0/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
+      supported_modes: ["composite", "rain_rate"]
+    },
+    eccc_canada: {
+      name: "Environment and Climate Change Canada (MSC GeoMet)",
+      type: "wms",
+      wms_url: "https://geo.weather.gc.ca/geomet",
+      wms_layer: "RADAR_1KM_RRAI",
+      refresh_sec: 180,
+      max_native_zoom: 12,
       supported_modes: ["composite", "rain_rate"]
     },
     dwd: {
@@ -98,10 +107,10 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       supported_modes: ["composite", "rain_rate"]
     },
     openmeteo_icon_d2: {
-      name: "DWD ICON-D2 (2.2km High-Res)",
+      name: "DWD ICON-D2 (2.2km Rapid Radar)",
       type: "wms",
       wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
-      wms_layer: "dwd:Niederschlagsradar",
+      wms_layer: "dwd:Radar_rv_product_1x1km_ger",
       refresh_sec: 300,
       max_native_zoom: 18,
       supported_modes: ["composite", "rain_rate"]
@@ -119,129 +128,45 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       name: "DWD MOSMIX Radar Guidance",
       type: "wms",
       wms_url: "https://maps.dwd.de/geoserver/dwd/wms",
-      wms_layer: "dwd:Niederschlagsradar",
+      wms_layer: "dwd:Radar_wn-analysis_1x1km_ger",
       refresh_sec: 300,
       max_native_zoom: 18,
       supported_modes: ["composite", "rain_rate"]
     },
     buienradar: {
-      name: "Buienradar Benelux Doppler",
-      type: "global_radar",
+      name: "Buienradar Benelux Doppler (KNMI)",
+      type: "wms",
+      wms_url: "https://geoservices.knmi.nl/adaguc-server?dataset=RADAR&",
+      wms_layer: "RAD_NL25_PCP_CM",
       refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    chmi_czechia: {
-      name: "CHMI CZRAD Doppler Network",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    chmi_radar_aladin: {
-      name: "CHMI ALADIN 2.3km Radar Mesh",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
+      max_native_zoom: 10,
+      supported_modes: ["composite", "rain_rate"]
     },
     knmi: {
       name: "KNMI Doppler Composites",
-      type: "global_radar",
+      type: "wms",
+      wms_url: "https://geoservices.knmi.nl/adaguc-server?dataset=RADAR&",
+      wms_layer: "RAD_NL25_PCP_CM",
       refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
+      max_native_zoom: 10,
+      supported_modes: ["composite", "rain_rate"]
     },
     knmi_radar_composites: {
-      name: "KNMI Doppler Composites (Dual-Pol)",
-      type: "global_radar",
+      name: "KNMI Dual-Pol Radar Composites",
+      type: "wms",
+      wms_url: "https://geoservices.knmi.nl/adaguc-server?dataset=RADAR&",
+      wms_layer: "Reflectivity",
       refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
+      max_native_zoom: 10,
+      supported_modes: ["composite", "rain_rate"]
     },
-    rmi_belgium: {
-      name: "RMI (KMI/IRM) Radar Belgium",
-      type: "global_radar",
+    jma_japan: {
+      name: "JMA Japan High-Resolution Precip Nowcast",
+      type: "tile",
+      tile_url: "https://www.jma.go.jp/bosai/jmatile/data/nowc/latest/none/latest/surf/hrpns/{z}/{x}/{y}.png",
       refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    shmu_slovakia: {
-      name: "SHMU Slovakia Radar Grid",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    aemet_spain: {
-      name: "AEMET Radar & Rayos Spain",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    aemet_opendata_radar: {
-      name: "AEMET 15 Doppler Radar Grid",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    singapore_nea: {
-      name: "Singapore NEA Doppler Radar",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    bmkg_indonesia: {
-      name: "BMKG Doppler Radar Indonesia",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    cwa_taiwan: {
-      name: "CWA Doppler Radar Taiwan",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    cwa_radar_taiwan: {
-      name: "CWA Dual-Pol Radar Network",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    kma_korea: {
-      name: "KMA Radar Supercomputing Korea",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    kma_supercomputing: {
-      name: "KMA Doppler Wind Assimilation",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    cma_nmc_china: {
-      name: "CMA National Doppler Radar Grid",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
-    },
-    saws_southafrica: {
-      name: "SAWS South Africa Doppler Radar",
-      type: "global_radar",
-      refresh_sec: 300,
-      max_native_zoom: 9,
-      supported_modes: ["composite", "rain_rate", "velocity"]
+      max_native_zoom: 10,
+      supported_modes: ["composite", "rain_rate"]
     },
     goes_east_vis: {
       name: "NOAA GOES-16 East VIS (1km Rapid)",
@@ -252,7 +177,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       supported_modes: ["satellite_vis"]
     },
     goes_east_ir: {
-      name: "NOAA GOES-16 East IR Band 13 (Rapid)",
+      name: "NOAA GOES-16 East IR (Band 13)",
       type: "tile",
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png",
       refresh_sec: 30,
@@ -268,7 +193,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       supported_modes: ["satellite_vis"]
     },
     goes_west_ir: {
-      name: "NOAA GOES-18 West IR Band 13 (Rapid)",
+      name: "NOAA GOES-18 West IR (Band 13)",
       type: "tile",
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-ir-4km-900913/{z}/{x}/{y}.png",
       refresh_sec: 30,
@@ -320,6 +245,8 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png";
     } else if (m === "rain_rate") {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png";
+    } else if (m === "velocity") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/c/tile.py/1.0.0/ridge::USCOMP-N0R-0/{z}/{x}/{y}.png";
     } else if (m === "satellite_ir") {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png";
     } else if (m === "satellite_vis") {
@@ -331,9 +258,17 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
     effectiveWmsUrl = "https://maps.dwd.de/geoserver/dwd/wms";
     if (m === "satellite_vis" || m === "satellite_ir") {
       effectiveWmsLayer = "dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h";
+    } else if (m === "rain_rate" || p === "openmeteo_icon_d2") {
+      effectiveWmsLayer = "dwd:Radar_rv_product_1x1km_ger";
     } else {
       effectiveWmsLayer = "dwd:Niederschlagsradar";
     }
+  } else if (p === "eccc_canada") {
+    effectiveWmsUrl = "https://geo.weather.gc.ca/geomet";
+    effectiveWmsLayer = (m === "rain_rate") ? "RADAR_1KM_RRAI" : "RADAR_1KM_RREC";
+  } else if (p === "knmi" || p === "buienradar" || p === "knmi_radar_composites") {
+    effectiveWmsUrl = "https://geoservices.knmi.nl/adaguc-server?dataset=RADAR&";
+    effectiveWmsLayer = (p === "knmi_radar_composites" && m === "composite") ? "Reflectivity" : "RAD_NL25_PCP_CM";
   } else if (p === "goes_east" || p === "goes_east_vis" || p === "goes_east_ir") {
     if (m === "satellite_ir") {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png";

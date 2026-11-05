@@ -5248,3 +5248,33 @@ path.subsea-cable-path {
     -webkit-user-select: text !important;
     cursor: text;
 }
+
+/* =========================================================================
+   LIVE TRAFFIC STAU-WATCHER // ROTE STRASSEN AUF DER KARTE (MON-01)
+========================================================================= */
+.stau-traffic-red-active .leaflet-tile-pane img[src*="traffic"],
+.stau-traffic-red-active .leaflet-tile-pane img[src*="lyrs=traffic"],
+.stau-traffic-red-active .leaflet-tile-pane img[src*="lyrs=y,traffic"],
+.stau-traffic-red-active .traffic-tile-layer {
+    filter: saturate(3.8) hue-rotate(-35deg) contrast(1.7) drop-shadow(0 0 4px #ff0033) !important;
+}
+
+.stau-hud-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid #ef4444;
+    color: #f87171;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    animation: stau-glow 1.6s infinite alternate ease-in-out;
+}
+
+@keyframes stau-glow {
+    0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+    100% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.9); }
+}
