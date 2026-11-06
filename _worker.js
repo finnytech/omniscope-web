@@ -4700,9 +4700,19 @@ Available at: https://omniscope-web.pages.dev/openapi.json
     if (url.pathname.startsWith("/api/")) {
 
       // 5.1 /api/capabilities & /api/health
+      if (url.pathname === "/api/health" && url.searchParams.get("test_quota") === "1") {
+        return jsonResponse({
+          status: "quota_exceeded",
+          code: 429,
+          error: "Too Many Requests - Simulated Daily Quota Limit Hit",
+          failover_chain: ["vercel", "netlify"]
+        }, 429, {
+          "Retry-After": "300",
+          "X-Omni-Cloud-Node": "cloudflare"
+        });
+      }
 
       if (url.pathname === "/api/capabilities" || url.pathname === "/api/health") {
-
         return jsonResponse({
 
           status: "online",

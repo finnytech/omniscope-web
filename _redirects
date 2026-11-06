@@ -1,0 +1,4 @@
+# Netlify Redirects for OmniScope OSINT
+# Proxy API routes to Cloudflare Edge Worker
+/api/*  https://omniscope-web.fuchsdany1984.workers.dev/api/:splat  200
+/*      /index.html                                                  200

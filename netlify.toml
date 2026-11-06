@@ -1,0 +1,39 @@
+# Netlify Configuration for OmniScope OSINT
+# Tri-Cloud Multi-Provider Failover & Load Balancing Node
+
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Omni-Cloud-Node = "netlify"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=86400"
+
+# API Proxy to Edge Worker Backend (Transparent Failover)
+[[redirects]]
+  from = "/api/*"
+  to = "https://omniscope-web.fuchsdany1984.workers.dev/api/:splat"
+  status = 200
+  force = false
+
+# SPA Fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
