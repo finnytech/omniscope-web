@@ -4981,6 +4981,10 @@ class OperationsMap {
             if (!res.ok) return;
             const data = await res.json();
             this.rawChasers = Array.isArray(data.chasers) ? data.chasers : [];
+            const countTag = document.getElementById('chasers-count-tag');
+            if (countTag) countTag.innerText = this.rawChasers.length;
+            const sideCountTag = document.getElementById('side-chasers-count-tag');
+            if (sideCountTag) sideCountTag.innerText = `${this.rawChasers.length} [🎯 USA]`;
             this.renderChasers(this.rawChasers);
         } catch (e) {
             console.warn('[OmniScope] Chaser fetch error:', e);
@@ -4991,19 +4995,27 @@ class OperationsMap {
         if (!this.chasersLayer) return;
         this.chasersLayer.clearLayers();
         window._chaserIndex = new Map();
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        
+        const countTag = document.getElementById('chasers-count-tag');
+        if (countTag && Array.isArray(list)) countTag.innerText = list.length;
+        const sideCountTag = document.getElementById('side-chasers-count-tag');
+        if (sideCountTag && Array.isArray(list)) sideCountTag.innerText = `${list.length} [🎯 USA]`;
+
         list.forEach(c => {
             if (!isFinite(c.lat) || !isFinite(c.lon)) return;
             window._chaserIndex.set(c.id, c);
             const live = !!(c.stream && (c.stream.url || c.stream.embedUrl));
-            const size = live ? 18 : 12;
+            const size = live ? 20 : 13;
             const heading = (c.heading != null && !isNaN(c.heading)) ? Number(c.heading) : null;
+            const safeName = esc(c.name || 'Storm Chaser');
             const headingTickHtml = heading !== null 
                 ? `<div class="chaser-heading-tick" style="transform: rotate(${heading}deg);">▲</div>` 
                 : '';
             const icon = L.divIcon({
                 className: 'chaser-node-wrap',
                 html: `
-                    <div class="chaser-radar-node${live ? ' live' : ''}" title="⚡ ${c.name || 'Storm Chaser'}${live ? ' (🔴 LIVE STREAM)' : ''}${heading !== null ? ' // Kurs ' + heading + '°' : ''}">
+                    <div class="chaser-radar-node${live ? ' live' : ''}" title="⚡ ${safeName}${live ? ' (🔴 LIVE STREAM)' : ''}${heading !== null ? ' // Kurs ' + heading + '°' : ''}">
                         ${headingTickHtml}
                     </div>
                 `,
@@ -5011,7 +5023,7 @@ class OperationsMap {
                 iconAnchor: [size / 2, size / 2],
                 popupAnchor: [0, -size / 2]
             });
-            const marker = L.marker([c.lat, c.lon], { icon, zIndexOffset: live ? 900 : 500 });
+            const marker = L.marker([c.lat, c.lon], { icon, zIndexOffset: live ? 950 : 600 });
             marker.bindPopup(() => this.buildChaserPopup(c), { maxWidth: 280, className: 'chaser-popup' });
             marker.addTo(this.chasersLayer);
         });
@@ -10656,5 +10668,17 @@ window.resetTrafficJamOnMap = function() {
             ctrl.stauZoneMarker = null;
         }
         ctrl.map.closePopup();
+    }
+};
+
+window.focusChasersSector = function() {
+    console.log('[OmniScope] Focusing Storm Chasers US Sector...');
+    if (window.MapController && window.MapController.map) {
+        window.MapController.map.flyTo([37.5, -96.5], 5, { duration: 1.2 });
+        const chk = document.getElementById('layer-chasers');
+        if (chk && !chk.checked) {
+            chk.checked = true;
+            chk.dispatchEvent(new Event('change'));
+        }
     }
 };

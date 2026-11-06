@@ -255,7 +255,7 @@
             <label style="color:#38bdf8;font-weight:700;"><input type="checkbox" id="layer-noaa-radar" checked />🇺🇸 NOAA NEXRAD USA Radar</label>
             <label style="color:#0284c7;font-weight:700;"><input type="checkbox" id="layer-noaa-stations" checked />🇺🇸 NOAA Live US Weather</label>
             <label style="color:#f87171;font-weight:700;"><input type="checkbox" id="layer-archive-events" checked />🏛️ Storm & Tornado Archive</label>
-            <label style="color:#f59e0b;font-weight:700;"><input type="checkbox" id="layer-chasers" checked />⚡ Storm Chasers (GPS / Live)</label>
+            <label style="color:#f59e0b;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" id="layer-chasers" checked />⚡ Storm Chasers (<span id="chasers-count-tag">364</span>)<button type="button" class="ops-btn" style="padding:1px 5px;font-size:9px;background:rgba(245,158,11,0.25);border:1px solid #f59e0b;color:#fde047;cursor:pointer;border-radius:2px;margin-left:2px;" onclick="window.focusChasersSector && window.focusChasersSector()" title="Karte direkt auf aktiven US-Chaser-Sektor zentrieren">🎯 USA</button></label>
             <label><input type="checkbox" id="layer-alerts" checked />NOAA Warnings</label>
             <label><input type="checkbox" id="layer-vessels" checked />Maritime Traffic (AIS Marine)</label>
             <label><input type="checkbox" id="layer-seamarks" />OpenSeaMap Nav Aids</label>
@@ -1206,12 +1206,13 @@
 
                         <!-- Group 27: ⚡ Storm Chasers (Live GPS + Live Streams) -->
                         <div class="sidebar-layer-group" style="border-left: 2px solid #f59e0b;">
-                            <div class="sidebar-group-header">
+                            <div class="sidebar-group-header" style="display:flex;justify-content:space-between;align-items:center;">
                                 <label class="layer-switch-lbl">
                                     <input type="checkbox" id="side-layer-chasers" checked />
                                     <span class="switch-custom"></span>
-                                    <span class="layer-name" style="color:#f59e0b;font-weight:bold;">⚡ STORM CHASERS (GPS + LIVE)</span>
+                                    <span class="layer-name" style="color:#f59e0b;font-weight:bold;">⚡ STORM CHASERS</span>
                                 </label>
+                                <span id="side-chasers-count-tag" class="layer-badge" style="background:rgba(245,158,11,0.25);border:1px solid #f59e0b;color:#fde047;font-size:10px;padding:2px 6px;border-radius:3px;cursor:pointer;font-weight:bold;" onclick="window.focusChasersSector && window.focusChasersSector()" title="Karte direkt auf aktiven US-Chaser-Sektor zentrieren">364 [🎯 USA]</span>
                             </div>
                             <div class="sidebar-hint" style="color:#f59e0b;">Echte Chaser-Positionen &amp; Live-Streams → MON-02</div>
                         </div>

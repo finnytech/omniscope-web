@@ -4974,14 +4974,15 @@ path.subsea-cable-path {
 }
 
 .chaser-radar-node {
-    width: 11px;
-    height: 11px;
+    width: 13px;
+    height: 13px;
     border-radius: 50%;
     background: #f59e0b;
-    border: 2px solid #fff;
-    box-shadow: 0 0 8px #f59e0b, 0 0 16px rgba(245, 158, 11, 0.6);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 10px #f59e0b, 0 0 18px rgba(245, 158, 11, 0.85);
     transition: transform 0.2s ease;
     cursor: pointer;
+    position: relative;
 }
 
 .chaser-radar-node:hover {
