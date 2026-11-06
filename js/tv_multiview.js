@@ -4336,46 +4336,29 @@
     };
 
     window.activateDopplerForStation = function(providerId, lat, lon) {
-        const provSelect = document.getElementById('select-radar-provider');
-        if (provSelect) {
-            // Check if providerId exists directly in options
-            let matched = false;
-            for (let opt of provSelect.options) {
-                if (opt.value === providerId) {
-                    provSelect.value = providerId;
-                    matched = true;
-                    break;
-                }
-            }
-            if (!matched) {
-                // Map to closest appropriate radar
-                if (providerId.includes('dwd') || providerId.includes('bright_sky') || providerId.includes('icon')) {
-                    provSelect.value = 'dwd';
-                } else if (providerId.includes('buienradar') || providerId.includes('knmi')) {
-                    provSelect.value = 'buienradar';
-                } else if (providerId.includes('noaa') || providerId.includes('hrrr') || providerId.includes('nexrad')) {
-                    provSelect.value = 'nexrad';
-                } else {
-                    provSelect.value = 'rainviewer';
-                }
-            }
-        }
-        const topRadar = document.getElementById('layer-radar');
-        const sideRadar = document.getElementById('side-layer-radar');
-        if (topRadar) topRadar.checked = true;
-        if (sideRadar) sideRadar.checked = true;
+        const stationName = (providerId || 'Radar Station').replace(/_/g, ' ').toUpperCase();
+        const isEurope = (lat >= 42.0 && lat <= 58.0 && lon >= -5.0 && lon <= 25.0);
+        const agency = isEurope ? 'DWD (Deutscher Wetterdienst)' : 'NOAA / NWS NEXRAD';
+        
+        console.log(`[OmniScope] Activating MON-02 authentic Doppler Radar for: ${stationName} at [${lat}, ${lon}]`);
 
-        if (window.MapController) {
-            const targetProv = provSelect ? provSelect.value : 'rainviewer';
-            if (window.MapController.setRadarProvider) {
-                window.MapController.setRadarProvider(targetProv, 'composite', false);
-            } else {
-                window.MapController.activeRadarProvider = targetProv;
-                window.MapController.renderRadarFrame(0);
-            }
-            if (lat !== undefined && lon !== undefined && window.MapController.map) {
-                window.MapController.map.setView([lat, lon], 7);
-            }
+        // Target authentic station workstation in MON-02
+        if (window.lockRadarStationTarget) {
+            window.lockRadarStationTarget(providerId, lat, lon, stationName, agency, 150);
+        } else if (window.MainPlayer && typeof window.MainPlayer.showRadarStationCommandDeck === 'function') {
+            window.MainPlayer.showRadarStationCommandDeck({
+                id: providerId,
+                name: stationName,
+                lat: Number(lat),
+                lon: Number(lon),
+                agency: agency,
+                elevation: 150
+            });
+        }
+
+        // Center MON-01 Leaflet map onto station coordinates without resetting provider
+        if (window.MapController && window.MapController.map && lat !== undefined && lon !== undefined) {
+            window.MapController.map.setView([lat, lon], Math.max(window.MapController.map.getZoom(), 8));
         }
     };
 

@@ -897,14 +897,36 @@ async function handleStorms() {
     parsedAlerts.push(alertObj);
 
     const combined = `${evt} ${headline} ${desc}`.toUpperCase();
-    if (combined.includes("TORNADO") && (eventName.includes("tornado warning") || combined.includes("RADAR INDICATED") || combined.includes("OBSERVED"))) {
-      const isGround = combined.includes("TORNADO...OBSERVED") || combined.includes("CONFIRMED TORNADO") || combined.includes("ON THE GROUND");
+    if (combined.includes("TORNADO") && (eventName.includes("tornado warning") || combined.includes("RADAR INDICATED") || combined.includes("OBSERVED") || combined.includes("ROTATION"))) {
+      const isConfirmedTouchdown = combined.includes("TORNADO...OBSERVED") || combined.includes("CONFIRMED TORNADO") || combined.includes("ON THE GROUND") || combined.includes("TORNADO EMERGENCY") || combined.includes("DEBRIS SIGNATURE") || combined.includes("LARGE AND EXTREMELY DANGEROUS TORNADO");
+      const isProbable = eventName.includes("tornado warning") || combined.includes("FUNNEL CLOUD") || combined.includes("TORNADO POSSIBLE") || combined.includes("RADAR INDICATED ROTATION");
+      
+      let stage = 1;
+      let status = "STAGE_1_CLOUD_ROTATION";
+      let threatLevel = "STAGE 1 // ROTATION IN DEN WOLKEN (KEIN BODENKONTAKT)";
+      let efRating = "RADAR INDICATED (IN-CLOUD)";
+
+      if (isConfirmedTouchdown) {
+        stage = 3;
+        status = "CONFIRMED_GROUND_CONTACT";
+        threatLevel = "STAGE 3 // 100% BESTÄTIGTER TORNADO AM BODEN (TOUCHDOWN VERIFIZIERT)";
+        efRating = "AUSSTEHEND (DAMAGE SURVEY)";
+      } else if (isProbable) {
+        stage = 2;
+        status = "PROBABLE_TORNADO";
+        threatLevel = "STAGE 2 // TORNADO VERMUTET (30-95% WAHRSCHEINLICHKEIT AM BODEN)";
+        efRating = "RADAR INDICATED / HOHE SCHERUNG";
+      }
+
       tornadoGroundAlerts.push({
         ...alertObj,
         is_tornado: true,
-        is_ground_confirmed: isGround,
-        status: isGround ? "CONFIRMED_GROUND_CONTACT" : "RADAR_INDICATED_ROTATION",
-        ef_scale: isGround ? "PENDING SURVEY" : "RADAR INDICATED"
+        stage: stage,
+        is_ground_confirmed: isConfirmedTouchdown,
+        status: status,
+        threat_level: threatLevel,
+        ef_scale: efRating,
+        ef_rating: efRating
       });
     }
   });

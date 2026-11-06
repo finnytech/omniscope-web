@@ -2624,6 +2624,9 @@ class StreamPlayer {
                         <div style="color:#cbd5e1;font-size:0.58rem;margin-top:2px;">
                             QUELLE: <strong id="mon02-hud-agency" style="color:#f59e0b;">${isEurope ? 'DWD // Deutscher Wetterdienst' : 'NOAA // NWS NEXRAD'}</strong>
                         </div>
+                        <div id="mon02-tornadic-status-badge" style="margin-top:4px;padding:3px 6px;border-radius:3px;font-size:0.60rem;font-weight:bold;background:rgba(16,185,129,0.18);border:1px solid #10b981;color:#34d399;">
+                            🌪️ TORNADIC SIGNATURE: SCANNING SEKTOR (150 KM)...
+                        </div>
                     </div>
 
                     <!-- BOTTOM-RIGHT OFFICIAL AGENCY WATERMARK -->
@@ -2748,6 +2751,82 @@ class StreamPlayer {
             iconSize: [0, 0]
         });
         L.marker([lat, lon], { icon: dishIcon, zIndexOffset: 1000 }).addTo(this.stationRadarMap);
+
+        // Scan for tornadic rotation & active severe signatures within 150 km of station [lat, lon]
+        const tornadicAlertsNearby = [];
+        let maxStage = 0;
+        if (window.MapController) {
+            const calcDistKm = (lat1, lon1, lat2, lon2) => {
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            };
+
+            const tgs = window.MapController.rawTornadoGroundAlerts || [];
+            tgs.forEach(tg => {
+                const tLat = tg.lat != null ? tg.lat : (tg.centroid && tg.centroid.lat);
+                const tLon = tg.lon != null ? tg.lon : (tg.centroid && tg.centroid.lon);
+                if (tLat != null && tLon != null) {
+                    const dist = calcDistKm(lat, lon, tLat, tLon);
+                    if (dist <= 150) {
+                        const stg = tg.stage || (tg.is_ground_confirmed ? 3 : (tg.status === 'PROBABLE_TORNADO' ? 2 : 1));
+                        if (stg > maxStage) maxStage = stg;
+                        tornadicAlertsNearby.push({ ...tg, distKm: Math.round(dist), stage: stg, tLat, tLon });
+                    }
+                }
+            });
+        }
+
+        const tornBadge = document.getElementById('mon02-tornadic-status-badge');
+        if (tornBadge) {
+            if (tornadicAlertsNearby.length > 0) {
+                const badgeColor = maxStage === 3 ? '#9333ea' : (maxStage === 2 ? '#ef4444' : '#eab308');
+                const badgeBorder = maxStage === 3 ? '#c084fc' : (maxStage === 2 ? '#f87171' : '#facc15');
+                const badgeBg = maxStage === 3 ? 'rgba(88,28,135,0.7)' : (maxStage === 2 ? 'rgba(239,68,68,0.2)' : 'rgba(234,179,8,0.2)');
+                tornBadge.style.background = badgeBg;
+                tornBadge.style.borderColor = badgeBorder;
+                tornBadge.style.color = badgeBorder;
+                tornBadge.innerHTML = `🌪️ TORNADIC SIGNATURE: POSITIV (STAGE ${maxStage}) • ${tornadicAlertsNearby.length} IM SEKTOR (${tornadicAlertsNearby[0].distKm} KM)`;
+            } else {
+                tornBadge.style.background = 'rgba(16,185,129,0.18)';
+                tornBadge.style.borderColor = '#10b981';
+                tornBadge.style.color = '#34d399';
+                tornBadge.innerHTML = `🌪️ TORNADIC SIGNATURE: NEGATIV // ALL-CLEAR (150 KM)`;
+            }
+        }
+
+        // Plot detected tornadic signatures onto MON-02 station radar map
+        if (tornadicAlertsNearby.length > 0 && this.stationRadarMap) {
+            const tornadicLayerMon02 = L.layerGroup().addTo(this.stationRadarMap);
+            tornadicAlertsNearby.forEach(tg => {
+                const sColor = tg.stage === 3 ? '#9333ea' : (tg.stage === 2 ? '#ef4444' : '#eab308');
+                const sLabel = tg.stage === 3 ? 'STAGE 3 TOUCHDOWN' : (tg.stage === 2 ? 'STAGE 2 VERMUTET' : 'STAGE 1 ROTATION');
+                const tIcon = L.divIcon({
+                    className: 'mon02-torn-icon',
+                    html: `
+                        <div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:${sColor};border:2px solid #fff;box-shadow:0 0 12px ${sColor};font-size:12px;cursor:pointer;" title="${sLabel} // ${tg.distKm} km von Station">
+                            🌪️
+                        </div>
+                    `,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+                const tMarker = L.marker([tg.tLat, tg.tLon], { icon: tIcon, zIndexOffset: 950 });
+                tMarker.bindPopup(`
+                    <div style="font-family:monospace;font-size:11px;color:#0f172a;min-width:180px;">
+                        <div style="font-weight:bold;color:${sColor};border-bottom:1px solid #ccc;padding-bottom:2px;">🌪️ ${sLabel}</div>
+                        <div style="margin-top:3px;"><strong>Distanz zur Radarstation:</strong> ${tg.distKm} km</div>
+                        <div style="margin-top:2px;"><strong>Zugbahn:</strong> ${tg.motion_deg || 240}° @ ${tg.motion_kts || 35} KTS</div>
+                        <div style="margin-top:2px;"><strong>Status:</strong> ${tg.threat_level || 'Aktiv'}</div>
+                    </div>
+                `);
+                tMarker.addTo(tornadicLayerMon02);
+            });
+        }
 
         // 3. PRODUCT LAYERS (100% NATIVE AGENCY SENSORS)
         let activeRadarLayer = null;

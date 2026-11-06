@@ -42,13 +42,21 @@ window.isRadarStation = function(st) {
 };
 
 window.lockRadarStationTarget = function(id, lat, lon, name, agency, elevation) {
+    if (typeof lat === 'string' && isNaN(Number(lat)) && !isNaN(Number(name))) {
+        const tempName = lat;
+        lat = Number(name);
+        lon = Number(agency);
+        name = tempName;
+    }
+    lat = Number(lat);
+    lon = Number(lon);
     console.log(`[OmniScope] Targeting Doppler Radar Station: ${name || id} at ${lat}, ${lon}`);
     const target = {
         id: id,
         name: name || id,
         agency: agency || 'Doppler Radar Site',
-        lat: Number(lat),
-        lon: Number(lon),
+        lat: lat,
+        lon: lon,
         elevation: elevation || 150
     };
     if (window.MainPlayer && typeof window.MainPlayer.showRadarStationCommandDeck === 'function') {
@@ -1716,8 +1724,7 @@ class OperationsMap {
             { topId: 'layer-blitzortung', sideId: 'side-layer-blitzortung', layer: this.blitzortungLayer },
             { topId: 'layer-spacedish', sideId: 'side-layer-spacedish', layer: this.spaceDishLayer },
             { topId: 'layer-energy', sideId: 'side-layer-energy', layer: this.energyLayer },
-            { topId: 'layer-geomag', sideId: 'side-layer-geomag', layer: this.geomagLayer },
-            { topId: 'layer-chasers', sideId: 'side-layer-chasers', layer: this.chasersLayer }
+            { topId: 'layer-geomag', sideId: 'side-layer-geomag', layer: this.geomagLayer }
         ];
 
         layerMappings.forEach(mapping => {
@@ -1787,6 +1794,12 @@ class OperationsMap {
                             this.fetchBorderWaitTimes();
                         } else if (mapping.topId === 'layer-tor' && this.torLayer.getLayers().length === 0) {
                             this.fetchTorRelays();
+                        } else if (mapping.topId === 'layer-chasers') {
+                            if (!this.rawChasers || this.rawChasers.length === 0) {
+                                this.fetchChasers();
+                            } else {
+                                this.renderChasers(this.rawChasers);
+                            }
                         }
                     } else {
                         if (mapping.topId === 'layer-alerts' || mapping.topId === 'layer-tornado-ground') {
@@ -4082,42 +4095,155 @@ class OperationsMap {
             return;
         }
 
+        // Haversine & Bearing helpers for nearest Storm Chaser calculation
+        const calcDistKm = (lat1, lon1, lat2, lon2) => {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        };
+        const calcBearingDeg = (lat1, lon1, lat2, lon2) => {
+            const y = Math.sin((lon2 - lon1) * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180);
+            const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                      Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos((lon2 - lon1) * Math.PI / 180);
+            return Math.round((Math.atan2(y, x) * 180 / Math.PI + 360) % 360);
+        };
+
         tornadoGround.forEach(async (tg) => {
             const lat = tg.lat != null ? tg.lat : (tg.centroid && tg.centroid.lat);
             const lon = tg.lon != null ? tg.lon : (tg.centroid && tg.centroid.lon);
             if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) return;
             if (window.isOceanCoordinate && window.isOceanCoordinate(lat, lon)) return;
-            const isGroundConfirmed = tg.is_ground_confirmed === true || tg.status === 'CONFIRMED_GROUND_CONTACT';
-            const threat = tg.threat_level || (isGroundConfirmed ? 'OBSERVED GROUND CONTACT' : 'RADAR INDICATED ROTATION (KEIN BODENKONTAKT)');
-            const ef = tg.ef_rating || tg.ef_scale || (isGroundConfirmed ? 'AUSSTEHEND (DAMAGE SURVEY)' : 'N/A (RADAR INDICATED)');
-            const tags = (tg.detection_tags || []).join(' // ') || (isGroundConfirmed ? 'Bodenkontakt Bestätigt' : 'Radar Indicated Rotation');
-            const headline = tg.headline || (isGroundConfirmed ? 'Bestätigter Tornado am Boden' : 'Radar-Indizierte Mesozzyklone');
+
+            // Authentic 3-Stage Classification
+            let stage = tg.stage || 1;
+            if (!tg.stage) {
+                if (tg.is_ground_confirmed === true || tg.status === 'CONFIRMED_GROUND_CONTACT') {
+                    stage = 3;
+                } else if (tg.status === 'PROBABLE_TORNADO') {
+                    stage = 2;
+                } else {
+                    stage = 1;
+                }
+            }
+
+            const isGroundConfirmed = stage === 3;
+            const threat = tg.threat_level || (stage === 3 ? 'STAGE 3 // 100% BESTÄTIGTER TOUCHDOWN' : (stage === 2 ? 'STAGE 2 // TORNADO VERMUTET (30-95%)' : 'STAGE 1 // ROTATION IN DEN WOLKEN'));
+            const ef = tg.ef_rating || tg.ef_scale || (stage === 3 ? 'AUSSTEHEND (DAMAGE SURVEY)' : (stage === 2 ? 'RADAR INDICATED / SCHERUNG' : 'N/A (IN-CLOUD)'));
+            const tags = (tg.detection_tags || []).join(' // ') || (stage === 3 ? '100% Touchdown Verifiziert' : (stage === 2 ? 'Tornado Vermutet (Warnung)' : 'Doppler Rotation'));
+            const headline = tg.headline || (stage === 3 ? '100% Bestätigter Tornado am Boden' : (stage === 2 ? 'Tornado Vermutet / Trichterwolke' : 'Doppler-Mesozzyklone'));
             const area = (typeof resolveCountry === 'function' ? resolveCountry(lat, lon, tg.area_description) : (tg.area_description || 'Severe Storm Sector'));
             const motion_deg = tg.motion_deg !== undefined ? tg.motion_deg : 240;
             const motion_kts = tg.motion_kts !== undefined ? tg.motion_kts : 35;
+            const speedKmh = Math.round(motion_kts * 1.852);
             const wind_speed_mph = tg.wind_speed_mph;
-            const windDisplay = tg.wind_speed || (wind_speed_mph ? `${wind_speed_mph} MPH` : (isGroundConfirmed ? 'Bodenmessung ausstehend' : 'Doppler-Rotation (Nicht gemessen)'));
+            const windDisplay = tg.wind_speed || (wind_speed_mph ? `${wind_speed_mph} MPH` : (stage === 3 ? 'Bodenmessung ausstehend' : `${speedKmh} km/h Doppler-Vektor`));
 
-            const markerWrapClass = isGroundConfirmed ? 'tornado-vortex-circle-wrap' : 'tornado-vortex-circle-wrap radar-indicated';
-            const spinOuterClass = isGroundConfirmed ? 'tornado-circle-spin-outer' : 'tornado-circle-spin-outer radar-indicated';
-            const coreClass = isGroundConfirmed ? 'tornado-vortex-core' : 'tornado-vortex-core radar-indicated';
-            const tagClass = isGroundConfirmed ? 'tornado-vortex-tag' : 'tornado-vortex-tag radar-indicated';
-            const tagText = isGroundConfirmed ? `${ef} • ${windDisplay}` : `RADAR ROTATION • ${windDisplay}`;
-            const headerTitle = isGroundConfirmed ? '🚨 TORNADO AM BODEN // CONFIRMED GROUND CONTACT (OBSERVED)' : '🌪️ MESOZYKLONE IM RADAR // RADAR INDICATED (UNBESTÄTIGT)';
-            const headerColor = isGroundConfirmed ? '#dc2626' : '#ea580c';
-            const headerBorder = isGroundConfirmed ? '#ef4444' : '#f97316';
-            const statusStyle = isGroundConfirmed ? 'background:#fee2e2;color:#b91c1c;' : 'background:#ffedd5;color:#c2410c;';
-            const coneBorderColor = isGroundConfirmed ? '#ef4444' : '#f97316';
-            const coneFillColor = isGroundConfirmed ? '#dc2626' : '#ea580c';
-            const noticeHtml = isGroundConfirmed
-                ? '<div style="margin-top:3px;font-size:10px;color:#991b1b;background:#fef2f2;padding:3px 5px;border-left:2px solid #ef4444;">🚨 <strong>BODENKONTAKT BESTÄTIGT:</strong> Verifiziert durch NWS/Spotter oder TDS Trümmer-Signatur. Offizielle EF-Skala wird nach Ground Damage Survey vergeben.</div>'
-                : '<div style="margin-top:3px;font-size:10px;color:#9a3412;background:#fff7ed;padding:3px 5px;border-left:2px solid #f97316;">📡 <strong>KEIN BODENKONTAKT BESTÄTIGT:</strong> Doppler-Radar erfasst Zirkulation in der Wolke. NWS Damage Survey ausstehend.</div>';
+            // Calculate nearest storm chaser from live chasers
+            let nearestChaserObj = null;
+            let minChaserDistKm = Infinity;
+            let chaserBearingDeg = null;
 
-            // 1. DYNAMIC VORTEX MARKER (RED = OBSERVED GROUND, AMBER = RADAR INDICATED)
+            if (Array.isArray(this.rawChasers) && this.rawChasers.length > 0) {
+                this.rawChasers.forEach(c => {
+                    if (!isFinite(c.lat) || !isFinite(c.lon)) return;
+                    const d = calcDistKm(lat, lon, c.lat, c.lon);
+                    if (d < minChaserDistKm) {
+                        minChaserDistKm = d;
+                        nearestChaserObj = c;
+                        chaserBearingDeg = calcBearingDeg(lat, lon, c.lat, c.lon);
+                    }
+                });
+            }
+
+            let nearestChaserHtml = '';
+            if (nearestChaserObj && minChaserDistKm < 1500) {
+                const isLive = !!(nearestChaserObj.stream && (nearestChaserObj.stream.url || nearestChaserObj.stream.embedUrl));
+                nearestChaserHtml = `
+                    <div style="margin-top:6px;padding:5px 7px;background:rgba(245,158,11,0.12);border:1px solid #f59e0b;border-radius:4px;font-size:10px;">
+                        <div style="font-weight:900;color:#f59e0b;display:flex;justify-content:space-between;align-items:center;">
+                            <span>⚡ NÄCHSTER STORM CHASER:</span>
+                            <span style="color:${isLive ? '#ef4444' : '#10b981'};font-weight:900;">${isLive ? '🔴 LIVE STREAM' : '📍 BEACON'}</span>
+                        </div>
+                        <div style="color:#f8fafc;margin-top:2px;">
+                            <strong>${nearestChaserObj.name}</strong> • <strong>${Math.round(minChaserDistKm)} km</strong> (Peilung ${chaserBearingDeg}°)
+                        </div>
+                        ${isLive ? `
+                        <button class="ops-btn" style="width:100%;margin-top:5px;padding:4px;font-size:10px;background:#ef4444;color:#fff;border:none;cursor:pointer;font-weight:bold;border-radius:2px;" onclick="window.streamChaserToMon02('${nearestChaserObj.id}')">
+                            📺 CHASER LIVE-FEED IN MON-02 ÖFFNEN
+                        </button>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // Visual Styling per Stage
+            let headerTitle, headerColor, headerBorder, markerClass, spinClass, coreClass, tagClass, tagText, statusStyle, coneBorderColor, coneFillColor, noticeHtml;
+
+            if (stage === 3) {
+                // STAGE 3: 100% BESTÄTIGTER TOUCHDOWN (DUNKELROT / VIOLETT)
+                headerTitle = '🚨 STAGE 3 // 100% BESTÄTIGTER TORNADO AM BODEN (TOUCHDOWN)';
+                headerColor = '#9333ea';
+                headerBorder = '#a855f7';
+                markerClass = 'tornado-vortex-circle-wrap stage-3';
+                spinClass = 'tornado-circle-spin-outer stage-3';
+                coreClass = 'tornado-vortex-core stage-3';
+                tagClass = 'tornado-vortex-tag stage-3';
+                tagText = `STAGE 3 • TOUCHDOWN • ${speedKmh} km/h`;
+                statusStyle = 'background:#581c87;color:#f3e8ff;border:1px solid #a855f7;';
+                coneBorderColor = '#9333ea';
+                coneFillColor = '#7e22ce';
+                noticeHtml = `
+                    <div style="margin-top:4px;font-size:10px;color:#f3e8ff;background:rgba(88,28,135,0.7);padding:4px 6px;border-left:3px solid #c084fc;border-radius:2px;">
+                        🚨 <strong>100% BESTÄTIGTER TOUCHDOWN:</strong> Verifiziert durch NWS Observed Spotter oder Dual-Pol Radar Debris Ball (TDS). Sofort Schutz suchen!
+                    </div>
+                `;
+            } else if (stage === 2) {
+                // STAGE 2: TORNADO VERMUTET (30-95% WAHRSCHEINLICHKEIT / ROT)
+                headerTitle = '⚠️ STAGE 2 // TORNADO VERMUTET (30-95% WAHRSCHEINLICHKEIT)';
+                headerColor = '#dc2626';
+                headerBorder = '#ef4444';
+                markerClass = 'tornado-vortex-circle-wrap stage-2';
+                spinClass = 'tornado-circle-spin-outer stage-2';
+                coreClass = 'tornado-vortex-core stage-2';
+                tagClass = 'tornado-vortex-tag stage-2';
+                tagText = `STAGE 2 • VERMUTET • ${speedKmh} km/h`;
+                statusStyle = 'background:#fee2e2;color:#b91c1c;border:1px solid #ef4444;';
+                coneBorderColor = '#ef4444';
+                coneFillColor = '#dc2626';
+                noticeHtml = `
+                    <div style="margin-top:4px;font-size:10px;color:#991b1b;background:#fef2f2;padding:4px 6px;border-left:3px solid #ef4444;border-radius:2px;">
+                        ⚠️ <strong>TORNADO AM BODEN VERMUTET (30-95%):</strong> NWS Tornado-Warnung oder Trichterwolke / TVS erfasst. Hohe Zirkulation!
+                    </div>
+                `;
+            } else {
+                // STAGE 1: ROTATION IN DEN WOLKEN (GELB / AMBER)
+                headerTitle = '📡 STAGE 1 // ROTATION IN DEN WOLKEN (DOPPLER MESOZYKLONE)';
+                headerColor = '#ca8a04';
+                headerBorder = '#eab308';
+                markerClass = 'tornado-vortex-circle-wrap stage-1';
+                spinClass = 'tornado-circle-spin-outer stage-1';
+                coreClass = 'tornado-vortex-core stage-1';
+                tagClass = 'tornado-vortex-tag stage-1';
+                tagText = `STAGE 1 • ROTATION • ${speedKmh} km/h`;
+                statusStyle = 'background:#fef9c3;color:#854d0e;border:1px solid #eab308;';
+                coneBorderColor = '#eab308';
+                coneFillColor = '#ca8a04';
+                noticeHtml = `
+                    <div style="margin-top:4px;font-size:10px;color:#854d0e;background:#fefce8;padding:4px 6px;border-left:3px solid #eab308;border-radius:2px;">
+                        📡 <strong>MESOZYKLONE IN DER WOLKE:</strong> Doppler-Radar erfasst Zirkulation in höheren Schichten. Bisher kein Bodenkontakt verifiziert.
+                    </div>
+                `;
+            }
+
+            // 1. DYNAMIC 3-STAGE VORTEX MARKER
             const vortexIcon = L.divIcon({
-                className: isGroundConfirmed ? 'tornado-vortex-pin' : 'tornado-vortex-pin radar-indicated',
+                className: `tornado-vortex-pin stage-${stage}`,
                 html: `
-                    <div class="${markerWrapClass}" title="${headerTitle} // ${ef} • ${windDisplay} (Zugrichtung: ${motion_deg}°)">
+                    <div class="${markerWrapClass}" title="${headerTitle} // ${ef} • Zugrichtung: ${motion_deg}° @ ${motion_kts} KTS (${speedKmh} km/h)">
                         <div class="${spinOuterClass}"></div>
                         <div class="${coreClass}">🌪️</div>
                         <div class="tornado-heading-tick" style="transform: rotate(${motion_deg}deg);"><span>▲</span></div>
@@ -4128,24 +4254,25 @@ class OperationsMap {
                 iconAnchor: [24, 24]
             });
 
-            const marker = L.marker([lat, lon], { icon: vortexIcon, zIndexOffset: 1000 });
+            const marker = L.marker([lat, lon], { icon: vortexIcon, zIndexOffset: stage === 3 ? 1200 : (stage === 2 ? 1000 : 800) });
 
             const popupContent = `
-                <div style="font-family:var(--font-mono);font-size:11px;min-width:270px;max-width:350px;color:#0f172a;">
+                <div style="font-family:var(--font-mono);font-size:11px;min-width:280px;max-width:360px;color:#0f172a;">
                     <div style="font-weight:900;color:${headerColor};border-bottom:2px solid ${headerBorder};padding-bottom:4px;margin-bottom:6px;display:flex;align-items:center;gap:6px;font-size:12px;">
-                        <span>${isGroundConfirmed ? '🌪️' : '📡'}</span>
+                        <span>🌪️</span>
                         <span>${headerTitle}</span>
                     </div>
-                    <div><strong>STATUS:</strong> <span style="${statusStyle}padding:1px 6px;border-radius:3px;font-weight:bold;">${threat.toUpperCase()}</span></div>
+                    <div><strong>STUFE / STAGE:</strong> <span style="${statusStyle}padding:1px 6px;border-radius:3px;font-weight:bold;">STAGE ${stage}</span></div>
                     <div style="margin-top:3px;"><strong>EF-BEWERTUNG:</strong> <strong style="color:${headerColor};">${ef}</strong></div>
-                    <div style="margin-top:2px;"><strong>WINDGESCHWINDIGKEIT:</strong> <span>${windDisplay}</span></div>
-                    <div style="margin-top:2px;"><strong>ZUGBAHN:</strong> <span style="color:#0284c7;font-weight:bold;">${motion_deg}° @ ${motion_kts} KTS</span></div>
+                    <div style="margin-top:2px;"><strong>GESCHWINDIGKEIT:</strong> <span>${speedKmh} km/h (${motion_kts} KTS)</span></div>
+                    <div style="margin-top:2px;"><strong>ZUGBAHN / RICHTUNG:</strong> <span style="color:#0284c7;font-weight:bold;">${motion_deg}° (${speedKmh} km/h)</span></div>
                     <div style="margin-top:2px;"><strong>ERFASSUNG:</strong> <span style="color:#475569;">${tags}</span></div>
                     <div style="margin-top:2px;"><strong>SEKTOR:</strong> ${area}</div>
                     ${noticeHtml}
+                    ${nearestChaserHtml}
                     <div style="margin-top:4px;font-size:10px;color:#64748b;">${headline}</div>
                     <div style="display:flex;gap:4px;margin-top:8px;">
-                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:${headerColor};color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.targetStorm({lat:${lat},lon:${lon},id:'${tg.alert_id||tg.id||''}',title:'${headline.replace(/'/g, '')}',ef_scale:'${ef}',wind_speed:'${windDisplay}',is_tornado:true,is_ground_confirmed:${isGroundConfirmed}});}">
+                        <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:${headerColor};color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.targetStorm({lat:${lat},lon:${lon},id:'${tg.alert_id||tg.id||''}',title:'${headline.replace(/'/g, '')}',ef_scale:'${ef}',wind_speed:'${windDisplay}',is_tornado:true,is_ground_confirmed:${isGroundConfirmed},stage:${stage}});}">
                             🎯 ANVISIEREN
                         </button>
                         <button class="ops-btn" style="flex:1;padding:4px 6px;font-size:10px;background:#0284c7;color:#fff;border:none;cursor:pointer;font-weight:bold;" onclick="if(window.MapController){window.MapController.lockProximityGroundStation(${lat}, ${lon}, true);}">
@@ -4178,7 +4305,6 @@ class OperationsMap {
                     };
                 };
 
-                const speedKmh = motion_kts * 1.852;
                 const dist15 = speedKmh * (15.0 / 60.0);
                 const dist30 = speedKmh * (30.0 / 60.0);
                 const dist45 = speedKmh * (45.0 / 60.0);
@@ -4199,14 +4325,14 @@ class OperationsMap {
                 ], {
                     pane: 'weatherZonesPane',
                     color: coneBorderColor,
-                    weight: 1.5,
+                    weight: stage === 3 ? 2.0 : 1.5,
                     dashArray: '4, 4',
                     fillColor: coneFillColor,
-                    fillOpacity: isGroundConfirmed ? 0.16 : 0.11,
+                    fillOpacity: stage === 3 ? 0.22 : (stage === 2 ? 0.15 : 0.10),
                     className: 'tornado-hazard-polygon alert-zone-pass-through',
                     bubblingMouseEvents: false
                 });
-                dangerCone.bindTooltip(`⚠️ GEFAHRENKORRIDOR: Zugbahn ${motion_deg}° @ ${motion_kts} KTS (${isGroundConfirmed ? 'Bodenkontakt Bestätigt' : 'Radar-Rotation'})`, { sticky: true });
+                dangerCone.bindTooltip(`⚠️ GEFAHRENKORRIDOR STAGE ${stage}: Zugbahn ${motion_deg}° @ ${motion_kts} KTS (${speedKmh} km/h)`, { sticky: true });
                 dangerCone.on('click', (ev) => {
                     this.notifyLayerClicked(ev);
                     if (window.openSupercellDossier) {
@@ -4224,15 +4350,14 @@ class OperationsMap {
                 ], {
                     pane: 'weatherZonesPane',
                     color: coneBorderColor,
-                    weight: 3.5,
+                    weight: stage === 3 ? 4.0 : 3.0,
                     dashArray: '8, 6',
                     opacity: 0.95,
                     className: 'alert-zone-pass-through',
                     bubblingMouseEvents: false
                 });
-                pathLine.bindTooltip(`🌪️ LIVE-PFAD: ${motion_deg}° @ ${motion_kts} KTS (${speedKmh.toFixed(0)} km/h)`, { sticky: true });
+                pathLine.bindTooltip(`🌪️ STAGE ${stage} LIVE-PFAD: ${motion_deg}° @ ${motion_kts} KTS (${speedKmh} km/h)`, { sticky: true });
                 this.tornadoGroundLayer.addLayer(pathLine);
-
 
                 // Checkpoint markers at +15m, +30m, +45m
                 const waypoints = [
@@ -4245,13 +4370,13 @@ class OperationsMap {
                         renderer: this.canvasRenderer,
                         radius: 5,
                         color: '#ffffff',
-                        fillColor: '#ef4444',
+                        fillColor: coneBorderColor,
                         fillOpacity: 0.95,
                         weight: 2,
                         className: 'alert-zone-pass-through',
                         bubblingMouseEvents: false
                     });
-                    wp.bindTooltip(`📍 PROGNOSE ${eta} // [${pt.lat.toFixed(3)}°, ${pt.lon.toFixed(3)}°]`, { direction: 'top', sticky: true });
+                    wp.bindTooltip(`📍 PROGNOSE ${eta} // [${pt.lat.toFixed(3)}°, ${pt.lon.toFixed(3)}°] (${speedKmh} km/h)`, { direction: 'top', sticky: true });
                     wp.on('click', (ev) => {
                         this.notifyLayerClicked(ev);
                     });
@@ -4268,10 +4393,10 @@ class OperationsMap {
                         pane: 'weatherZonesPane',
                         bubblingMouseEvents: false,
                         style: {
-                            color: '#ef4444',
-                            weight: 3,
-                            fillColor: '#b91c1c',
-                            fillOpacity: 0.35,
+                            color: coneBorderColor,
+                            weight: stage === 3 ? 3.5 : 2.5,
+                            fillColor: coneFillColor,
+                            fillOpacity: stage === 3 ? 0.32 : (stage === 2 ? 0.22 : 0.15),
                             dashArray: '5, 5',
                             className: 'tornado-hazard-polygon alert-zone-pass-through'
                         }
@@ -4288,10 +4413,10 @@ class OperationsMap {
                 const hazardCircle = L.circle([lat, lon], {
                     pane: 'weatherZonesPane',
                     radius: 12000,
-                    color: '#ef4444',
-                    weight: 3,
-                    fillColor: '#b91c1c',
-                    fillOpacity: 0.28,
+                    color: coneBorderColor,
+                    weight: stage === 3 ? 3.5 : 2.5,
+                    fillColor: coneFillColor,
+                    fillOpacity: stage === 3 ? 0.28 : (stage === 2 ? 0.20 : 0.12),
                     dashArray: '6, 6',
                     className: 'tornado-hazard-polygon alert-zone-pass-through',
                     bubblingMouseEvents: false
@@ -4311,7 +4436,7 @@ class OperationsMap {
                     const stations = stnData.stations || [];
                     stations.forEach((st, sIdx) => {
                         const linkLine = L.polyline([[lat, lon], [st.lat, st.lon]], {
-                            color: sIdx === 0 ? '#ef4444' : '#f59e0b',
+                            color: sIdx === 0 ? coneBorderColor : '#f59e0b',
                             weight: 2,
                             dashArray: '4, 4',
                             opacity: 0.85,
@@ -4870,16 +4995,24 @@ class OperationsMap {
             if (!isFinite(c.lat) || !isFinite(c.lon)) return;
             window._chaserIndex.set(c.id, c);
             const live = !!(c.stream && (c.stream.url || c.stream.embedUrl));
-            const size = live ? 16 : 11;
+            const size = live ? 18 : 12;
+            const heading = (c.heading != null && !isNaN(c.heading)) ? Number(c.heading) : null;
+            const headingTickHtml = heading !== null 
+                ? `<div class="chaser-heading-tick" style="transform: rotate(${heading}deg);">▲</div>` 
+                : '';
             const icon = L.divIcon({
                 className: 'chaser-node-wrap',
-                html: `<div class="chaser-radar-node${live ? ' live' : ''}"></div>`,
+                html: `
+                    <div class="chaser-radar-node${live ? ' live' : ''}" title="⚡ ${c.name || 'Storm Chaser'}${live ? ' (🔴 LIVE STREAM)' : ''}${heading !== null ? ' // Kurs ' + heading + '°' : ''}">
+                        ${headingTickHtml}
+                    </div>
+                `,
                 iconSize: [size, size],
                 iconAnchor: [size / 2, size / 2],
                 popupAnchor: [0, -size / 2]
             });
-            const marker = L.marker([c.lat, c.lon], { icon, zIndexOffset: live ? 800 : 400 });
-            marker.bindPopup(() => this.buildChaserPopup(c), { maxWidth: 270, className: 'chaser-popup' });
+            const marker = L.marker([c.lat, c.lon], { icon, zIndexOffset: live ? 900 : 500 });
+            marker.bindPopup(() => this.buildChaserPopup(c), { maxWidth: 280, className: 'chaser-popup' });
             marker.addTo(this.chasersLayer);
         });
     }
@@ -8186,13 +8319,21 @@ window.isRadarStation = function(st) {
 };
 
 window.lockRadarStationTarget = function(id, lat, lon, name, agency, elevation) {
+    if (typeof lat === 'string' && isNaN(Number(lat)) && !isNaN(Number(name))) {
+        const tempName = lat;
+        lat = Number(name);
+        lon = Number(agency);
+        name = tempName;
+    }
+    lat = Number(lat);
+    lon = Number(lon);
     console.log(`[OmniScope] Targeting Doppler Radar Station: ${name || id} at ${lat}, ${lon}`);
     const target = {
         id: id,
         name: name || id,
         agency: agency || 'Doppler Radar Site',
-        lat: Number(lat),
-        lon: Number(lon),
+        lat: lat,
+        lon: lon,
         elevation: elevation || 150
     };
     if (window.MainPlayer && typeof window.MainPlayer.showRadarStationCommandDeck === 'function') {
