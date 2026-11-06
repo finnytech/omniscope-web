@@ -4965,49 +4965,122 @@ path.subsea-cable-path {
 
 
 /* =========================================================================
-   STORM CHASER TACTICAL NODES & QUICK-VIEW POPUPS (LiveStormChasing + SpotterNetwork)
+   STORM CHASER TACTICAL DIRECTIONAL MARKERS (Pfeil + 🚗 Auto-Emoji)
+   LiveStormChasing (Red Streamers) + SpotterNetwork (Amber Spotters)
    ========================================================================= */
 .chaser-node-wrap {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    overflow: visible !important;
 }
 
+/* Drehbarer Pfeilcontainer (32x32px für optimale Sichtbarkeit Zoom 2-5) */
+.chaser-arrow-marker {
+    position: relative;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transform-origin: 16px 16px;
+    transition: transform 0.25s ease-out;
+    overflow: visible !important;
+}
+
+/* Prägnanter SVG-Pfeil (viewBox="0 0 32 32") */
+.chaser-arrow-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    overflow: visible !important;
+    pointer-events: none;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+/* ROT: Streamer & prominente Chaser (Reed Timmer, Brandon Copic, LiveStormChasing etc.) */
+.chaser-arrow-marker.chaser-live .chaser-arrow-path {
+    fill: #ef4444;
+    stroke: #ffffff;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.chaser-arrow-marker.chaser-live .chaser-arrow-svg {
+    animation: chaserLivePulse 1.5s infinite ease-in-out;
+}
+
+/* AMBER/GOLD: Aktive GPS-Spotter von SpotterNetwork mit schwarzer Kontur */
+.chaser-arrow-marker.chaser-spotter .chaser-arrow-path {
+    fill: #f59e0b;
+    stroke: #000000;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.chaser-arrow-marker.chaser-spotter .chaser-arrow-svg {
+    filter: drop-shadow(0 0 2px #000000) drop-shadow(0 0 6px rgba(245, 158, 11, 0.95)) drop-shadow(0 0 10px rgba(251, 191, 36, 0.6));
+}
+
+/* 🚗 Zentriertes Auto-Emoji in der Mitte des Pfeils */
+.chaser-car-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 13px;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+    z-index: 2;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.95));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hover-Feedback */
+.chaser-arrow-marker:hover .chaser-arrow-svg {
+    filter: brightness(1.25) drop-shadow(0 0 8px #ffffff);
+}
+
+.chaser-arrow-marker:hover .chaser-car-icon {
+    transform: translate(-50%, -50%) scale(1.15);
+}
+
+/* Leuchtender Pulsing-Glow für Live-Streamer */
+@keyframes chaserLivePulse {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.9)) drop-shadow(0 0 5px #ef4444);
+    }
+    50% {
+        filter: drop-shadow(0 0 5px #ffffff) drop-shadow(0 0 12px #ef4444) drop-shadow(0 0 22px rgba(239, 68, 68, 0.95));
+    }
+    100% {
+        filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.9)) drop-shadow(0 0 5px #ef4444);
+    }
+}
+
+/* Fallback-Klassen für Rückwärtskompatibilität */
 .chaser-radar-node {
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: #f59e0b;
     border: 2px solid #ffffff;
-    box-shadow: 0 0 10px #f59e0b, 0 0 18px rgba(245, 158, 11, 0.85);
-    transition: transform 0.2s ease;
-    cursor: pointer;
+    box-shadow: 0 0 10px #f59e0b;
     position: relative;
 }
 
-.chaser-radar-node:hover {
-    transform: scale(1.4);
-}
-
 .chaser-radar-node.live {
-    width: 15px;
-    height: 15px;
     background: #ef4444;
     border: 2px solid #fef08a;
-    box-shadow: 0 0 10px #ef4444, 0 0 20px rgba(239, 68, 68, 0.8);
-    animation: chaserLivePulse 1.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
-}
-
-@keyframes chaserLivePulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8), 0 0 8px #ef4444;
-    }
-    70% {
-        box-shadow: 0 0 0 12px rgba(239, 68, 68, 0), 0 0 14px #ef4444;
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 8px #ef4444;
-    }
+    box-shadow: 0 0 10px #ef4444;
 }
 
 .chaser-popup .leaflet-popup-content-wrapper {
