@@ -4977,10 +4977,12 @@ class OperationsMap {
 
     async fetchChasers() {
         try {
-            const res = await fetch('/api/chaser-cams');
+            const fetchFn = window._originalFetch || window.fetch;
+            const res = await fetchFn('/api/chaser-cams');
             if (!res.ok) return;
             const data = await res.json();
-            this.rawChasers = Array.isArray(data.chasers) ? data.chasers : [];
+            if (!Array.isArray(data.chasers)) return;
+            this.rawChasers = data.chasers;
             const countTag = document.getElementById('chasers-count-tag');
             if (countTag) countTag.innerText = this.rawChasers.length;
             const sideCountTag = document.getElementById('side-chasers-count-tag');

@@ -920,7 +920,7 @@ async function handleBridgeWeatherRadar(urlStr) {
 
         // On HTTP/HTTPS, delegate /api calls directly to the Cloudflare Edge Worker first
 
-        if (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') {
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
 
             try {
 
@@ -3567,6 +3567,37 @@ const PRIMARY_US_STATIONS = [
         // 12. Catch-All Wildcard for any other /api/* request
 
         console.log('[OmniScope Web] Catch-all wildcard bridge handled:', urlStr);
+
+        
+        // 17. /api/chaser-cams & /api/telemetry/chasers
+        if (urlStr.includes('/api/chaser-cams') || urlStr.includes('/api/telemetry/chasers')) {
+            try {
+                const edgeRes = await window._originalFetch('/api/chaser-cams');
+                if (edgeRes && edgeRes.ok) return edgeRes;
+            } catch (_) {}
+            try {
+                const lscRes = await (window._originalFetch || fetch)("https://api.livestormchasing.com/api/v1/chasers?geojson=true");
+                if (lscRes && lscRes.ok) {
+                    const lscData = await lscRes.json();
+                    const feats = lscData.features || [];
+                    const chasers = feats.map(f => {
+                        const p = f.properties || {};
+                        const coords = (f.geometry && f.geometry.coordinates) || [];
+                        return {
+                            id: "lsc-" + (p.name || 'chaser').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                            name: p.name || 'Live Chaser',
+                            lat: coords[1],
+                            lon: coords[0],
+                            heading: p.heading != null ? Number(p.heading) : null,
+                            speed: 0,
+                            source: "LiveStormChasing",
+                            stream: null
+                        };
+                    }).filter(c => isFinite(c.lat) && isFinite(c.lon));
+                    return jsonResponse({ status: "ok", count: chasers.length, chasers: chasers, sources: { livestormchasing: chasers.length, spotternetwork: 0 } });
+                }
+            } catch (_) {}
+        }
 
         return jsonResponse({
 
