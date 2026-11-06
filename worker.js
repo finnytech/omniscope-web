@@ -5850,7 +5850,6 @@ const PRIMARY_US_STATIONS = [
       headers: newHeaders
     });
   }
-}
 async function handleBlitzortungStations(url) {
   const stations = [
     { id: 'blitz_berlin', name: 'Blitzortung Station Berlin', city: 'Berlin', country: 'DE', lat: 52.520, lon: 13.405 },
