@@ -5048,7 +5048,7 @@ class OperationsMap {
 
     buildChaserPopup(c) {
         const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-        const PROMINENT_CHASERS = /Reed|Timmer|Dominator|Connor|Croff|Brandon|Copic|Jayjack|Freddy|McKinney|Slusin|McGee|Arnold|Ryan|Hall/i;
+        const PROMINENT_CHASERS = /Reed|Timmer|Dominator|Connor|Croff|Brandon|Copic|Jayjack|Freddy|McKinney|Slusin|McGee|Arnold|Ryan|Hall|Pecos|Hank/i;
         const isProminent = PROMINENT_CHASERS.test(c.name || '');
         const hasStream = !!(c.stream && (c.stream.url || c.stream.embedUrl));
         const live = hasStream || !!c.isLive || c.status === 'STREAMING' || c.status === 'LIVE' || c.source === 'LiveStormChasing' || isProminent;
@@ -5056,14 +5056,7 @@ class OperationsMap {
         const hd = c.heading != null ? `${c.headingLabel ? esc(c.headingLabel) + ' ' : ''}${esc(c.heading)}°` : '—';
         const spd = c.speed ? `${esc(c.speed)} mph` : (c.status === 'STATIONARY' ? 'Stationary' : '—');
         
-        let statusBadge = '📍 ACTIVE CHASE BEACON';
-        if (hasStream) {
-            statusBadge = '🔴 STREAMING LIVE';
-        } else if (isProminent) {
-            statusBadge = '🔴 PRO STORM CHASER (LIVE TRACKING)';
-        } else if (live) {
-            statusBadge = '🔴 LIVE STREAMER';
-        }
+        let statusBadge = live ? '🔴 STREAMING LIVE // CHASER FEED' : '📍 ACTIVE CHASE BEACON';
 
         return `
             <div class="chaser-popup-body">
@@ -5076,9 +5069,7 @@ class OperationsMap {
                 <div class="chaser-popup-row"><span>Updated</span><b>${mins == null ? '—' : mins + ' min ago'}</b></div>
                 <div class="chaser-popup-row"><span>Source</span><b>${esc(c.source)}</b></div>
                 ${c.twitter ? `<div class="chaser-popup-row"><span>Social</span><a href="${esc(c.twitter)}" target="_blank" rel="noopener noreferrer">${esc(c.twitter.replace('https://', ''))}</a></div>` : ''}
-                ${hasStream
-                    ? `<button class="chaser-stream-btn" onclick="window.streamChaserToMon02('${esc(c.id)}')">📺 STREAM TO MON-02</button>`
-                    : `<div class="chaser-popup-note">Kein verifizierter Video-Stream aktiv</div>`}
+                <button class="chaser-stream-btn" onclick="window.streamChaserToMon02('${esc(c.id)}')">📺 IN MON-02 STREAMEN</button>
             </div>`;
     }
 

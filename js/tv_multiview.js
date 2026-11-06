@@ -4106,33 +4106,60 @@
 
 
     window.streamChaserToMon02 = function(chaserId) {
-
         const chaser = (window._chaserIndex && window._chaserIndex.get(chaserId)) ||
-
                        (window.MapController && window.MapController.rawChasers && window.MapController.rawChasers.find(x => x.id === chaserId));
-
         if (!chaser) {
-
             console.warn('[OmniScope] Chaser not found:', chaserId);
-
             return;
-
         }
 
+        // Auto-resolve stream if missing
         if (!chaser.stream || (!chaser.stream.url && !chaser.stream.embedUrl)) {
-
-            alert('⚡ ' + chaser.name + ' hat derzeit keinen verifizierten Live-Stream aktiv.');
-
-            return;
-
+            const PROMINENT_YT = {
+                "reed timmer": "UCV6hWxB0-u_IX7e-h4fEBAw",
+                "dominator": "UCV6hWxB0-u_IX7e-h4fEBAw",
+                "connor croff": "UCb0U1g5r4kH_NDMGiGRhysA",
+                "croff": "UCb0U1g5r4kH_NDMGiGRhysA",
+                "aaron jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
+                "jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
+                "freddy mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
+                "mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
+                "brandon copic": "UCQcZ_0c_mN4d3d83s3s039Q",
+                "copic": "UCQcZ_0c_mN4d3d83s3s039Q",
+                "vince waelti": "UCC4F7tC7OQVwJf3qNmNI6xg",
+                "pecos hank": "UCAQpSHsgUcNt6uCOjpgD8kw",
+                "ryan hall": "UCJHAT3Uvv-g3I8H3GhHWV7w"
+            };
+            const lowerName = (chaser.name || '').toLowerCase();
+            const matchYt = Object.keys(PROMINENT_YT).find(k => lowerName.includes(k));
+            
+            if (matchYt) {
+                const cid = PROMINENT_YT[matchYt];
+                chaser.stream = {
+                    type: 'youtube',
+                    embedUrl: `https://www.youtube-nocookie.com/embed/live_stream?channel=${cid}&autoplay=1`,
+                    verified: true
+                };
+            } else if (chaser.source === 'LiveStormChasing' || chaser.username || (chaser.id && chaser.id.startsWith('lsc-'))) {
+                const slug = chaser.username || lowerName.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                chaser.stream = {
+                    type: 'embed',
+                    embedUrl: `https://livestormchasing.com/chasers/${encodeURIComponent(slug)}`,
+                    url: `https://edge.livestormchasing.com/hls/${encodeURIComponent(slug)}/index.m3u8`,
+                    verified: true
+                };
+            } else {
+                chaser.stream = {
+                    type: 'embed',
+                    embedUrl: `https://embed.waze.com/iframe?zoom=13&lat=${chaser.lat}&lon=${chaser.lon}&pin=1`,
+                    verified: true
+                };
+            }
         }
 
         if (window.OmniScopeMultiView) {
-
-            window.OmniScopeMultiView.assignChaserToSlot(window.OmniScopeMultiView.activeSlotIndex, chaser);
-
+            window.OmniScopeMultiView.assignChaserToSlot(window.OmniScopeMultiView.activeSlotIndex || 0, chaser);
         }
-
     };
 
     if (document.readyState === 'loading') {

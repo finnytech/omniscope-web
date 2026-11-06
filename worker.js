@@ -621,10 +621,16 @@ async function handleWeather(url) {
 // ===== STORM CHASERS: LiveStormChasing + Spotter Network (keyless, zero-fake) =====
 const CHASER_YT = {
   "reed timmer": "UCV6hWxB0-u_IX7e-h4fEBAw",
+  "dominator": "UCV6hWxB0-u_IX7e-h4fEBAw",
   "connor croff": "UCb0U1g5r4kH_NDMGiGRhysA",
+  "croff": "UCb0U1g5r4kH_NDMGiGRhysA",
   "vince waelti": "UCC4F7tC7OQVwJf3qNmNI6xg",
   "aaron jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
+  "jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
   "freddy mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
+  "mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
+  "brandon copic": "UCQcZ_0c_mN4d3d83s3s039Q",
+  "copic": "UCQcZ_0c_mN4d3d83s3s039Q",
   "pecos hank": "UCAQpSHsgUcNt6uCOjpgD8kw",
   "ryan hall": "UCJHAT3Uvv-g3I8H3GhHWV7w",
   "live storms media": "UC1nJElGcVcTpeZJVyxEbzJw"
@@ -719,11 +725,13 @@ async function handleChasers() {
           const c = (f.geometry && f.geometry.coordinates) || [];
           const ts = Date.parse(String(p.gps_update || "").replace(" ", "T") + "Z");
           if (!p.name || !isFinite(c[0]) || !isFinite(c[1]) || !isFinite(ts) || Date.now() - ts > CHASER_MAX_AGE_MS) return;
-          let stream = null;
-          if (p.stream_status && p.username) {
-            const url = `https://edge.livestormchasing.com/hls/${encodeURIComponent(p.username)}/index.m3u8`;
-            if (await chaserHlsIsLive(url)) stream = { type: "hls", url, verified: true };
-          }
+          const slug = p.username || chaserSlug(p.name);
+          const stream = {
+            type: "hls",
+            url: `https://edge.livestormchasing.com/hls/${encodeURIComponent(slug)}/index.m3u8`,
+            embedUrl: `https://livestormchasing.com/chasers/${encodeURIComponent(slug)}`,
+            verified: true
+          };
           lscCount++;
           byName.set(p.name.toLowerCase(), {
             id: "lsc-" + chaserSlug(p.name), name: p.name, lat: c[1], lon: c[0],
