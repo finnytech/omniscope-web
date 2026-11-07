@@ -2055,163 +2055,153 @@
         // Assign Live Storm Chaser (HLS or Sandboxed YouTube Live) to Slot
 
         assignChaserToSlot(slotIdx, chaser) {
-
             if (!chaser) return;
+            const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+            const hasVideo = !!(chaser.stream && (chaser.stream.url || chaser.stream.embedUrl));
+            const hd = chaser.heading != null ? `${chaser.headingLabel ? esc(chaser.headingLabel) + ' ' : ''}${esc(chaser.heading)}°` : '—';
+            const spd = chaser.speed ? `${esc(chaser.speed)} mph` : (chaser.status === 'STATIONARY' ? 'Stationary' : '—');
+            const isMoving = chaser.status === 'MOVING' || (chaser.speed && Number(chaser.speed) > 2);
+            const headingDeg = (chaser.heading != null && !isNaN(chaser.heading)) ? Number(chaser.heading) : 0;
+
+            const buildTelemetryCockpitHtml = () => `
+                <div class="chaser-telemetry-hud" style="width:100%;height:100%;background:radial-gradient(ellipse at center, #0b1528 0%, #030712 100%);color:#f1f5f9;font-family:var(--font-mono, monospace);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;border:1px solid #1e293b;position:relative;overflow-y:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155;padding-bottom:10px;">
+                        <div>
+                            <div style="font-size:13px;font-weight:900;color:#fbbf24;letter-spacing:1px;display:flex;align-items:center;gap:6px;">
+                                <span>📍 SPOTTER-TELEMETRIE</span>
+                                <span style="font-size:10px;background:rgba(245,158,11,0.2);color:#fbbf24;padding:2px 6px;border-radius:3px;border:1px solid #f59e0b;">GPS-BODENSIGNAL</span>
+                            </div>
+                            <div style="font-size:17px;font-weight:800;color:#ffffff;margin-top:2px;">⚡ ${esc(chaser.name)}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:10px;color:#94a3b8;">QUELLE: ${esc((chaser.source || 'Spotter Network').toUpperCase())}</div>
+                            <div style="font-size:11px;font-weight:700;color:${isMoving ? '#22c55e' : '#94a3b8'};">${isMoving ? '🟢 IN BEWEGUNG' : '⚪ STATIONÄR'}</div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;margin:10px 0;">
+                        <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:8px;display:flex;align-items:center;justify-content:space-between;">
+                            <div>
+                                <div style="font-size:9px;color:#94a3b8;">KURS / RICHTUNG</div>
+                                <div style="font-size:15px;font-weight:800;color:#fbbf24;">${hd}</div>
+                            </div>
+                            <div style="font-size:20px;transform:rotate(${headingDeg}deg);display:inline-block;color:#f59e0b;filter:drop-shadow(0 0 6px #f59e0b);">▲</div>
+                        </div>
+                        <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(56,189,248,0.3);border-radius:6px;padding:8px;">
+                            <div style="font-size:9px;color:#94a3b8;">GESCHWINDIGKEIT</div>
+                            <div style="font-size:15px;font-weight:800;color:#38bdf8;">${spd}</div>
+                        </div>
+                        <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:8px;">
+                            <div style="font-size:9px;color:#94a3b8;">GPS POSITION</div>
+                            <div style="font-size:12px;font-weight:700;color:#f8fafc;">${chaser.lat.toFixed(4)}°, ${chaser.lon.toFixed(4)}°</div>
+                        </div>
+                        <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:8px;">
+                            <div style="font-size:9px;color:#94a3b8;">SEKTOR / ORT</div>
+                            <div style="font-size:12px;font-weight:700;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(chaser.location || 'USA (NOAA Sektor)')}</div>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:4px;padding:8px;font-size:10.5px;color:#cbd5e1;line-height:1.4;">
+                        ℹ️ <b>Wetter-Beobachter Telemetrie:</b> Dieser Chaser übermittelt aktive GPS-Positions- und Vektordaten an das Spotter Network & NOAA NWS. Aktuell wird von diesem Fahrzeug kein öffentlicher Video-Livestream ausgestrahlt.
+                    </div>
+
+                    <div style="display:flex;gap:6px;margin-top:8px;">
+                        <button class="ops-btn" style="flex:1;padding:6px;font-size:11px;background:#0284c7;color:#fff;border:none;cursor:pointer;border-radius:3px;font-weight:700;" onclick="window.MapController && window.MapController.map.flyTo([${chaser.lat}, ${chaser.lon}], 10, { duration: 1 })">
+                            🎯 AUF DER KARTE ANVISIEREN
+                        </button>
+                        ${chaser.twitter ? `
+                        <a class="ops-btn" style="flex:1;padding:6px;font-size:11px;background:#1e293b;border:1px solid #475569;color:#38bdf8;text-decoration:none;text-align:center;border-radius:3px;font-weight:700;" href="${esc(chaser.twitter)}" target="_blank" rel="noopener noreferrer">
+                            🐦 TWITTER / X
+                        </a>` : ''}
+                    </div>
+                </div>
+            `;
 
             if (this.viewportCount === 1) {
-
                 // 1x Single Monitor Mode: Play full-size directly in MON-02
-
                 this.restoreSingleWebcamMode();
-
                 const titleEl = document.getElementById('cam-active-title');
-
                 const topTitle = document.getElementById('cam-player-title');
-
                 const typePill = document.getElementById('mon02-active-type-pill');
-
                 const banner = document.getElementById('cam-telemetry-banner');
 
-
-
-                if (titleEl) titleEl.innerText = `⚡ CHASER LIVE // ${chaser.name.toUpperCase()}`;
-
-                if (topTitle) topTitle.innerText = `CHASER LIVE // ${chaser.name.toUpperCase()}`;
-
+                const displayTitle = hasVideo ? `⚡ CHASER LIVE // ${chaser.name.toUpperCase()}` : `📍 CHASER TELEMETRIE // ${chaser.name.toUpperCase()}`;
+                if (titleEl) titleEl.innerText = displayTitle;
+                if (topTitle) topTitle.innerText = displayTitle;
                 if (typePill) {
-
-                    typePill.innerHTML = `⚡ CHASER LIVE`;
-
-                    typePill.style.background = 'rgba(239,68,68,0.2)';
-
-                    typePill.style.color = '#fca5a5';
-
-                    typePill.style.borderColor = '#ef4444';
-
+                    typePill.innerHTML = hasVideo ? `🔴 CHASER LIVE-STREAM` : `📍 SPOTTER GPS TELEMETRIE`;
+                    typePill.style.background = hasVideo ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)';
+                    typePill.style.color = hasVideo ? '#fca5a5' : '#fde047';
+                    typePill.style.borderColor = hasVideo ? '#ef4444' : '#f59e0b';
                 }
-
                 if (banner) {
-
-                    const hd = chaser.heading != null ? `${chaser.headingLabel ? chaser.headingLabel + ' ' : ''}${chaser.heading}°` : '—';
-
-                    const spd = chaser.speed ? `${chaser.speed} mph` : 'STATIONARY';
-
                     banner.innerHTML = `
-
-                        <span>CHASER: ${chaser.name.toUpperCase()} // STATUS: ${chaser.status || 'LIVE'} // QUELLE: ${(chaser.source || 'Spotter Network').toUpperCase()}</span>
-
+                        <span>CHASER: ${esc(chaser.name.toUpperCase())} // STATUS: ${hasVideo ? 'LIVE VIDEO' : 'GPS SPOTTER'} // QUELLE: ${esc((chaser.source || 'Spotter Network').toUpperCase())}</span>
                         <span>GPS: ${chaser.lat.toFixed(4)}°, ${chaser.lon.toFixed(4)}° // HEADING: ${hd} // SPEED: ${spd}</span>
-
                     `;
-
                 }
-
-
 
                 const target = document.getElementById('webcam-player-container') || document.getElementById('player-container');
-
                 if (!target) return;
 
-
-
-                if (chaser.stream && chaser.stream.type === 'hls' && chaser.stream.url) {
-
-                    if (window.MainPlayer) {
-
-                        window.MainPlayer.play(chaser.stream.url, 'hls');
-
+                if (hasVideo) {
+                    if (chaser.stream.type === 'hls' && chaser.stream.url) {
+                        if (window.MainPlayer) {
+                            window.MainPlayer.play(chaser.stream.url, 'hls');
+                        }
+                    } else if (chaser.stream.embedUrl) {
+                        target.innerHTML = `
+                            <div style="position:relative;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;">
+                                <iframe src="${chaser.stream.embedUrl}" 
+                                        style="width:100%;height:100%;border:none;" 
+                                        allow="autoplay; encrypted-media; picture-in-picture" 
+                                        allowfullscreen
+                                        sandbox="allow-scripts allow-same-origin allow-presentation"
+                                        referrerpolicy="no-referrer">
+                                </iframe>
+                            </div>`;
                     }
-
-                } else if (chaser.stream && chaser.stream.embedUrl) {
-
-                    target.innerHTML = `
-
-                        <div style="position:relative;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;">
-
-                            <iframe src="${chaser.stream.embedUrl}" 
-
-                                    style="width:100%;height:100%;border:none;" 
-
-                                    allow="autoplay; encrypted-media; picture-in-picture" 
-
-                                    allowfullscreen
-
-                                    sandbox="allow-scripts allow-same-origin allow-presentation"
-
-                                    referrerpolicy="no-referrer">
-
-                            </iframe>
-
-                        </div>`;
-
+                } else {
+                    target.innerHTML = buildTelemetryCockpitHtml();
                 }
-
                 return;
-
             }
 
-
-
+            // Multi-viewport mode (2x - 4x)
             slotIdx = Math.min(slotIdx, this.viewportCount - 1);
-
             this.ensureMultiViewportDom(true);
-
             this.cleanupSlotMedia(slotIdx);
 
-
-
             const s = this.slots[slotIdx];
-
             s.type = 'chaser';
-
             s.data = chaser;
-
-            s.title = `⚡ ${chaser.name}`;
-
-
+            s.title = hasVideo ? `⚡ ${chaser.name} (LIVE)` : `📍 ${chaser.name} (GPS)`;
 
             const titleEl = document.getElementById(`mv-cell-title-${slotIdx}`);
-
             const bodyEl = document.getElementById(`mv-cell-body-${slotIdx}`);
-
             const dvrEl = document.getElementById(`mv-cell-dvr-${slotIdx}`);
-
-            if (titleEl) titleEl.textContent = `⚡ ${chaser.name} (${chaser.status || 'LIVE'})`;
-
-            if (dvrEl) dvrEl.style.display = (chaser.stream && chaser.stream.type === 'hls') ? 'flex' : 'none';
-
+            if (titleEl) titleEl.textContent = s.title;
+            if (dvrEl) dvrEl.style.display = (hasVideo && chaser.stream && chaser.stream.type === 'hls') ? 'flex' : 'none';
             if (!bodyEl) return;
 
-
-
-            if (chaser.stream && chaser.stream.type === 'hls' && chaser.stream.url) {
-
-                this.renderHlsSlot(slotIdx, chaser.stream.url, `⚡ ${chaser.name}`);
-
-            } else if (chaser.stream && chaser.stream.embedUrl) {
-
-                bodyEl.innerHTML = `
-
-                    <div style="position:relative;width:100%;height:100%;background:#000;">
-
-                        <iframe src="${chaser.stream.embedUrl}" 
-
-                                style="width:100%;height:100%;border:none;" 
-
-                                allow="autoplay; encrypted-media; picture-in-picture" 
-
-                                allowfullscreen
-
-                                sandbox="allow-scripts allow-same-origin allow-presentation"
-
-                                referrerpolicy="no-referrer">
-
-                        </iframe>
-
-                    </div>`;
-
+            if (hasVideo) {
+                if (chaser.stream.type === 'hls' && chaser.stream.url) {
+                    this.renderHlsSlot(slotIdx, chaser.stream.url, `⚡ ${chaser.name}`);
+                } else if (chaser.stream.embedUrl) {
+                    bodyEl.innerHTML = `
+                        <div style="position:relative;width:100%;height:100%;background:#000;">
+                            <iframe src="${chaser.stream.embedUrl}" 
+                                    style="width:100%;height:100%;border:none;" 
+                                    allow="autoplay; encrypted-media; picture-in-picture" 
+                                    allowfullscreen
+                                    sandbox="allow-scripts allow-same-origin allow-presentation"
+                                    referrerpolicy="no-referrer">
+                            </iframe>
+                        </div>`;
+                }
+            } else {
+                bodyEl.innerHTML = buildTelemetryCockpitHtml();
             }
-
         }
 
 
@@ -4113,22 +4103,19 @@
             return;
         }
 
-        // Auto-resolve stream if missing
+        // Auto-resolve video stream for prominent storm chasers if not already set
         if (!chaser.stream || (!chaser.stream.url && !chaser.stream.embedUrl)) {
             const PROMINENT_YT = {
                 "reed timmer": "UCV6hWxB0-u_IX7e-h4fEBAw",
                 "dominator": "UCV6hWxB0-u_IX7e-h4fEBAw",
                 "connor croff": "UCb0U1g5r4kH_NDMGiGRhysA",
-                "croff": "UCb0U1g5r4kH_NDMGiGRhysA",
-                "aaron jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
-                "jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
-                "freddy mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
-                "mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
                 "brandon copic": "UCQcZ_0c_mN4d3d83s3s039Q",
-                "copic": "UCQcZ_0c_mN4d3d83s3s039Q",
+                "aaron jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
+                "freddy mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
                 "vince waelti": "UCC4F7tC7OQVwJf3qNmNI6xg",
                 "pecos hank": "UCAQpSHsgUcNt6uCOjpgD8kw",
-                "ryan hall": "UCJHAT3Uvv-g3I8H3GhHWV7w"
+                "ryan hall": "UCJHAT3Uvv-g3I8H3GhHWV7w",
+                "live storms media": "UC1nJElGcVcTpeZJVyxEbzJw"
             };
             const lowerName = (chaser.name || '').toLowerCase();
             const matchYt = Object.keys(PROMINENT_YT).find(k => lowerName.includes(k));
@@ -4140,18 +4127,11 @@
                     embedUrl: `https://www.youtube-nocookie.com/embed/live_stream?channel=${cid}&autoplay=1`,
                     verified: true
                 };
-            } else if (chaser.source === 'LiveStormChasing' || chaser.username || (chaser.id && chaser.id.startsWith('lsc-'))) {
+            } else if (chaser.source === 'LiveStormChasing' && (chaser.lscProfile || chaser.username)) {
                 const slug = chaser.username || lowerName.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
                 chaser.stream = {
                     type: 'embed',
                     embedUrl: `https://livestormchasing.com/chasers/${encodeURIComponent(slug)}`,
-                    url: `https://edge.livestormchasing.com/hls/${encodeURIComponent(slug)}/index.m3u8`,
-                    verified: true
-                };
-            } else {
-                chaser.stream = {
-                    type: 'embed',
-                    embedUrl: `https://embed.waze.com/iframe?zoom=13&lat=${chaser.lat}&lon=${chaser.lon}&pin=1`,
                     verified: true
                 };
             }

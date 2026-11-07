@@ -5004,17 +5004,29 @@ class OperationsMap {
         const sideCountTag = document.getElementById('side-chasers-count-tag');
         if (sideCountTag && Array.isArray(list)) sideCountTag.innerText = `${list.length} [🎯 USA]`;
 
-        const PROMINENT_CHASERS = /Reed|Timmer|Dominator|Connor|Croff|Brandon|Copic|Jayjack|Freddy|McKinney|Slusin|McGee|Arnold|Ryan|Hall/i;
+        const isRealStreamer = (c) => {
+            if (!c) return false;
+            if (c.stream && (c.stream.url || c.stream.embedUrl)) return true;
+            if (c.isLive === true || c.status === 'STREAMING') return true;
+            const n = (c.name || '').toLowerCase();
+            const TOP_CHASERS = [
+                'reed timmer', 'dominator',
+                'connor croff',
+                'brandon copic',
+                'aaron jayjack',
+                'freddy mckinney',
+                'vince waelti',
+                'ryan hall',
+                'live storms media'
+            ];
+            return TOP_CHASERS.some(tc => n.includes(tc));
+        };
 
         list.forEach(c => {
             if (!isFinite(c.lat) || !isFinite(c.lon)) return;
             window._chaserIndex.set(c.id, c);
 
-            const isProminent = PROMINENT_CHASERS.test(c.name || '');
-            const hasStream = !!(c.stream && (c.stream.url || c.stream.embedUrl));
-            const isRed = hasStream || !!c.isLive || c.status === 'STREAMING' || c.status === 'LIVE' || c.source === 'LiveStormChasing' || isProminent;
-
-            // Kurs / Heading in Grad (0-360°, Fallback 0° Norden)
+            const isRed = isRealStreamer(c);
             const heading = (c.heading != null && !isNaN(c.heading)) ? Math.round(Number(c.heading)) % 360 : 0;
             const safeName = esc(c.name || 'Storm Chaser');
             const statusLabel = isRed ? '🔴 LIVE STREAMER' : '📍 SPOTTER';
@@ -5048,20 +5060,33 @@ class OperationsMap {
 
     buildChaserPopup(c) {
         const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-        const PROMINENT_CHASERS = /Reed|Timmer|Dominator|Connor|Croff|Brandon|Copic|Jayjack|Freddy|McKinney|Slusin|McGee|Arnold|Ryan|Hall|Pecos|Hank/i;
-        const isProminent = PROMINENT_CHASERS.test(c.name || '');
-        const hasStream = !!(c.stream && (c.stream.url || c.stream.embedUrl));
-        const live = hasStream || !!c.isLive || c.status === 'STREAMING' || c.status === 'LIVE' || c.source === 'LiveStormChasing' || isProminent;
+        const isRealStreamer = (ch) => {
+            if (!ch) return false;
+            if (ch.stream && (ch.stream.url || ch.stream.embedUrl)) return true;
+            if (ch.isLive === true || ch.status === 'STREAMING') return true;
+            const n = (ch.name || '').toLowerCase();
+            const TOP_CHASERS = [
+                'reed timmer', 'dominator',
+                'connor croff',
+                'brandon copic',
+                'aaron jayjack',
+                'freddy mckinney',
+                'vince waelti',
+                'ryan hall',
+                'live storms media'
+            ];
+            return TOP_CHASERS.some(tc => n.includes(tc));
+        };
+
+        const live = isRealStreamer(c);
         const mins = c.updated ? Math.max(0, Math.round((Date.now() - Date.parse(c.updated)) / 60000)) : null;
         const hd = c.heading != null ? `${c.headingLabel ? esc(c.headingLabel) + ' ' : ''}${esc(c.heading)}°` : '—';
         const spd = c.speed ? `${esc(c.speed)} mph` : (c.status === 'STATIONARY' ? 'Stationary' : '—');
-        
-        let statusBadge = live ? '🔴 STREAMING LIVE // CHASER FEED' : '📍 ACTIVE CHASE BEACON';
 
         return `
             <div class="chaser-popup-body">
                 <div class="chaser-popup-title">⚡ ${esc(c.name)}</div>
-                <div class="chaser-popup-status ${live ? 'live' : ''}">${statusBadge}</div>
+                <div class="chaser-popup-status ${live ? 'live' : ''}">${live ? '🔴 LIVE STREAMER' : '📍 GPS WETTER-BEOBACHTER'}</div>
                 <div class="chaser-popup-row"><span>GPS</span><b>${esc(c.lat.toFixed(4))}°, ${esc(c.lon.toFixed(4))}°</b></div>
                 <div class="chaser-popup-row"><span>Heading</span><b>${hd}</b></div>
                 <div class="chaser-popup-row"><span>Speed</span><b>${spd}</b></div>
@@ -5069,7 +5094,9 @@ class OperationsMap {
                 <div class="chaser-popup-row"><span>Updated</span><b>${mins == null ? '—' : mins + ' min ago'}</b></div>
                 <div class="chaser-popup-row"><span>Source</span><b>${esc(c.source)}</b></div>
                 ${c.twitter ? `<div class="chaser-popup-row"><span>Social</span><a href="${esc(c.twitter)}" target="_blank" rel="noopener noreferrer">${esc(c.twitter.replace('https://', ''))}</a></div>` : ''}
-                <button class="chaser-stream-btn" onclick="window.streamChaserToMon02('${esc(c.id)}')">📺 IN MON-02 STREAMEN</button>
+                ${live
+                    ? `<button class="chaser-stream-btn" onclick="window.streamChaserToMon02('${esc(c.id)}')">📺 LIVE-STREAM IN MON-02 ÖFFNEN</button>`
+                    : `<button class="chaser-stream-btn" style="background:linear-gradient(135deg,#0284c7,#0369a1);border-color:#38bdf8;" onclick="window.streamChaserToMon02('${esc(c.id)}')">📡 TELEMETRIE & HUD IN MON-02</button>`}
             </div>`;
     }
 
