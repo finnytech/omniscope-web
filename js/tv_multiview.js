@@ -2057,13 +2057,14 @@
         assignChaserToSlot(slotIdx, chaser) {
             if (!chaser) return;
             const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-            const hasVideo = !!(chaser.stream && (chaser.stream.url || chaser.stream.embedUrl));
+            const hasVideo = !!(chaser.stream && (chaser.stream.url || chaser.stream.embedUrl) && chaser.stream.verified !== false);
             const hd = chaser.heading != null ? `${chaser.headingLabel ? esc(chaser.headingLabel) + ' ' : ''}${esc(chaser.heading)}°` : '—';
             const spd = chaser.speed ? `${esc(chaser.speed)} mph` : (chaser.status === 'STATIONARY' ? 'Stationary' : '—');
             const isMoving = chaser.status === 'MOVING' || (chaser.speed && Number(chaser.speed) > 2);
             const headingDeg = (chaser.heading != null && !isNaN(chaser.heading)) ? Number(chaser.heading) : 0;
+            const wxDomId = `chaser-wx-${String(chaser.id || 'spotter').replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
-            const buildTelemetryCockpitHtml = () => `
+            const buildTelemetryCockpitHtml = (streamNotice = '') => `
                 <div class="chaser-telemetry-hud" style="width:100%;height:100%;background:radial-gradient(ellipse at center, #0b1528 0%, #030712 100%);color:#f1f5f9;font-family:var(--font-mono, monospace);padding:14px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;border:1px solid #1e293b;position:relative;overflow-y:auto;">
                     <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155;padding-bottom:10px;">
                         <div>
@@ -2079,7 +2080,7 @@
                         </div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;margin:10px 0;">
+                    <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;margin:8px 0;">
                         <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:8px;display:flex;align-items:center;justify-content:space-between;">
                             <div>
                                 <div style="font-size:9px;color:#94a3b8;">KURS / RICHTUNG</div>
@@ -2096,13 +2097,13 @@
                             <div style="font-size:12px;font-weight:700;color:#f8fafc;">${chaser.lat.toFixed(4)}°, ${chaser.lon.toFixed(4)}°</div>
                         </div>
                         <div style="background:rgba(15,23,42,0.7);border:1px solid rgba(148,163,184,0.3);border-radius:6px;padding:8px;">
-                            <div style="font-size:9px;color:#94a3b8;">SEKTOR / ORT</div>
-                            <div style="font-size:12px;font-weight:700;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(chaser.location || 'USA (NOAA Sektor)')}</div>
+                            <div style="font-size:9px;color:#94a3b8;">LOKALES BODENWETTER</div>
+                            <div id="${wxDomId}" style="font-size:11px;font-weight:700;color:#38bdf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Lade NOAA/Meteo Daten...</div>
                         </div>
                     </div>
 
                     <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:4px;padding:8px;font-size:10.5px;color:#cbd5e1;line-height:1.4;">
-                        ℹ️ <b>Wetter-Beobachter Telemetrie:</b> Dieser Chaser übermittelt aktive GPS-Positions- und Vektordaten an das Spotter Network & NOAA NWS. Aktuell wird von diesem Fahrzeug kein öffentlicher Video-Livestream ausgestrahlt.
+                        ℹ️ <b>Wetter-Beobachter Telemetrie:</b> ${streamNotice ? esc(streamNotice) : 'Dieser Chaser übermittelt aktive Echtzeit-GPS-Positions- und Vektordaten an das Spotter Network & NOAA NWS. Aktuell wird von diesem Fahrzeug kein Video-Livestream ausgestrahlt (Zero-Fake Policy: Kein Stock-Bild-Fallback).'}
                     </div>
 
                     <div style="display:flex;gap:6px;margin-top:8px;">
@@ -2117,8 +2118,93 @@
                 </div>
             `;
 
+            const hydrateChaserWeather = () => {
+                const fetchFn = window._originalFetch || window.fetch;
+                fetchFn(`https://api.open-meteo.com/v1/forecast?latitude=${chaser.lat}&longitude=${chaser.lon}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,surface_pressure`)
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => {
+                        const el = document.getElementById(wxDomId);
+                        if (el && d && d.current) {
+                            const c = d.current;
+                            el.textContent = `${c.temperature_2m}°C | Wind ${c.wind_speed_10m} km/h | ${Math.round(c.surface_pressure || 1013)} hPa`;
+                        }
+                    })
+                    .catch(() => {});
+            };
+
+            const mountChaserHls = (containerEl) => {
+                if (this._chaserHls) {
+                    try { this._chaserHls.destroy(); } catch (_) {}
+                    this._chaserHls = null;
+                }
+                containerEl.innerHTML = '';
+                const video = document.createElement('video');
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'contain';
+                video.style.backgroundColor = '#000';
+                video.autoplay = true;
+                video.muted = true;
+                video.controls = true;
+                video.playsInline = true;
+                containerEl.appendChild(video);
+
+                const rawUrl = chaser.stream.url;
+                const proxiedUrl = (rawUrl.startsWith('/api/proxy/stream') || rawUrl.startsWith('http://localhost'))
+                    ? rawUrl
+                    : `/api/proxy/stream?url=${encodeURIComponent(rawUrl)}`;
+
+                let started = false;
+                const fallbackToCockpit = () => {
+                    if (started) return;
+                    started = true;
+                    if (this._chaserHls) {
+                        try { this._chaserHls.destroy(); } catch (_) {}
+                        this._chaserHls = null;
+                    }
+                    containerEl.innerHTML = buildTelemetryCockpitHtml('HLS-Video-Stream ist aktuell beendet oder nicht erreichbar. Zeige Echtzeit-GPS-Telemetrie des Fahrzeugs.');
+                    hydrateChaserWeather();
+                };
+
+                const safetyTimer = setTimeout(fallbackToCockpit, 4500);
+                video.addEventListener('playing', () => {
+                    started = true;
+                    clearTimeout(safetyTimer);
+                }, { once: true });
+
+                if (window.Hls && window.Hls.isSupported()) {
+                    const hls = new window.Hls({ enableWorker: true, lowLatencyMode: true });
+                    this._chaserHls = hls;
+                    hls.loadSource(proxiedUrl);
+                    hls.attachMedia(video);
+                    hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                        video.play().catch(() => {});
+                    });
+                    hls.on(window.Hls.Events.ERROR, (_ev, data) => {
+                        if (data && data.fatal) {
+                            clearTimeout(safetyTimer);
+                            fallbackToCockpit();
+                        }
+                    });
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                    video.src = proxiedUrl;
+                    video.addEventListener('error', () => {
+                        clearTimeout(safetyTimer);
+                        fallbackToCockpit();
+                    }, { once: true });
+                    video.play().catch(() => {});
+                } else {
+                    clearTimeout(safetyTimer);
+                    fallbackToCockpit();
+                }
+            };
+
             if (this.viewportCount === 1) {
-                // 1x Single Monitor Mode: Play full-size directly in MON-02
+                // 1x Single Monitor Mode: Stop any MainPlayer webcam timers/fallbacks immediately!
+                if (window.MainPlayer) {
+                    window.MainPlayer.destroy();
+                    window.MainPlayer.currentCamData = null;
+                }
                 this.restoreSingleWebcamMode();
                 const titleEl = document.getElementById('cam-active-title');
                 const topTitle = document.getElementById('cam-player-title');
@@ -2146,9 +2232,7 @@
 
                 if (hasVideo) {
                     if (chaser.stream.type === 'hls' && chaser.stream.url) {
-                        if (window.MainPlayer) {
-                            window.MainPlayer.play(chaser.stream.url, 'hls');
-                        }
+                        mountChaserHls(target);
                     } else if (chaser.stream.embedUrl) {
                         target.innerHTML = `
                             <div style="position:relative;width:100%;height:100%;background:#000;display:flex;align-items:center;justify-content:center;">
@@ -2163,6 +2247,7 @@
                     }
                 } else {
                     target.innerHTML = buildTelemetryCockpitHtml();
+                    hydrateChaserWeather();
                 }
                 return;
             }
@@ -2186,7 +2271,7 @@
 
             if (hasVideo) {
                 if (chaser.stream.type === 'hls' && chaser.stream.url) {
-                    this.renderHlsSlot(slotIdx, chaser.stream.url, `⚡ ${chaser.name}`);
+                    mountChaserHls(bodyEl);
                 } else if (chaser.stream.embedUrl) {
                     bodyEl.innerHTML = `
                         <div style="position:relative;width:100%;height:100%;background:#000;">
@@ -2201,6 +2286,7 @@
                 }
             } else {
                 bodyEl.innerHTML = buildTelemetryCockpitHtml();
+                hydrateChaserWeather();
             }
         }
 
@@ -4096,45 +4182,16 @@
 
 
     window.streamChaserToMon02 = function(chaserId) {
+        window._lastChaserStreamTime = Date.now();
+        window._lastMapNodeClick = Date.now();
+        if (window.MapController) {
+            window.MapController._lastLayerClickTime = Date.now();
+        }
         const chaser = (window._chaserIndex && window._chaserIndex.get(chaserId)) ||
                        (window.MapController && window.MapController.rawChasers && window.MapController.rawChasers.find(x => x.id === chaserId));
         if (!chaser) {
             console.warn('[OmniScope] Chaser not found:', chaserId);
             return;
-        }
-
-        // Auto-resolve video stream for prominent storm chasers if not already set
-        if (!chaser.stream || (!chaser.stream.url && !chaser.stream.embedUrl)) {
-            const PROMINENT_YT = {
-                "reed timmer": "UCV6hWxB0-u_IX7e-h4fEBAw",
-                "dominator": "UCV6hWxB0-u_IX7e-h4fEBAw",
-                "connor croff": "UCb0U1g5r4kH_NDMGiGRhysA",
-                "brandon copic": "UCQcZ_0c_mN4d3d83s3s039Q",
-                "aaron jayjack": "UC8QZ-OIqfWKek1CpMvs2O3g",
-                "freddy mckinney": "UCZSDkxJS7PRw9V0_Sm6U7jg",
-                "vince waelti": "UCC4F7tC7OQVwJf3qNmNI6xg",
-                "pecos hank": "UCAQpSHsgUcNt6uCOjpgD8kw",
-                "ryan hall": "UCJHAT3Uvv-g3I8H3GhHWV7w",
-                "live storms media": "UC1nJElGcVcTpeZJVyxEbzJw"
-            };
-            const lowerName = (chaser.name || '').toLowerCase();
-            const matchYt = Object.keys(PROMINENT_YT).find(k => lowerName.includes(k));
-            
-            if (matchYt) {
-                const cid = PROMINENT_YT[matchYt];
-                chaser.stream = {
-                    type: 'youtube',
-                    embedUrl: `https://www.youtube-nocookie.com/embed/live_stream?channel=${cid}&autoplay=1`,
-                    verified: true
-                };
-            } else if (chaser.source === 'LiveStormChasing' && (chaser.lscProfile || chaser.username)) {
-                const slug = chaser.username || lowerName.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-                chaser.stream = {
-                    type: 'embed',
-                    embedUrl: `https://livestormchasing.com/chasers/${encodeURIComponent(slug)}`,
-                    verified: true
-                };
-            }
         }
 
         if (window.OmniScopeMultiView) {

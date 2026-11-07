@@ -722,17 +722,31 @@ async function handleChasers() {
           const ts = Date.parse(String(p.gps_update || "").replace(" ", "T") + "Z");
           if (!p.name || !isFinite(c[0]) || !isFinite(c[1]) || !isFinite(ts) || Date.now() - ts > CHASER_MAX_AGE_MS) return;
           const slug = p.username || chaserSlug(p.name);
-          const stream = {
-            type: "hls",
-            url: `https://edge.livestormchasing.com/hls/${encodeURIComponent(slug)}/index.m3u8`,
-            embedUrl: `https://livestormchasing.com/chasers/${encodeURIComponent(slug)}`,
-            verified: true
-          };
+          let stream = null;
+          if (p.stream_status === true || p.streaming === true) {
+            const hlsUrl = `https://edge.livestormchasing.com/hls/${encodeURIComponent(slug)}/index.m3u8`;
+            if (await chaserHlsIsLive(hlsUrl)) {
+              stream = {
+                type: "hls",
+                url: hlsUrl,
+                embedUrl: `https://livestormchasing.com/chasers/${encodeURIComponent(slug)}`,
+                verified: true
+              };
+            }
+          }
+          if (!stream) {
+            const lowerName = p.name.toLowerCase();
+            const known = Object.keys(CHASER_YT).find(k => lowerName.includes(k));
+            if (known) {
+              const vid = await chaserYoutubeIsLive(CHASER_YT[known]);
+              if (vid) stream = { type: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&mute=1`, verified: true };
+            }
+          }
           lscCount++;
           byName.set(p.name.toLowerCase(), {
             id: "lsc-" + chaserSlug(p.name), name: p.name, lat: c[1], lon: c[0],
             heading: p.heading != null ? Number(p.heading) : null, headingLabel: null, speed: 0,
-            status: stream ? "STREAMING" : "ACTIVE", location: p.location || null,
+            status: stream ? "STREAMING" : (p.heading != null ? "MOVING" : "ACTIVE"), location: p.location || null,
             updated: new Date(ts).toISOString(), source: "LiveStormChasing", twitter: null, stream
           });
         }));
@@ -754,7 +768,7 @@ async function handleChasers() {
             const cid = CHASER_YT[known];
             if (!ytCache.has(cid)) ytCache.set(cid, chaserYoutubeIsLive(cid));
             const vid = await ytCache.get(cid);
-            if (vid) stream = { type: "youtube", embedUrl: `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1`, verified: true };
+            if (vid) stream = { type: "youtube", embedUrl: `https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&mute=1`, verified: true };
           }
           spotterCount++;
           byName.set(key, {
@@ -1380,19 +1394,24 @@ async function handleWebcams(url, request, env) {
 
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "15", 10), 100);
 
+    const maxRadiusKm = Math.max(50, parseFloat(url.searchParams.get("radius") || "500"));
 
+    const calcDistKm = (lat1, lon1, lat2, lon2) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+    };
 
     const withDist = allCams.map(c => {
+      const distance_km = calcDistKm(lat, lon, Number(c.lat || 0), Number(c.lon || 0));
+      return { ...c, distance_km, distSq: distance_km * distance_km };
+    }).filter(c => c.distance_km <= maxRadiusKm);
 
-      const dLat = (c.lat - lat);
-
-      const dLon = (c.lon - lon) * Math.cos(lat * Math.PI / 180);
-
-      return { ...c, distSq: dLat * dLat + dLon * dLon };
-
-    });
-
-    withDist.sort((a, b) => a.distSq - b.distSq);
+    withDist.sort((a, b) => a.distance_km - b.distance_km);
 
     const nearest = withDist.slice(0, limit);
 

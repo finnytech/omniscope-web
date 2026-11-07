@@ -694,31 +694,18 @@ class StreamPlayer {
                     </button>` : ''}
                 </div>
 
-                <div id="offline-failover-indicator" style="font-size:0.7rem;color:#38bdf8;opacity:0.85;">
-                    Automatischer Failover zur nächsten aktiven Kamera in <span id="failover-timer-count">8</span>s...
+                <div id="offline-failover-indicator" style="font-size:0.7rem;color:#64748b;opacity:0.85;">
+                    Kein automatischer Stock-/Snapshot-Fallback aktiv (Zero-Fake Policy).
                 </div>
             </div>
         `;
 
-        let failoverCount = 8;
-        const countdownEl = document.getElementById('failover-timer-count');
         const clearCountdown = () => {
             if (this.failoverInterval) {
                 clearInterval(this.failoverInterval);
                 this.failoverInterval = null;
             }
-            const ind = document.getElementById('offline-failover-indicator');
-            if (ind) ind.style.display = 'none';
         };
-
-        this.failoverInterval = setInterval(() => {
-            failoverCount--;
-            if (countdownEl) countdownEl.innerText = failoverCount;
-            if (failoverCount <= 0) {
-                clearCountdown();
-                this.loadNextRealCam();
-            }
-        }, 1000);
 
         const retryBtn = document.getElementById('btn-offline-retry');
         if (retryBtn) {
@@ -3249,25 +3236,8 @@ class StreamPlayer {
             return;
         }
 
-        // 3. YouTube Live Stream - Strictly Prohibited
-        if (this.currentType === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
-            console.warn('[Player] YouTube streams strictly forbidden under Zero-Fake policy.');
-            this.container.innerHTML = `
-                <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#030712;color:#f87171;font-family:var(--font-mono);padding:20px;text-align:center;">
-                    <span style="font-size:2.5rem;margin-bottom:8px;">🚫</span>
-                    <strong style="font-size:1.1rem;letter-spacing:1px;">YOUTUBE STREAMS DEAKTIVIERT</strong>
-                    <p style="font-size:0.75rem;color:#94a3b8;max-width:380px;margin-top:6px;">
-                        Laut Sicherheitsdirektive sind externe YouTube-Streams in MON-02 verboten. Es werden ausschließlich verifizierte, direkte Live-Sensoren, Webcams & Wetterdaten geladen.
-                    </p>
-                    <button onclick="if(window.MainPlayer) window.MainPlayer.loadNextRealCam();" class="ops-btn" style="margin-top:12px;background:#0284c7;color:#fff;border:none;padding:6px 14px;border-radius:3px;font-weight:bold;cursor:pointer;">
-                        ▶ NÄCHSTE ECHTE KAMERA LADEN
-                    </button>
-                </div>
-            `;
-            setTimeout(() => this.loadNextRealCam(), 1500);
-            return;
-        }
-        if (false) {
+        // 3. YouTube Live Stream - Allow verified YouTube nocookie live embeds, block unverified raw YouTube pages
+        if (this.currentType === 'youtube' || url.includes('youtube.com') || url.includes('youtube-nocookie.com') || url.includes('youtu.be')) {
             let videoId = url;
             if (url.includes('v=')) {
                 videoId = url.split('v=')[1].split('&')[0];
@@ -3280,14 +3250,18 @@ class StreamPlayer {
             }
             videoId = videoId.replace(/[^a-zA-Z0-9_-]/g, '');
 
-            const iframe = document.createElement('iframe');
-            iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&enablejsapi=1&rel=0`;
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-            iframe.allowFullscreen = true;
-            this.container.appendChild(iframe);
+            if (videoId && videoId !== 'live_stream') {
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&enablejsapi=1&rel=0`;
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                iframe.allowFullscreen = true;
+                this.container.appendChild(iframe);
+                return;
+            }
+            this.showOffline(this.currentCamData, 'KEIN AKTIVER LIVE-STREAM VERFÜGBAR');
             return;
         }
 
@@ -3323,14 +3297,8 @@ class StreamPlayer {
                     try { this.hls.destroy(); } catch (e) {}
                     this.hls = null;
                 }
-                const realImg = this.hasRealImage(this.currentCamData);
-                if (realImg) {
-                    console.warn(`[StreamPlayer] ${reason} -> Fallback auf Snapshot-Modus`);
-                    this.playLiveSnapshot(this.currentCamData, realImg);
-                } else {
-                    console.warn(`[StreamPlayer] ${reason} -> Offline HUD`);
-                    this.showOffline(this.currentCamData, `SENSOR OFFLINE // BILDQUELLE ANTWORTET NICHT (HTTP 502/504) - ${reason}`);
-                }
+                console.warn(`[StreamPlayer] ${reason} -> Offline HUD (Zero-Fake Policy: no stock/snapshot fallback)`);
+                this.showOffline(this.currentCamData, `LIVE-STREAM OFFLINE // QUELLE ANTWORTET NICHT - ${reason}`);
             };
 
             // 4.0-second safety timeout: never hang or leave black screen
@@ -3443,6 +3411,10 @@ class StreamPlayer {
 
     destroy() {
         this.stopSdrAudio();
+        if (this.failoverInterval) {
+            clearInterval(this.failoverInterval);
+            this.failoverInterval = null;
+        }
         if (this.lightningTicker) {
             clearInterval(this.lightningTicker);
             this.lightningTicker = null;

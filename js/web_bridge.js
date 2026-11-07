@@ -1072,21 +1072,26 @@ async function handleBridgeWeatherRadar(urlStr) {
 
                 const limit = parseInt(url.searchParams.get('limit') || '15', 10);
 
+                const maxRadiusKm = Math.max(50, parseFloat(url.searchParams.get('radius') || '500'));
+
                 const allCams = await getLocalWebcams();
 
+                const calcDistKm = (lat1, lon1, lat2, lon2) => {
+                    const R = 6371;
+                    const dLat = (lat2 - lat1) * Math.PI / 180;
+                    const dLon = (lon2 - lon1) * Math.PI / 180;
+                    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+                };
+
                 const withDist = allCams.map(c => {
+                    const distance_km = calcDistKm(lat, lon, Number(c.lat || 0), Number(c.lon || 0));
+                    return { ...c, distance_km, distSq: distance_km * distance_km };
+                }).filter(c => c.distance_km <= maxRadiusKm);
 
-                    const dLat = (c.lat - lat);
-
-                    const dLon = (c.lon - lon) * Math.cos(lat * Math.PI / 180);
-
-                    const distSq = dLat * dLat + dLon * dLon;
-
-                    return { ...c, distSq };
-
-                });
-
-                withDist.sort((a, b) => a.distSq - b.distSq);
+                withDist.sort((a, b) => a.distance_km - b.distance_km);
 
                 const nearest = withDist.slice(0, limit);
 
@@ -2475,19 +2480,29 @@ const PRIMARY_US_STATIONS = [
 
                 const allCams = await getLocalWebcams();
 
+                const calcDistKm = (lat1, lon1, lat2, lon2) => {
+                    const R = 6371;
+                    const dLat = (lat2 - lat1) * Math.PI / 180;
+                    const dLon = (lon2 - lon1) * Math.PI / 180;
+                    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
+                };
+
                 let nearest = null;
 
-                let minDist = Infinity;
+                let minDistKm = Infinity;
 
                 allCams.forEach(c => {
 
                     if (c.lat && c.lon) {
 
-                        const d = Math.hypot(c.lat - lat, c.lon - lon);
+                        const dKm = calcDistKm(lat, lon, Number(c.lat), Number(c.lon));
 
-                        if (d < minDist) {
+                        if (dKm < minDistKm) {
 
-                            minDist = d;
+                            minDistKm = dKm;
 
                             nearest = c;
 
@@ -2497,19 +2512,23 @@ const PRIMARY_US_STATIONS = [
 
                 });
 
+                const validCam = (nearest && minDistKm <= 400) ? { ...nearest, distance_km: minDistKm } : null;
+
                 return jsonResponse({
 
                     status: "ok",
 
-                    camera: nearest || allCams[0],
+                    camera: validCam,
 
-                    distance_km: Math.round(minDist * 111)
+                    nearest_camera: validCam,
+
+                    distance_km: validCam ? minDistKm : null
 
                 });
 
             } catch (e) {
 
-                return jsonResponse({ status: "ok", camera: null });
+                return jsonResponse({ status: "ok", camera: null, nearest_camera: null });
 
             }
 

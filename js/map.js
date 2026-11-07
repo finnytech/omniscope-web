@@ -1482,7 +1482,7 @@ class OperationsMap {
             }
 
             [this.tornadoGroundLayer, this.archiveEventsLayer, this.alertsLayer, this.quakesLayer,
-             this.camsLayer, this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
+             this.camsLayer, this.chasersLayer, this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
              this.radiationLayer, this.torLayer, this.volcanoLayer, this.buoyLayer,
              this.blitzortungLayer, this.spaceDishLayer, this.energyLayer, this.geomagLayer,
              this.bordersLayer, this.balticAisLayer, this.gdacsLayer, this.noaaStationsLayer].forEach(checkGroupProximity);
@@ -2981,6 +2981,9 @@ class OperationsMap {
     }
 
     async lockProximityCamera(lat, lng, provider = null, openMapPopup = true) {
+        if (Date.now() - (window._lastChaserStreamTime || 0) < 3500) {
+            return;
+        }
         this.lastClickedLat = lat;
         this.lastClickedLng = lng;
         if (provider) this.selectedProvider = provider;
@@ -2991,9 +2994,13 @@ class OperationsMap {
 
         try {
             const [camsRes, weatherRes] = await Promise.all([
-                fetch(`/api/cameras/hybrid-nearby?lat=${lat}&lon=${lng}&radius=250&limit=20&provider=${currentProv}`),
+                fetch(`/api/cameras/hybrid-nearby?lat=${lat}&lon=${lng}&radius=500&limit=20&provider=${currentProv}`),
                 fetch(`/api/weather/live?lat=${lat}&lon=${lng}`)
             ]);
+
+            if (Date.now() - (window._lastChaserStreamTime || 0) < 3500) {
+                return;
+            }
 
             const camsData = await camsRes.json();
             const weatherData = await weatherRes.json();
@@ -3016,15 +3023,15 @@ class OperationsMap {
                 if (!c.city) c.city = 'Sector';
                 if (!c.country) c.country = 'Global';
             });
+            const localCams = rawCams.filter(c => Number(c.distance_km) <= 500);
             const scoreCam = (c) => {
                 const u = String(c.stream_url || c.preview_url || '').toLowerCase();
                 if (u.includes('.m3u8') || c.stream_type === 'hls') return 0;
-                if (u.includes('panomax.') || u.includes('roundshot.') || u.includes('foto-webcam')) return 1;
-                if (u.match(/\.(jpg|jpeg|png|webp)/i) || c.poster_url || c.preview_url) return 2;
+                if (u.match(/\.(jpg|jpeg|png|webp)/i) || c.poster_url || c.preview_url) return 1;
                 if (u.includes('livebeaches') || u.includes('earthcam') || u.includes('ptztv')) return 9;
                 return 4;
             };
-            const cams = rawCams.slice().sort((a, b) => scoreCam(a) - scoreCam(b) || (a.distance_km - b.distance_km));
+            const cams = localCams.slice().sort((a, b) => scoreCam(a) - scoreCam(b) || (a.distance_km - b.distance_km));
 
             const listContainer = document.getElementById('available-cams-list');
             if (listContainer) listContainer.innerHTML = '';
@@ -4618,12 +4625,12 @@ class OperationsMap {
         this.lockProximityGroundStation(lat, lon, false);
         this.lockProximityCamera(lat, lon);
 
-        // 3. Load nearest optical/DOT feed for this storm's exact location into MON-02
+        // 3. Load nearest optical/DOT feed for this storm's exact location into MON-02 (only if within 400 km)
         try {
             const res = await fetch(`/api/weather/alarms/nearest-feed?lat=${lat}&lon=${lon}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data.nearest_camera && window.MainPlayer) {
+                if (data.nearest_camera && (data.distance_km == null || data.distance_km <= 400) && window.MainPlayer) {
                     storm.nearest_camera = data.nearest_camera;
                     window.MainPlayer.loadCamera(data.nearest_camera);
                 }
@@ -4820,6 +4827,28 @@ class OperationsMap {
 
                 document.getElementById('btn-pin-target')?.addEventListener('click', () => this.targetStorm(ps));
                 document.getElementById('btn-pin-cam')?.addEventListener('click', () => {
+                    const chasers = Array.isArray(this.rawChasers) ? this.rawChasers : [];
+                    if (chasers.length > 0) {
+                        const sLat = Number(ps.lat || 35);
+                        const sLon = Number(ps.lon || -97);
+                        const withDist = chasers.map(ch => {
+                            const d = Math.hypot((ch.lat || 0) - sLat, (ch.lon || 0) - sLon) * 111;
+                            const hasLive = !!(ch.stream && (ch.stream.url || ch.stream.embedUrl) && ch.stream.verified !== false);
+                            return { ch, d, hasLive };
+                        });
+                        const liveNearby = withDist.filter(x => x.hasLive).sort((a, b) => a.d - b.d);
+                        const allNearby = withDist.sort((a, b) => a.d - b.d);
+                        const chosen = (liveNearby.length > 0 ? liveNearby[0] : allNearby[0]).ch;
+                        if (chosen) {
+                            if (this.map) {
+                                this.map.flyTo([chosen.lat, chosen.lon], 9, { duration: 1.2 });
+                            }
+                            if (typeof window.streamChaserToMon02 === 'function') {
+                                window.streamChaserToMon02(chosen.id);
+                            }
+                            return;
+                        }
+                    }
                     this.targetStorm(ps);
                 });
                 document.getElementById('btn-pin-stn')?.addEventListener('click', () => {
@@ -5005,21 +5034,7 @@ class OperationsMap {
         if (sideCountTag && Array.isArray(list)) sideCountTag.innerText = `${list.length} [🎯 USA]`;
 
         const isRealStreamer = (c) => {
-            if (!c) return false;
-            if (c.stream && (c.stream.url || c.stream.embedUrl)) return true;
-            if (c.isLive === true || c.status === 'STREAMING') return true;
-            const n = (c.name || '').toLowerCase();
-            const TOP_CHASERS = [
-                'reed timmer', 'dominator',
-                'connor croff',
-                'brandon copic',
-                'aaron jayjack',
-                'freddy mckinney',
-                'vince waelti',
-                'ryan hall',
-                'live storms media'
-            ];
-            return TOP_CHASERS.some(tc => n.includes(tc));
+            return Boolean(c && c.stream && (c.stream.url || c.stream.embedUrl) && c.stream.verified !== false);
         };
 
         list.forEach(c => {
@@ -5054,6 +5069,12 @@ class OperationsMap {
                 zIndexOffset: isRed ? 3000 : 2000
             });
             marker.bindPopup(() => this.buildChaserPopup(c), { maxWidth: 280, className: 'chaser-popup' });
+            marker.on('click', (ev) => {
+                this.notifyLayerClicked(ev);
+                if (typeof window.streamChaserToMon02 === 'function') {
+                    window.streamChaserToMon02(c.id);
+                }
+            });
             marker.addTo(this.chasersLayer);
         });
     }
@@ -5061,21 +5082,7 @@ class OperationsMap {
     buildChaserPopup(c) {
         const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
         const isRealStreamer = (ch) => {
-            if (!ch) return false;
-            if (ch.stream && (ch.stream.url || ch.stream.embedUrl)) return true;
-            if (ch.isLive === true || ch.status === 'STREAMING') return true;
-            const n = (ch.name || '').toLowerCase();
-            const TOP_CHASERS = [
-                'reed timmer', 'dominator',
-                'connor croff',
-                'brandon copic',
-                'aaron jayjack',
-                'freddy mckinney',
-                'vince waelti',
-                'ryan hall',
-                'live storms media'
-            ];
-            return TOP_CHASERS.some(tc => n.includes(tc));
+            return Boolean(ch && ch.stream && (ch.stream.url || ch.stream.embedUrl) && ch.stream.verified !== false);
         };
 
         const live = isRealStreamer(c);
