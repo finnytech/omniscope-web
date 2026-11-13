@@ -1150,6 +1150,11 @@ class OperationsMap {
         this.tornadoGroundLayer = L.layerGroup().addTo(this.map);
         this.chasersLayer = L.layerGroup().addTo(this.map);
         this.rawChasers = [];
+        this.chaserTrails = new Map();
+        this.knownLiveChasers = new Set();
+        this.mobileDopplerLayer = L.layerGroup().addTo(this.map);
+        this.spotterReportsLayer = L.layerGroup().addTo(this.map);
+        this.eolAprsLayer = L.layerGroup().addTo(this.map);
         this.activeTornadoGroundMarkers = new Map();
         this.rawTornadoGroundAlerts = [];
         this._tornadoAlertSoundPlayed = false;
@@ -1482,7 +1487,8 @@ class OperationsMap {
             }
 
             [this.tornadoGroundLayer, this.archiveEventsLayer, this.alertsLayer, this.quakesLayer,
-             this.camsLayer, this.chasersLayer, this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
+             this.camsLayer, this.chasersLayer, this.mobileDopplerLayer, this.spotterReportsLayer, this.eolAprsLayer,
+             this.weatherEnginesLayer, this.metarLayer, this.kiwiSdrLayer,
              this.radiationLayer, this.torLayer, this.volcanoLayer, this.buoyLayer,
              this.blitzortungLayer, this.spaceDishLayer, this.energyLayer, this.geomagLayer,
              this.bordersLayer, this.balticAisLayer, this.gdacsLayer, this.noaaStationsLayer].forEach(checkGroupProximity);
@@ -1697,6 +1703,9 @@ class OperationsMap {
             { topId: 'layer-radar', sideId: 'side-layer-radar', layer: null, isRadar: true },
             { topId: 'layer-traffic', sideId: 'side-layer-traffic', layer: this.trafficLayer },
             { topId: 'layer-chasers', sideId: 'side-layer-chasers', layer: this.chasersLayer },
+            { topId: 'layer-mobile-doppler', sideId: null, layer: this.mobileDopplerLayer },
+            { topId: 'layer-spotter-reports', sideId: null, layer: this.spotterReportsLayer },
+            { topId: 'layer-eol-aprs', sideId: null, layer: this.eolAprsLayer },
             { topId: 'layer-noaa-radar', sideId: 'side-layer-noaa-radar', layer: null, isNoaaRadar: true },
             { topId: 'layer-noaa-stations', sideId: 'side-layer-noaa-stations', layer: this.noaaStationsLayer },
             { topId: 'layer-archive-events', sideId: 'side-layer-archive-events', layer: this.archiveEventsLayer },
@@ -3520,12 +3529,14 @@ class OperationsMap {
             }
 
             let knmiLayer = 'RAD_NL25_PCP_CM';
-            if (prov === 'knmi_radar_composites' && mode === 'composite') {
+            if (mode === 'composite' || mode === 'dbz') {
                 knmiLayer = 'Reflectivity';
             } else if (mode === 'rain_rate') {
                 knmiLayer = 'RAD_NL25_PCP_CM';
             } else if (mode === 'echo_tops') {
-                knmiLayer = 'RAD_NL25_PCP_CM';
+                knmiLayer = 'RAD_NL25_ETH_NA';
+            } else if (mode === 'velocity') {
+                knmiLayer = 'Reflectivity';
             }
 
             if (this.activeWmsLayer && this.map.hasLayer(this.activeWmsLayer) && this.activeWmsLayer._currentLayerName === knmiLayer) {
@@ -3563,8 +3574,9 @@ class OperationsMap {
                 this.cleanRadarLayers();
             }
 
-            const isSat = (mode === 'satellite_vis' || mode === 'satellite_ir');
-            const geometLayer = isSat ? 'GOES-EAST_1KM_VIS' : (mode === 'rain_rate' ? 'RADAR_1KM_RRAI' : 'RADAR_1KM_RREC');
+            const isSatIr = (mode === 'satellite_ir');
+            const isSatVis = (mode === 'satellite_vis');
+            const geometLayer = isSatIr ? 'GOES-EAST_1KM_IR' : (isSatVis ? 'GOES-EAST_1KM_VIS' : (mode === 'rain_rate' ? 'RADAR_1KM_RRAI' : 'RADAR_1KM_RREC'));
 
             if (this.geometNativeWms && this.map.hasLayer(this.geometNativeWms) && this.geometNativeWms._currentLayerName === geometLayer) {
                 this.geometNativeWms.setParams({ _ts: tsBucket });
@@ -3625,11 +3637,17 @@ class OperationsMap {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
                 hudStatus = '🛰️ NOAA GOES-EAST VIS (1km RAPID)';
             } else if (mode === 'velocity') {
-                tileUrl = `https://mesonet.agron.iastate.edu/c/tile.py/1.0.0/ridge::USCOMP-N0R-0/{z}/{x}/{y}.png?_ts=${tsBucket}`;
-                hudStatus = '💨 NOAA NEXRAD DOPPLER (RADIAL-WIND / RIDGE)';
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-hsr-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '💨 NOAA NEXRAD DOPPLER VELOCITY / HSR';
             } else if (mode === 'dual_pol_cc') {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
                 hudStatus = '🎯 NOAA NEXRAD DUAL-POL CORRELATION (CC)';
+            } else if (mode === 'differential_z') {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '📡 NOAA NEXRAD DIFFERENTIAL REFLECTIVITY (ZDR)';
+            } else if (mode === 'dbz') {
+                tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-hsr-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+                hudStatus = '🇺🇸 NOAA MRMS HIGH-RES REFLECTIVITY (dBZ)';
             } else {
                 tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
                 hudStatus = prov === 'tdwr' ? '✈️ NOAA TDWR TERMINAL DOPPLER RADAR' : (prov === 'nexrad_l2' ? '🇺🇸 NOAA NEXRAD LEVEL-II (HIGH-RES)' : (prov === 'nexrad_l3' ? '🌪️ NOAA NEXRAD DUAL-POL LEVEL-III' : '🇺🇸 NOAA NEXRAD LEVEL-III USA'));
@@ -3637,9 +3655,11 @@ class OperationsMap {
             maxNative = 11;
             layerAttribution = 'NOAA / NWS / Iowa State IEM';
         } else if (prov === 'noaa_mrms' || prov === 'openmeteo_hrrr') {
-            tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
+            tileUrl = mode === 'echo_tops'
+                ? `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`
+                : `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
             maxNative = 11;
-            hudStatus = '🇺🇸 NOAA MRMS Q2 CONVECTIVE (1km)';
+            hudStatus = mode === 'echo_tops' ? '🇺🇸 NOAA MRMS ECHO TOPS' : '🇺🇸 NOAA MRMS Q2 CONVECTIVE (1km)';
             layerAttribution = 'NOAA MRMS / NCEP';
         } else if (prov === 'goes_east_vis') {
             tileUrl = `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png?_ts=${tsBucket}`;
@@ -3671,17 +3691,26 @@ class OperationsMap {
             maxNative = 9;
             hudStatus = '🛰️ INFRAROT SATELLITEN-WOLKEN (NASA GIBS)';
             layerAttribution = 'NASA EOSDIS GIBS / MODIS';
+        } else if (mode === 'satellite_vis') {
+            tileUrl = 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg';
+            maxNative = 9;
+            hudStatus = '🛰️ VISIBLE SATELLITEN-ANSICHT (NASA GIBS)';
+            layerAttribution = 'NASA EOSDIS GIBS / VIIRS';
         } else {
             // MULTI-FRAME GLOBAL RADAR MOSAIC & AUTHENTIC NATIONAL DOPPLER INTEGRATIONS
             const host = this.radarHost || "https://tilecache.rainviewer.com";
             const path = frame.path || (this.radarFrames && this.radarFrames[0] ? this.radarFrames[0].path : '/v2/radar/nowcast');
 
-            let schemeNum = 2;
-            if (mode === 'rain_rate') {
-                schemeNum = 7;
-            } else {
-                schemeNum = this.radarColorScheme || 2;
-            }
+            const MODE_SCHEMES = {
+                composite: this.radarColorScheme || 2,
+                dbz: 6,
+                rain_rate: 7,
+                echo_tops: 4,
+                velocity: 8,
+                dual_pol_cc: 3,
+                differential_z: 5
+            };
+            const schemeNum = MODE_SCHEMES[mode] || this.radarColorScheme || 2;
 
             tileUrl = `${host}${path}/256/{z}/{x}/{y}/${schemeNum}/1_1.png`;
             maxNative = 7;
@@ -3730,6 +3759,7 @@ class OperationsMap {
             zIndex: 20,
             maxNativeZoom: maxNative,
             maxZoom: 19,
+            className: `radar-tile-layer radar-mode-${mode}`,
             attribution: layerAttribution
         });
 
@@ -4997,6 +5027,15 @@ class OperationsMap {
         this.fetchChasers();
         setInterval(() => this.fetchChasers(), 60000);
 
+        // 15d. OU ARRC RadarHub, FARM/DOW Live, Spotter Reports, NCAR/EOL & APRS-IS (every 60s)
+        this.fetchMobileDoppler();
+        setInterval(() => this.fetchMobileDoppler(), 60000);
+        this.fetchSpotterReports();
+        setInterval(() => this.fetchSpotterReports(), 60000);
+        this.fetchEolAndAprs();
+        setInterval(() => this.fetchEolAndAprs(), 60000);
+        this.initRadarHubWebSocket();
+
         // 16. OSINT Tactical Tools Workbench Drawer
         this.initOsintToolsDrawer();
 
@@ -5042,6 +5081,39 @@ class OperationsMap {
             window._chaserIndex.set(c.id, c);
 
             const isRed = isRealStreamer(c);
+            if (isRed && this.knownLiveChasers && !this.knownLiveChasers.has(c.id)) {
+                this.knownLiveChasers.add(c.id);
+                if (this._chasersBootstrapped) {
+                    const logEl = document.getElementById('tactical-event-log');
+                    if (logEl) {
+                        const item = document.createElement('div');
+                        item.className = 'log-entry';
+                        item.style.cssText = 'border-left:3px solid #ef4444;padding:6px 8px;margin-bottom:4px;background:rgba(239,68,68,0.12);';
+                        item.innerHTML = `<span style="color:#f87171;font-weight:bold;">🔴 LIVE-STREAM GESTARTET:</span> <b>${esc(c.name)}</b> streamt jetzt live! <button class="ops-btn" style="padding:1px 6px;font-size:10px;margin-left:6px;background:#ef4444;color:#fff;border:none;cursor:pointer;" onclick="window.streamChaserToMon02('${esc(c.id)}')">IN MON-02 ÖFFNEN</button>`;
+                        logEl.prepend(item);
+                    }
+                }
+            }
+
+            // Chaser Breadcrumb Trail (last 20 GPS updates)
+            if (this.chaserTrails) {
+                const trail = this.chaserTrails.get(c.id) || [];
+                const lastPt = trail[trail.length - 1];
+                if (!lastPt || Math.abs(lastPt[0] - c.lat) > 0.0005 || Math.abs(lastPt[1] - c.lon) > 0.0005) {
+                    trail.push([c.lat, c.lon]);
+                    if (trail.length > 20) trail.shift();
+                    this.chaserTrails.set(c.id, trail);
+                }
+                if (trail.length >= 2) {
+                    L.polyline(trail, {
+                        color: isRed ? '#ef4444' : '#f59e0b',
+                        weight: 2,
+                        opacity: 0.65,
+                        dashArray: '4, 6'
+                    }).addTo(this.chasersLayer);
+                }
+            }
+
             const heading = (c.heading != null && !isNaN(c.heading)) ? Math.round(Number(c.heading)) % 360 : 0;
             const safeName = esc(c.name || 'Storm Chaser');
             const statusLabel = isRed ? '🔴 LIVE STREAMER' : '📍 SPOTTER';
@@ -5077,6 +5149,162 @@ class OperationsMap {
             });
             marker.addTo(this.chasersLayer);
         });
+        this._chasersBootstrapped = true;
+    }
+
+    initRadarHubWebSocket() {
+        if (this._radarHubWs) return;
+        try {
+            const ws = new WebSocket('wss://radarhub.arrc.ou.edu/ws/user/');
+            this._radarHubWs = ws;
+            ws.onopen = () => {
+                ['RaXPol', 'PX-1000', 'PX-10k'].forEach(grp => {
+                    try { ws.send(JSON.stringify({ action: 'subscribe', group: grp })); } catch (_) {}
+                });
+            };
+            ws.onmessage = (ev) => {
+                try {
+                    const payload = JSON.parse(ev.data);
+                    window._latestRadarHubWsPayload = payload;
+                } catch (_) {}
+            };
+            ws.onerror = () => {};
+            ws.onclose = () => {
+                this._radarHubWs = null;
+            };
+        } catch (_) {}
+    }
+
+    async fetchMobileDoppler() {
+        if (!this.mobileDopplerLayer) return;
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const fetchFn = window._originalFetch || window.fetch;
+        try {
+            const [rhRes, dowRes] = await Promise.all([
+                fetchFn('/api/radarhub').catch(() => null),
+                fetchFn('/api/dow-live').catch(() => null)
+            ]);
+            const rhData = rhRes && rhRes.ok ? await rhRes.json() : { units: [] };
+            const dowData = dowRes && dowRes.ok ? await dowRes.json() : { units: [] };
+            const rhUnits = Array.isArray(rhData.units) ? rhData.units : [];
+            const dowUnits = Array.isArray(dowData.units) ? dowData.units : [];
+
+            this.mobileDopplerLayer.clearLayers();
+            window._mobileDopplerIndex = new Map();
+
+            const total = rhUnits.length + dowUnits.length;
+            const tag = document.getElementById('mobile-doppler-count-tag');
+            if (tag) tag.innerText = total;
+
+            const renderUnit = (u, kind) => {
+                if (!isFinite(u.lat) || !isFinite(u.lon)) return;
+                window._mobileDopplerIndex.set(u.id, { ...u, kind });
+                const isDow = kind === 'dow';
+                const color = isDow ? '#ec4899' : '#a855f7';
+                const icon = L.divIcon({
+                    className: 'mobile-doppler-marker',
+                    html: `<div style="background:${color};color:#fff;border:2px solid #fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 0 10px ${color};">📡</div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                const marker = L.marker([u.lat, u.lon], { icon, zIndexOffset: 2400 });
+                marker.bindPopup(`
+                    <div style="font-family:var(--font-mono);font-size:12px;min-width:220px;">
+                        <div style="font-weight:bold;color:${color};margin-bottom:4px;">📡 ${esc(u.name)}</div>
+                        <div><b>Typ:</b> ${isDow ? 'FARM / DOW Mobile Radar' : 'OU ARRC RadarHub'}</div>
+                        ${u.lastPlotUtc ? `<div><b>Letzter Plot:</b> ${esc(u.lastPlotUtc)}</div>` : ''}
+                        ${u.month ? `<div><b>Monat/Feed:</b> ${esc(u.month)} (60s Poll)</div>` : ''}
+                        <div style="margin-top:6px;display:flex;gap:4px;">
+                            <button class="ops-btn" style="flex:1;padding:4px 8px;background:${color};color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:bold;" onclick="window.openMobileDopplerInMon02('${esc(u.id)}')">📺 IN MON-02 ÖFFNEN</button>
+                        </div>
+                    </div>
+                `);
+                marker.addTo(this.mobileDopplerLayer);
+            };
+
+            rhUnits.forEach(u => renderUnit(u, 'radarhub'));
+            dowUnits.forEach(u => renderUnit(u, 'dow'));
+        } catch (e) {
+            console.warn('[OmniScope] Mobile Doppler fetch error:', e);
+        }
+    }
+
+    async fetchSpotterReports() {
+        if (!this.spotterReportsLayer) return;
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const fetchFn = window._originalFetch || window.fetch;
+        try {
+            const res = await fetchFn('/api/spotter-reports');
+            if (!res.ok) return;
+            const data = await res.json();
+            const list = Array.isArray(data.reports) ? data.reports : [];
+            this.spotterReportsLayer.clearLayers();
+            const tag = document.getElementById('spotter-reports-count-tag');
+            if (tag) tag.innerText = list.length;
+
+            list.forEach(rep => {
+                if (!isFinite(rep.lat) || !isFinite(rep.lon)) return;
+                const emoji = rep.type === 'TORNADO' ? '🌪️' : (rep.type === 'HAIL' ? '🧊' : (rep.type === 'DAMAGING WIND' ? '💨' : '⚠️'));
+                const icon = L.divIcon({
+                    className: 'spotter-report-marker',
+                    html: `<div style="background:rgba(220,38,38,0.9);color:#fff;border:1px solid #fecaca;border-radius:4px;padding:1px 4px;font-size:12px;box-shadow:0 0 8px rgba(239,68,68,0.8);">${emoji}</div>`,
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                });
+                L.marker([rep.lat, rep.lon], { icon, zIndexOffset: 2600 })
+                    .bindPopup(`<div style="font-family:var(--font-mono);font-size:12px;"><b style="color:#ef4444;">${emoji} ${esc(rep.type)}</b><br/>${esc(rep.description)}<br/><small>${esc(rep.source)}</small></div>`)
+                    .addTo(this.spotterReportsLayer);
+            });
+        } catch (e) {
+            console.warn('[OmniScope] Spotter reports fetch error:', e);
+        }
+    }
+
+    async fetchEolAndAprs() {
+        if (!this.eolAprsLayer) return;
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const fetchFn = window._originalFetch || window.fetch;
+        try {
+            const [eolRes, aprsRes] = await Promise.all([
+                fetchFn('/api/ncar-eol').catch(() => null),
+                fetchFn('/api/telemetry/aprs').catch(() => null)
+            ]);
+            const eolData = eolRes && eolRes.ok ? await eolRes.json() : { campaigns: [] };
+            const aprsData = aprsRes && aprsRes.ok ? await aprsRes.json() : { stations: [] };
+            const campaigns = Array.isArray(eolData.campaigns) ? eolData.campaigns : [];
+            const stations = Array.isArray(aprsData.stations) ? aprsData.stations : [];
+
+            this.eolAprsLayer.clearLayers();
+            const tag = document.getElementById('eol-aprs-count-tag');
+            if (tag) tag.innerText = campaigns.length + stations.length;
+
+            if (campaigns.length > 0) {
+                const icon = L.divIcon({
+                    className: 'ncar-eol-marker',
+                    html: `<div style="background:#0284c7;color:#fff;border:2px solid #bae6fd;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;">🛰️</div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                const listHtml = campaigns.slice(0, 8).map(cp => `<li><a href="${esc(cp.mapUrl)}" target="_blank" rel="noopener noreferrer">${esc(cp.title)}</a></li>`).join('');
+                L.marker([40.015, -105.2705], { icon, zIndexOffset: 2200 })
+                    .bindPopup(`<div style="font-family:var(--font-mono);font-size:11px;max-width:260px;"><b style="color:#38bdf8;">🛰️ NCAR / EOL Field Catalog (${campaigns.length})</b><ul style="margin:6px 0 0 14px;padding:0;">${listHtml}</ul></div>`)
+                    .addTo(this.eolAprsLayer);
+            }
+
+            stations.forEach(st => {
+                if (!isFinite(st.lat) || !isFinite(st.lon)) return;
+                L.circleMarker([st.lat, st.lon], {
+                    radius: 4,
+                    color: '#22d3ee',
+                    fillColor: '#06b6d4',
+                    fillOpacity: 0.8,
+                    weight: 1
+                }).bindPopup(`<div style="font-family:var(--font-mono);font-size:11px;"><b style="color:#22d3ee;">📻 APRS-IS / WX: ${esc(st.callsign)}</b><br/>${esc(st.name)}<br/>${st.temp_c != null ? `Temp: ${esc(st.temp_c)}°C<br/>` : ''}${st.wind_kmh != null ? `Wind: ${esc(st.wind_kmh)} km/h<br/>` : ''}<small>${esc(st.source || 'APRS-IS rotate.aprs2.net:14580')}</small></div>`)
+                  .addTo(this.eolAprsLayer);
+            });
+        } catch (e) {
+            console.warn('[OmniScope] NCAR/EOL & APRS fetch error:', e);
+        }
     }
 
     buildChaserPopup(c) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <!-- OmniScope Multi-Cloud Edge Balancer & Smart Quota Failover Ring (Cloudflare <-> Vercel <-> Netlify) -->
-    <script src="js/edge_balancer.js?v=2.8.5"></script>
+    <script src="js/edge_balancer.js?v=2.9.0"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>OmniScope OSINT // Realtime Geospatial Intelligence & Radar Command Grid</title>
     <meta name="description" content="OmniScope by FinnyTech is the premier 100% keyless open-source intelligence (OSINT) command center. Features real-time geospatial mapping, 147-model weather consensus, live NEXRAD Doppler radar, 1,000,000+ verified CCTV nodes, and native MCP protocol support. Zero-Fake, keyless open data." />
@@ -159,7 +159,7 @@
     <link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png?v=2.6.2" />
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="css/cyberpunk.css?v=2.8.5" />
+    <link rel="stylesheet" href="css/cyberpunk.css?v=2.9.0" />
 </head>
 <body>
     <!-- Top Operations Header -->
@@ -256,6 +256,9 @@
             <label style="color:#0284c7;font-weight:700;"><input type="checkbox" id="layer-noaa-stations" checked />🇺🇸 NOAA Live US Weather</label>
             <label style="color:#f87171;font-weight:700;"><input type="checkbox" id="layer-archive-events" checked />🏛️ Storm & Tornado Archive</label>
             <label style="color:#f59e0b;font-weight:700;display:inline-flex;align-items:center;gap:4px;"><input type="checkbox" id="layer-chasers" checked />⚡ Storm Chasers (<span id="chasers-count-tag">364</span>)<button type="button" class="ops-btn" style="padding:1px 5px;font-size:9px;background:rgba(245,158,11,0.25);border:1px solid #f59e0b;color:#fde047;cursor:pointer;border-radius:2px;margin-left:2px;" onclick="window.focusChasersSector && window.focusChasersSector()" title="Karte direkt auf aktiven US-Chaser-Sektor zentrieren">🎯 USA</button></label>
+            <label style="color:#a855f7;font-weight:700;"><input type="checkbox" id="layer-mobile-doppler" checked />📡 RadarHub & DOW (<span id="mobile-doppler-count-tag">0</span>)</label>
+            <label style="color:#ef4444;font-weight:700;"><input type="checkbox" id="layer-spotter-reports" checked />🌪️ Spotter Reports (<span id="spotter-reports-count-tag">0</span>)</label>
+            <label style="color:#22d3ee;font-weight:700;"><input type="checkbox" id="layer-eol-aprs" checked />🛰️ NCAR/EOL & APRS-IS (<span id="eol-aprs-count-tag">0</span>)</label>
             <label><input type="checkbox" id="layer-alerts" checked />NOAA Warnings</label>
             <label><input type="checkbox" id="layer-vessels" checked />Maritime Traffic (AIS Marine)</label>
             <label><input type="checkbox" id="layer-seamarks" />OpenSeaMap Nav Aids</label>
@@ -2370,18 +2373,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- OmniScope Web Serverless Client-Side Bridge -->
-    <script src="js/web_bridge.js?v=2.8.5"></script>
+    <script src="js/web_bridge.js?v=2.9.0"></script>
 
     <script src="js/audio.js?v=7.4"></script>
     <script src="js/ram_cleaner.js?v=7.4"></script>
-    <script src="js/player.js?v=2.8.5"></script>
+    <script src="js/player.js?v=2.9.0"></script>
     <script src="js/globe.js?v=7.4"></script>
-    <script src="js/map.js?v=2.8.5"></script>
-    <script src="js/i18n.js?v=2.8.5"></script>
+    <script src="js/map.js?v=2.9.0"></script>
+    <script src="js/i18n.js?v=2.9.0"></script>
     <script src="js/settings.js?v=7.4"></script>
-    <script src="js/app.js?v=2.8.5"></script>
-    <script src="js/upgrade.js?v=2.8.5"></script>
-    <script src="js/tv_multiview.js?v=2.8.5"></script>
+    <script src="js/app.js?v=2.9.0"></script>
+    <script src="js/upgrade.js?v=2.9.0"></script>
+    <script src="js/tv_multiview.js?v=2.9.0"></script>
 
     <!-- ========================================================================= -->
     <!-- 115-LANGUAGE SYSTEM SETTINGS & CONFIGURATION MODAL                        -->

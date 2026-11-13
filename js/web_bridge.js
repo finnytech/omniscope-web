@@ -3618,6 +3618,19 @@ const PRIMARY_US_STATIONS = [
             } catch (_) {}
         }
 
+        // 18. v2.9.0 New Keyless Storm & Mobile Doppler Feeds (RadarHub, Spotter Reports, DOW, NCAR/EOL, APRS-IS)
+        if (urlStr.includes('/api/radarhub') || urlStr.includes('/api/spotter-reports') || urlStr.includes('/api/dow-live') || urlStr.includes('/api/ncar-eol') || urlStr.includes('/api/telemetry/aprs')) {
+            try {
+                const edgeRes = await window._originalFetch(urlStr);
+                if (edgeRes && edgeRes.ok) return edgeRes;
+            } catch (_) {}
+            try {
+                const remoteRes = await window._originalFetch('https://omniscope-web.pages.dev' + new URL(urlStr, window.location.href).pathname);
+                if (remoteRes && remoteRes.ok) return remoteRes;
+            } catch (_) {}
+            return jsonResponse({ status: "ok", count: 0, units: [], reports: [], campaigns: [], stations: [] });
+        }
+
         return jsonResponse({
 
             status: "omitted",

@@ -4199,6 +4199,39 @@
         }
     };
 
+    window.openMobileDopplerInMon02 = function(unitId) {
+        const u = window._mobileDopplerIndex && window._mobileDopplerIndex.get(unitId);
+        if (!u) return;
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        if (window.MainPlayer) {
+            window.MainPlayer.destroy();
+            window.MainPlayer.currentCamData = null;
+        }
+        const titleEl = document.getElementById('cam-active-title');
+        const topTitle = document.getElementById('cam-player-title');
+        const banner = document.getElementById('cam-telemetry-banner');
+        const label = `📡 MOBILE DOPPLER // ${u.name.toUpperCase()}`;
+        if (titleEl) titleEl.innerText = label;
+        if (topTitle) topTitle.innerText = label;
+        if (banner) {
+            banner.innerHTML = `<span>UNIT: ${esc(u.name)} // SOURCE: ${esc(u.source)}</span><span>${u.lastPlotUtc ? 'LAST PLOT: ' + esc(u.lastPlotUtc) : 'POLL: 60s + WS'}</span>`;
+        }
+        const target = document.getElementById('webcam-player-container') || document.getElementById('player-container');
+        if (!target) return;
+        const plotHtml = u.latestPlotUrl
+            ? `<div style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;"><img src="${esc(u.latestPlotUrl)}" alt="${esc(u.name)}" style="max-width:100%;max-height:100%;object-fit:contain;" /></div>`
+            : `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;color:#cbd5e1;font-size:12px;">
+                 <div style="font-size:28px;margin-bottom:8px;">📡</div>
+                 <b style="color:#a855f7;font-size:14px;">${esc(u.name)}</b>
+                 <p style="max-width:380px;margin:8px 0;">OU ARRC RadarHub Feed (60s HTTP-Poll + WebSocket <code>wss://radarhub.arrc.ou.edu/ws/user/</code>).</p>
+                 <div style="display:flex;gap:8px;margin-top:6px;">
+                   ${u.archiveUrl ? `<a class="ops-btn" href="${esc(u.archiveUrl)}" target="_blank" rel="noopener noreferrer" style="background:#7e22ce;color:#fff;padding:6px 12px;text-decoration:none;border-radius:3px;">📂 ARCHIV ÖFFNEN</a>` : ''}
+                   ${u.dataUrl ? `<a class="ops-btn" href="${esc(u.dataUrl)}" target="_blank" rel="noopener noreferrer" style="background:#0284c7;color:#fff;padding:6px 12px;text-decoration:none;border-radius:3px;">📊 DATEN-FEED</a>` : ''}
+                 </div>
+               </div>`;
+        target.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;background:#030712;font-family:var(--font-mono);">${plotHtml}</div>`;
+    };
+
     if (document.readyState === 'loading') {
 
         document.addEventListener('DOMContentLoaded', () => window.OmniScopeMultiView.init());

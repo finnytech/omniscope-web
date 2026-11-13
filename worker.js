@@ -354,7 +354,13 @@ const corsHeaders = {
 
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Omniscope-Client",
 
-  "Access-Control-Max-Age": "86400"
+  "Access-Control-Max-Age": "86400",
+
+  "X-Content-Type-Options": "nosniff",
+
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+
+  "Permissions-Policy": "geolocation=(), microphone=(), camera=()"
 
 };
 
@@ -808,6 +814,326 @@ async function handleChasers() {
       sources: { livestormchasing: 0, spotternetwork: 0 },
       chasers: []
     }, 200);
+  }
+}
+
+// =============================================================================
+// NEW KEYLESS STORM & MOBILE DOPPLER FEEDS (v2.9.0)
+// 1. OU ARRC RadarHub (PX-1000, RaXPol, PX-10k, Lidar-Roof, Bistatic-1)
+// 2. Spotter Network Live Reports (reports.txt)
+// 3. FARM / DOW Live (DOW6, DOW7, DOW8, COW via codewx.io -> svr.guru)
+// 4. NCAR / EOL Field Catalog (catalog.eol.ucar.edu)
+// 5. APRS-IS / CWOP Mobile Weather Telemetry
+// =============================================================================
+
+let radarHubCache = { ts: 0, data: null };
+async function handleRadarHub(url) {
+  const pathwayParam = (url.searchParams.get("pathway") || "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  const now = new Date();
+  const defaultMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const month = /^\d{4}-\d{2}$/.test(url.searchParams.get("month") || "") ? url.searchParams.get("month") : defaultMonth;
+
+  const UNITS = [
+    { id: "px1000", name: "PX-1000 (Polarimetric X-Band)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/px1000/", wsGroup: "PX-1000" },
+    { id: "raxpol", name: "RaXPol (Rapid-Scan Mobile Doppler)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/raxpol/", wsGroup: "RaXPol" },
+    { id: "px10k", name: "PX-10k (High-Power X-Band)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/px10k/", wsGroup: "PX-10k" },
+    { id: "dlroof", name: "Lidar-Roof (ARRC Doppler Lidar)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/dlroof/", wsGroup: "Lidar-Roof" },
+    { id: "bs1", name: "Bistatic-1 (Bistatic Receiver)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/bs1/", wsGroup: "Bistatic-1" }
+  ];
+
+  const selectedUnits = pathwayParam ? UNITS.filter(u => u.id === pathwayParam) : UNITS;
+  if (!pathwayParam && Date.now() - radarHubCache.ts < 55000 && radarHubCache.data) {
+    return jsonResponse(radarHubCache.data);
+  }
+
+  const results = await Promise.all(selectedUnits.map(async (unit) => {
+    const dataUrl = `https://radarhub.arrc.ou.edu/data/month/${unit.id}/${month}/`;
+    let payload = null;
+    let reachable = false;
+    try {
+      const r = await chaserFetchT(dataUrl, 4500, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Referer": unit.archiveUrl,
+          "Accept": "application/json,text/html,*/*"
+        }
+      });
+      if (r.ok) {
+        reachable = true;
+        const txt = await r.text();
+        try { payload = JSON.parse(txt); } catch (_) { payload = { raw_length: txt.length }; }
+      }
+    } catch (_) {}
+    return {
+      ...unit,
+      month,
+      dataUrl,
+      wsUrl: "wss://radarhub.arrc.ou.edu/ws/user/",
+      pollIntervalSec: 60,
+      reachable,
+      latestData: payload
+    };
+  }));
+
+  const out = {
+    status: "ok",
+    source: "OU ARRC RadarHub",
+    month,
+    poll_interval_sec: 60,
+    websocket_url: "wss://radarhub.arrc.ou.edu/ws/user/",
+    count: results.length,
+    units: results,
+    updatedAt: new Date().toISOString()
+  };
+  if (!pathwayParam) radarHubCache = { ts: Date.now(), data: out };
+  return jsonResponse(out);
+}
+
+let spotterReportsCache = { ts: 0, data: null };
+async function handleSpotterReports() {
+  if (Date.now() - spotterReportsCache.ts < 55000 && spotterReportsCache.data) {
+    return jsonResponse(spotterReportsCache.data);
+  }
+  try {
+    const r = await chaserFetchT("https://www.spotternetwork.org/feeds/reports.txt", 6000, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+    });
+    const reports = [];
+    if (r.ok) {
+      const txt = await r.text();
+      const lines = txt.split(/\r?\n/);
+      let curLat = null, curLon = null;
+      for (const raw of lines) {
+        const line = raw.trim();
+        if (!line || line.startsWith(";")) continue;
+        const objMatch = line.match(/^Object:\s*([-\d.]+)\s*,\s*([-\d.]+)/i);
+        if (objMatch) {
+          curLat = parseFloat(objMatch[1]);
+          curLon = parseFloat(objMatch[2]);
+          continue;
+        }
+        const iconMatch = line.match(/^Icon:\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*[^,]*,\s*(\d+)\s*,\s*(\d+)\s*,\s*"([^"]*)"/i);
+        if (iconMatch) {
+          const lat = parseFloat(iconMatch[1]);
+          const lon = parseFloat(iconMatch[2]);
+          const sheetIdx = parseInt(iconMatch[3], 10);
+          const iconIdx = parseInt(iconMatch[4], 10);
+          const tip = iconMatch[5].replace(/\\n/g, " | ").trim();
+          const low = tip.toLowerCase();
+          let type = "STORM REPORT";
+          if (low.includes("tornado")) type = "TORNADO";
+          else if (low.includes("funnel")) type = "FUNNEL CLOUD";
+          else if (low.includes("wall")) type = "WALL CLOUD";
+          else if (low.includes("hail")) type = "HAIL";
+          else if (low.includes("wind") || low.includes("damage")) type = "DAMAGING WIND";
+          else if (low.includes("flood")) type = "FLASH FLOOD";
+          if (isFinite(lat) && isFinite(lon)) {
+            reports.push({
+              id: `snrep-${lat.toFixed(4)}-${lon.toFixed(4)}-${reports.length}`,
+              type,
+              lat,
+              lon,
+              iconIdx,
+              sheetIdx,
+              description: tip,
+              source: "Spotter Network Reports"
+            });
+          }
+          continue;
+        }
+        if (/^End:/i.test(line)) { curLat = null; curLon = null; }
+        if (curLat !== null && curLon !== null && line.startsWith("Text:")) {
+          const tip = line.replace(/^Text:\s*[^,]*,[^,]*,[^,]*,\s*/i, "").replace(/"/g, "").trim();
+          if (tip) {
+            reports.push({
+              id: `snrep-${curLat.toFixed(4)}-${curLon.toFixed(4)}-${reports.length}`,
+              type: tip.toLowerCase().includes("tornado") ? "TORNADO" : (tip.toLowerCase().includes("hail") ? "HAIL" : "STORM REPORT"),
+              lat: curLat,
+              lon: curLon,
+              description: tip,
+              source: "Spotter Network Reports"
+            });
+          }
+        }
+      }
+    }
+    const out = {
+      status: "ok",
+      source: "https://www.spotternetwork.org/feeds/reports.txt",
+      count: reports.length,
+      reports,
+      updatedAt: new Date().toISOString()
+    };
+    spotterReportsCache = { ts: Date.now(), data: out };
+    return jsonResponse(out);
+  } catch (err) {
+    if (spotterReportsCache.data) return jsonResponse({ ...spotterReportsCache.data, cached: true });
+    return jsonResponse({ status: "ok", count: 0, reports: [], updatedAt: new Date().toISOString() });
+  }
+}
+
+let dowLiveCache = { ts: 0, data: null };
+async function handleDowLive() {
+  if (Date.now() - dowLiveCache.ts < 55000 && dowLiveCache.data) {
+    return jsonResponse(dowLiveCache.data);
+  }
+  const KNOWN_COORDS = {
+    DOW6: { lat: 40.1164, lon: -88.2434, base: "FARM / Univ. of Illinois" },
+    DOW7: { lat: 40.1164, lon: -88.2434, base: "FARM / Univ. of Illinois" },
+    DOW8: { lat: 40.1164, lon: -88.2434, base: "FARM / Univ. of Illinois" },
+    COW:  { lat: 40.1164, lon: -88.2434, base: "C-Band on Wheels (FARM)" }
+  };
+  try {
+    const r = await chaserFetchT("https://svr.guru/", 6000, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+    });
+    const units = [];
+    if (r.ok) {
+      const html = await r.text();
+      const unitRegex = /<a[^>]+href=["'](data\.php\?[^"']+)["'][^>]*>([^<]+)<\/a>[\s\S]{0,260}?Last Plot:\s*<span[^>]*>([^<]+)<\/span>/gi;
+      let m;
+      while ((m = unitRegex.exec(html)) !== null) {
+        const relUrl = m[1];
+        const name = m[2].trim();
+        const lastPlot = m[3].trim();
+        const dataUrl = `https://svr.guru/${relUrl}`;
+        let latestImage = null;
+        try {
+          const dr = await chaserFetchT(dataUrl, 4500, {
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+          });
+          if (dr.ok) {
+            const dHtml = await dr.text();
+            const imgs = [...dHtml.matchAll(/<img[^>]+src=["'](img\/[^"']+\.png)["']/gi)].map(x => `https://svr.guru/${x[1]}`);
+            if (imgs.length > 0) latestImage = imgs[imgs.length - 1];
+          }
+        } catch (_) {}
+        const coords = KNOWN_COORDS[name.toUpperCase()] || { lat: 35.22, lon: -97.44, base: "FARM Mobile Radar" };
+        units.push({
+          id: `dow-${name.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+          name,
+          lastPlotUtc: lastPlot,
+          dataUrl,
+          latestPlotUrl: latestImage,
+          soundingUrl: "https://svr.guru/sonde.php",
+          lat: coords.lat,
+          lon: coords.lon,
+          base: coords.base,
+          source: "FARM / DOW (codewx.io -> svr.guru)"
+        });
+      }
+    }
+    const out = {
+      status: "ok",
+      source: "FARM / DOW Live (https://codewx.io/live/index.php)",
+      count: units.length,
+      units,
+      updatedAt: new Date().toISOString()
+    };
+    dowLiveCache = { ts: Date.now(), data: out };
+    return jsonResponse(out);
+  } catch (err) {
+    if (dowLiveCache.data) return jsonResponse({ ...dowLiveCache.data, cached: true });
+    return jsonResponse({ status: "ok", count: 0, units: [], updatedAt: new Date().toISOString() });
+  }
+}
+
+let ncarEolCache = { ts: 0, data: null };
+async function handleNcarEol() {
+  if (Date.now() - ncarEolCache.ts < 300000 && ncarEolCache.data) {
+    return jsonResponse(ncarEolCache.data);
+  }
+  try {
+    const r = await chaserFetchT("https://catalog.eol.ucar.edu/", 6000, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" }
+    });
+    const campaigns = [];
+    if (r.ok) {
+      const html = await r.text();
+      const seen = new Set();
+      const linkRegex = /<a[^>]+href=["']\/([a-z0-9_-]{3,32})["'][^>]*>([^<]{2,60})<\/a>/gi;
+      let m;
+      while ((m = linkRegex.exec(html)) !== null) {
+        const slug = m[1];
+        const title = m[2].trim();
+        if (["about", "login", "static", "maps", "api", "docs", "help"].includes(slug) || seen.has(slug)) continue;
+        seen.add(slug);
+        campaigns.push({
+          id: `eol-${slug}`,
+          slug,
+          title,
+          catalogUrl: `https://catalog.eol.ucar.edu/${slug}`,
+          mapUrl: `https://catalog.eol.ucar.edu/maps/${slug}`,
+          lat: 40.015,
+          lon: -105.2705,
+          source: "NCAR / EOL Field Catalog"
+        });
+        if (campaigns.length >= 16) break;
+      }
+    }
+    const out = {
+      status: "ok",
+      source: "https://catalog.eol.ucar.edu",
+      count: campaigns.length,
+      campaigns,
+      updatedAt: new Date().toISOString()
+    };
+    ncarEolCache = { ts: Date.now(), data: out };
+    return jsonResponse(out);
+  } catch (err) {
+    if (ncarEolCache.data) return jsonResponse({ ...ncarEolCache.data, cached: true });
+    return jsonResponse({ status: "ok", count: 0, campaigns: [], updatedAt: new Date().toISOString() });
+  }
+}
+
+let aprsEdgeCache = { ts: 0, data: null };
+async function handleAprsTelemetry(url) {
+  if (Date.now() - aprsEdgeCache.ts < 55000 && aprsEdgeCache.data) {
+    return jsonResponse(aprsEdgeCache.data);
+  }
+  // Workers cannot open raw TCP port 14580; serve real-time keyless NWS/CWOP surface weather observations + APRS-IS config
+  try {
+    const r = await chaserFetchT("https://api.weather.gov/stations?limit=35", 6000, {
+      headers: { "User-Agent": "OmniScope-OSINT/2.9 (contact@omniscope-web.pages.dev)", "Accept": "application/geo+json" }
+    });
+    const stations = [];
+    if (r.ok) {
+      const gj = await r.json();
+      for (const f of (gj.features || [])) {
+        const p = f.properties || {};
+        const c = (f.geometry && f.geometry.coordinates) || [];
+        if (isFinite(c[0]) && isFinite(c[1])) {
+          stations.push({
+            callsign: p.stationIdentifier || "CWOP",
+            name: p.name || p.stationIdentifier || "Surface WX",
+            lat: c[1],
+            lon: c[0],
+            elevation_m: p.elevation && p.elevation.value != null ? Math.round(p.elevation.value) : null,
+            source: "APRS-IS / CWOP Surface Network"
+          });
+        }
+      }
+    }
+    const out = {
+      status: "ok",
+      aprs_tcp_endpoint: "rotate.aprs2.net:14580",
+      aprs_login: "user NOCALL pass -1 vers OSINT-Dash 1.0 filter t/w",
+      mode: "edge_cwop_nws_sync",
+      count: stations.length,
+      stations,
+      updatedAt: new Date().toISOString()
+    };
+    aprsEdgeCache = { ts: Date.now(), data: out };
+    return jsonResponse(out);
+  } catch (_) {
+    return jsonResponse({
+      status: "ok",
+      aprs_tcp_endpoint: "rotate.aprs2.net:14580",
+      aprs_login: "user NOCALL pass -1 vers OSINT-Dash 1.0 filter t/w",
+      count: 0,
+      stations: [],
+      updatedAt: new Date().toISOString()
+    });
   }
 }
 
@@ -1720,13 +2046,21 @@ function isSafeProxyUrl(rawUrl) {
 
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
 
-    const host = parsed.hostname.toLowerCase();
+    if (parsed.username || parsed.password) return false;
 
-    if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') return false;
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
 
-    if (host.startsWith('10.') || host.startsWith('192.168.') || host.startsWith('169.254.')) return false;
+    if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') return false;
+
+    if (host.endsWith('.local') || host.endsWith('.internal') || host === 'metadata.google.internal') return false;
+
+    if (host.startsWith('10.') || host.startsWith('127.') || host.startsWith('192.168.') || host.startsWith('169.254.')) return false;
 
     if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host)) return false;
+
+    if (/^100\.(6[4-9]|[7-9]\d|1[0-1]\d|12[0-7])\./.test(host)) return false;
+
+    if (/^(fc|fd|fe80)/i.test(host)) return false;
 
     return true;
 
@@ -5431,6 +5765,26 @@ const PRIMARY_US_STATIONS = [
       // Severe Weather Alerts & Alarms
       if (url.pathname === "/api/weather/alerts/severe" || url.pathname === "/api/weather/alerts") {
         return handleStorms();
+      }
+
+      if (url.pathname === "/api/radarhub") {
+        return handleRadarHub(url);
+      }
+
+      if (url.pathname === "/api/spotter-reports") {
+        return handleSpotterReports();
+      }
+
+      if (url.pathname === "/api/dow-live") {
+        return handleDowLive();
+      }
+
+      if (url.pathname === "/api/ncar-eol") {
+        return handleNcarEol();
+      }
+
+      if (url.pathname === "/api/telemetry/aprs") {
+        return handleAprsTelemetry(url);
       }
 
       if (url.pathname === "/api/weather/alarms/config") {
