@@ -5153,26 +5153,29 @@ class OperationsMap {
     }
 
     initRadarHubWebSocket() {
-        if (this._radarHubWs) return;
-        try {
-            const ws = new WebSocket('wss://radarhub.arrc.ou.edu/ws/user/');
-            this._radarHubWs = ws;
-            ws.onopen = () => {
-                ['RaXPol', 'PX-1000', 'PX-10k'].forEach(grp => {
-                    try { ws.send(JSON.stringify({ action: 'subscribe', group: grp })); } catch (_) {}
-                });
-            };
-            ws.onmessage = (ev) => {
-                try {
-                    const payload = JSON.parse(ev.data);
-                    window._latestRadarHubWsPayload = payload;
-                } catch (_) {}
-            };
-            ws.onerror = () => {};
-            ws.onclose = () => {
-                this._radarHubWs = null;
-            };
-        } catch (_) {}
+        if (this._radarHubSockets) return;
+        this._radarHubSockets = {};
+        ['raxpol', 'px1000'].forEach(pathway => {
+            try {
+                const ws = new WebSocket(`wss://radarhub.arrc.ou.edu/ws/${pathway}/`);
+                ws.binaryType = 'arraybuffer';
+                this._radarHubSockets[pathway] = ws;
+                ws.onmessage = (ev) => {
+                    const size = ev.data instanceof ArrayBuffer
+                        ? ev.data.byteLength
+                        : (ev.data instanceof Blob ? ev.data.size : String(ev.data || '').length);
+                    window._latestRadarHubWsPayload = {
+                        pathway,
+                        bytes: size,
+                        ts: Date.now()
+                    };
+                };
+                ws.onerror = () => {};
+                ws.onclose = () => {
+                    if (this._radarHubSockets) delete this._radarHubSockets[pathway];
+                };
+            } catch (_) {}
+        });
     }
 
     async fetchMobileDoppler() {

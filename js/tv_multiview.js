@@ -4203,6 +4203,10 @@
         const u = window._mobileDopplerIndex && window._mobileDopplerIndex.get(unitId);
         if (!u) return;
         const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        if (window._mon02DopplerCleanup) {
+            try { window._mon02DopplerCleanup(); } catch (_) {}
+            window._mon02DopplerCleanup = null;
+        }
         if (window.MainPlayer) {
             window.MainPlayer.destroy();
             window.MainPlayer.currentCamData = null;
@@ -4214,22 +4218,300 @@
         if (titleEl) titleEl.innerText = label;
         if (topTitle) topTitle.innerText = label;
         if (banner) {
-            banner.innerHTML = `<span>UNIT: ${esc(u.name)} // SOURCE: ${esc(u.source)}</span><span>${u.lastPlotUtc ? 'LAST PLOT: ' + esc(u.lastPlotUtc) : 'POLL: 60s + WS'}</span>`;
+            banner.innerHTML = `<span>UNIT: ${esc(u.name)} // SOURCE: ${esc(u.source)}</span><span id="mon02-doppler-status">${u.lastPlotUtc ? 'LAST PLOT: ' + esc(u.lastPlotUtc) : 'LIVE WS + ARCHIVE'}</span>`;
         }
         const target = document.getElementById('webcam-player-container') || document.getElementById('player-container');
         if (!target) return;
-        const plotHtml = u.latestPlotUrl
-            ? `<div style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;"><img src="${esc(u.latestPlotUrl)}" alt="${esc(u.name)}" style="max-width:100%;max-height:100%;object-fit:contain;" /></div>`
-            : `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;color:#cbd5e1;font-size:12px;">
-                 <div style="font-size:28px;margin-bottom:8px;">📡</div>
-                 <b style="color:#a855f7;font-size:14px;">${esc(u.name)}</b>
-                 <p style="max-width:380px;margin:8px 0;">OU ARRC RadarHub Feed (60s HTTP-Poll + WebSocket <code>wss://radarhub.arrc.ou.edu/ws/user/</code>).</p>
-                 <div style="display:flex;gap:8px;margin-top:6px;">
-                   ${u.archiveUrl ? `<a class="ops-btn" href="${esc(u.archiveUrl)}" target="_blank" rel="noopener noreferrer" style="background:#7e22ce;color:#fff;padding:6px 12px;text-decoration:none;border-radius:3px;">📂 ARCHIV ÖFFNEN</a>` : ''}
-                   ${u.dataUrl ? `<a class="ops-btn" href="${esc(u.dataUrl)}" target="_blank" rel="noopener noreferrer" style="background:#0284c7;color:#fff;padding:6px 12px;text-decoration:none;border-radius:3px;">📊 DATEN-FEED</a>` : ''}
-                 </div>
-               </div>`;
-        target.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;background:#030712;font-family:var(--font-mono);">${plotHtml}</div>`;
+
+        // 1) FARM / DOW Live Plot Mode (native image + 60s auto-refresh + sounding toggle)
+        if (u.latestPlotUrl) {
+            const bust = (url) => url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+            target.innerHTML = `
+                <div style="width:100%;height:100%;display:flex;flex-direction:column;background:#030712;font-family:var(--font-mono);color:#e2e8f0;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:#0f172a;border-bottom:1px solid #334155;font-size:10px;">
+                        <span style="color:#38bdf8;font-weight:700;">📡 ${esc(u.name)} LIVE PPI PLOT (AUTO-REFRESH 60s)</span>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <button id="mon02-dow-refresh" class="ops-btn" style="padding:2px 8px;font-size:10px;background:#1e293b;border:1px solid #38bdf8;color:#38bdf8;cursor:pointer;">↻ REFRESH</button>
+                            ${u.soundingUrl ? `<button id="mon02-dow-sounding" class="ops-btn" style="padding:2px 8px;font-size:10px;background:#1e293b;border:1px solid #a855f7;color:#c084fc;cursor:pointer;">🎈 SOUNDING</button>` : ''}
+                        </div>
+                    </div>
+                    <div id="mon02-dow-stage" style="flex:1;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;position:relative;">
+                        <img id="mon02-dow-img" src="${esc(bust(u.latestPlotUrl))}" alt="${esc(u.name)}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+                    </div>
+                </div>`;
+            const imgEl = document.getElementById('mon02-dow-img');
+            const refreshBtn = document.getElementById('mon02-dow-refresh');
+            const soundingBtn = document.getElementById('mon02-dow-sounding');
+            let showingSounding = false;
+            const reloadImg = () => {
+                if (!imgEl) return;
+                const base = showingSounding && u.soundingUrl ? u.soundingUrl : u.latestPlotUrl;
+                imgEl.src = bust(base);
+            };
+            if (refreshBtn) refreshBtn.onclick = reloadImg;
+            if (soundingBtn) {
+                soundingBtn.onclick = () => {
+                    showingSounding = !showingSounding;
+                    soundingBtn.innerText = showingSounding ? '📡 PPI PLOT' : '🎈 SOUNDING';
+                    reloadImg();
+                };
+            }
+            const timer = setInterval(reloadImg, 60000);
+            window._mon02DopplerCleanup = () => clearInterval(timer);
+            return;
+        }
+
+        // 2) OU ARRC RadarHub Native Cockpit inside MON-02
+        const radarHubUnits = [
+            { id: 'px1000', label: 'PX-1000' },
+            { id: 'raxpol', label: 'RaXPol' },
+            { id: 'px10k', label: 'PX-10k' },
+            { id: 'dlroof', label: 'Lidar-Roof' },
+            { id: 'bs1', label: 'Bistatic-1' }
+        ];
+        const unitPills = radarHubUnits.map(ru => {
+            const active = ru.id === u.id;
+            return `<button class="mon02-rh-unit" data-rh-id="${esc(ru.id)}" style="padding:2px 7px;font-size:10px;border-radius:3px;cursor:pointer;border:1px solid ${active ? '#a855f7' : '#334155'};background:${active ? '#581c87' : '#0f172a'};color:${active ? '#f3e8ff' : '#94a3b8'};font-weight:${active ? '700' : '500'};">${esc(ru.label)}</button>`;
+        }).join('');
+
+        target.innerHTML = `
+            <div style="width:100%;height:100%;display:flex;flex-direction:column;background:#030712;font-family:var(--font-mono);color:#e2e8f0;overflow:hidden;">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;padding:5px 8px;background:#0b1120;border-bottom:1px solid #334155;">
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">
+                        <span style="color:#a855f7;font-size:10px;font-weight:700;margin-right:4px;">RADARHUB:</span>
+                        ${unitPills}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span id="mon02-rh-ws-badge" style="font-size:9px;padding:2px 6px;border-radius:3px;background:#1e293b;color:#fbbf24;border:1px solid #475569;">WS: CONNECTING...</span>
+                        <button id="mon02-rh-embed-btn" style="padding:2px 7px;font-size:10px;border-radius:3px;cursor:pointer;border:1px solid #0284c7;background:#0c4a6e;color:#e0f2fe;">🖥️ RAW SCOPE</button>
+                    </div>
+                </div>
+                <div id="mon02-rh-native-body" style="flex:1;display:grid;grid-template-columns:180px 1fr;gap:6px;padding:6px;min-height:0;overflow:hidden;">
+                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:#020617;border:1px solid #1e293b;border-radius:4px;padding:6px;position:relative;">
+                        <canvas id="mon02-rh-ppi" width="160" height="160" style="width:156px;height:156px;border-radius:50%;background:#000;"></canvas>
+                        <div id="mon02-rh-pkt-stats" style="margin-top:5px;font-size:9px;color:#94a3b8;text-align:center;">PKTS: 0 // 0.0 KB</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px;min-width:0;min-height:0;overflow-y:auto;padding-right:2px;">
+                        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:6px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-bottom:4px;">
+                                <span style="color:#38bdf8;font-weight:700;">📅 30-DAY SCAN CALENDAR (<span id="mon02-rh-month-lbl">${esc(u.month || '')}</span>)</span>
+                                <span id="mon02-rh-active-days-lbl" style="color:#94a3b8;"></span>
+                            </div>
+                            <div id="mon02-rh-calendar" style="display:grid;grid-template-columns:repeat(10,1fr);gap:3px;"></div>
+                        </div>
+                        <div style="background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:6px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-bottom:4px;">
+                                <span style="color:#22c55e;font-weight:700;">📊 24H SCAN ACTIVITY (<span id="mon02-rh-day-lbl">${esc(u.selectedDay || 'TODAY')}</span>)</span>
+                                <span id="mon02-rh-total-day" style="color:#94a3b8;"></span>
+                            </div>
+                            <div id="mon02-rh-bars" style="display:flex;align-items:flex-end;gap:2px;height:38px;padding-top:2px;"></div>
+                        </div>
+                        <div style="flex:1;min-height:60px;background:#0f172a;border:1px solid #1e293b;border-radius:4px;padding:6px;display:flex;flex-direction:column;min-height:0;">
+                            <div style="font-size:10px;color:#c084fc;font-weight:700;margin-bottom:4px;">🌀 LIVE / ARCHIVE SWEEPS</div>
+                            <div id="mon02-rh-sweeps" style="flex:1;overflow-y:auto;font-size:10px;display:flex;flex-direction:column;gap:2px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="mon02-rh-iframe-body" style="flex:1;display:none;background:#000;">
+                    <iframe id="mon02-rh-iframe" src="about:blank" style="width:100%;height:100%;border:0;" allow="fullscreen"></iframe>
+                </div>
+            </div>`;
+
+        // Render PPI Sweep Canvas
+        const canvas = document.getElementById('mon02-rh-ppi');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        let sweepAngle = 0;
+        let pktCount = 0;
+        let pktBytes = 0;
+        let lastPktTs = 0;
+        const echoes = [];
+
+        const drawPPI = () => {
+            if (!ctx) return;
+            const w = canvas.width, h = canvas.height, cx = w / 2, cy = h / 2, r = w / 2 - 4;
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.22)';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+            ctx.lineWidth = 1;
+            [0.33, 0.66, 1].forEach(f => {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r * f, 0, Math.PI * 2);
+                ctx.stroke();
+            });
+            ctx.beginPath();
+            ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy);
+            ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r);
+            ctx.stroke();
+
+            // Plot real WS packet echo blips if streaming, else idle ring
+            for (let i = echoes.length - 1; i >= 0; i--) {
+                const e = echoes[i];
+                e.alpha -= 0.015;
+                if (e.alpha <= 0) { echoes.splice(i, 1); continue; }
+                ctx.fillStyle = `rgba(34, 197, 94, ${e.alpha.toFixed(2)})`;
+                ctx.fillRect(e.x, e.y, 3, 3);
+            }
+
+            // Sweep beam
+            const active = (Date.now() - lastPktTs) < 5000;
+            sweepAngle = (sweepAngle + (active ? 0.09 : 0.03)) % (Math.PI * 2);
+            ctx.strokeStyle = active ? '#22c55e' : '#a855f7';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(sweepAngle) * r, cy + Math.sin(sweepAngle) * r);
+            ctx.stroke();
+        };
+        const ppiTimer = setInterval(drawPPI, 50);
+
+        const renderUnitData = (data) => {
+            const monthLbl = document.getElementById('mon02-rh-month-lbl');
+            const activeDaysLbl = document.getElementById('mon02-rh-active-days-lbl');
+            const calEl = document.getElementById('mon02-rh-calendar');
+            const dayLbl = document.getElementById('mon02-rh-day-lbl');
+            const totalDayEl = document.getElementById('mon02-rh-total-day');
+            const barsEl = document.getElementById('mon02-rh-bars');
+            const sweepsEl = document.getElementById('mon02-rh-sweeps');
+
+            if (monthLbl) monthLbl.innerText = data.month || '--';
+            const activeDays = Array.isArray(data.activeDays) ? data.activeDays : [];
+            if (activeDaysLbl) activeDaysLbl.innerText = `${activeDays.length} ACTIVE DAYS`;
+
+            if (calEl) {
+                const monthMap = data.monthMap || {};
+                const keys = Object.keys(monthMap).sort();
+                if (keys.length === 0) {
+                    calEl.innerHTML = `<div style="grid-column:1/-1;color:#64748b;font-size:10px;">NO ARCHIVE SCANS THIS MONTH</div>`;
+                } else {
+                    calEl.innerHTML = keys.map(k => {
+                        const cnt = Number(monthMap[k] || 0);
+                        const has = cnt > 0;
+                        const sel = data.selectedDay === k;
+                        return `<button class="mon02-rh-day-btn" data-day="${esc(k)}" title="${esc(k)}: ${cnt} scans" style="padding:3px 2px;font-size:9px;border-radius:2px;cursor:${has ? 'pointer' : 'default'};border:1px solid ${sel ? '#38bdf8' : (has ? '#22c55e' : '#1e293b')};background:${sel ? '#0369a1' : (has ? '#052e16' : '#020617')};color:${has ? '#dcfce7' : '#475569'};">${esc(k.slice(6))}</button>`;
+                    }).join('');
+                    calEl.querySelectorAll('.mon02-rh-day-btn').forEach(btn => {
+                        const d = btn.getAttribute('data-day');
+                        if (!d || !(Number(monthMap[d] || 0) > 0)) return;
+                        btn.onclick = async () => {
+                            try {
+                                const res = await fetch(`/api/radarhub?pathway=${encodeURIComponent(data.id)}&day=${encodeURIComponent(d)}`);
+                                if (!res.ok) return;
+                                const j = await res.json();
+                                const found = (j.units || []).find(x => x.id === data.id);
+                                if (found) renderUnitData(found);
+                            } catch (_) {}
+                        };
+                    });
+                }
+            }
+
+            if (dayLbl) dayLbl.innerText = data.selectedDay || 'NONE';
+            const counts = Array.isArray(data.hourlyCounts) ? data.hourlyCounts : [];
+            const totalScans = counts.reduce((a, b) => a + Number(b || 0), 0);
+            if (totalDayEl) totalDayEl.innerText = `${totalScans} SCANS`;
+            if (barsEl) {
+                const maxC = Math.max(1, ...counts.map(n => Number(n || 0)));
+                barsEl.innerHTML = counts.length === 24
+                    ? counts.map((c, hr) => {
+                        const hPct = Math.max(4, Math.round((Number(c || 0) / maxC) * 100));
+                        return `<div title="${String(hr).padStart(2, '0')}Z: ${c} scans" style="flex:1;height:${hPct}%;background:${c > 0 ? '#22c55e' : '#1e293b'};border-radius:1px;"></div>`;
+                    }).join('')
+                    : `<div style="color:#64748b;font-size:10px;">NO HOURLY DATA FOR SELECTED MONTH</div>`;
+            }
+
+            if (sweepsEl) {
+                const sweeps = Array.isArray(data.latestSweeps) ? data.latestSweeps : [];
+                if (sweeps.length === 0) {
+                    sweepsEl.innerHTML = `<div style="color:#64748b;">No sweeps recorded for ${esc(data.name)} in ${esc(data.month || 'current month')}. Listening on WebSocket for live scans...</div>`;
+                } else {
+                    sweepsEl.innerHTML = sweeps.slice(0, 25).map(sw =>
+                        `<div style="display:flex;justify-content:space-between;padding:2px 4px;background:#020617;border:1px solid #1e293b;border-radius:2px;"><span style="color:#e2e8f0;">${esc(sw)}</span><span style="color:#22c55e;">PPI</span></div>`
+                    ).join('');
+                }
+            }
+        };
+
+        renderUnitData(u);
+
+        // Connect live WebSocket for this specific pathway
+        let ws = null;
+        const wsUrl = u.wsUrl || `wss://radarhub.arrc.ou.edu/ws/${u.id}/`;
+        const wsBadge = document.getElementById('mon02-rh-ws-badge');
+        const pktStats = document.getElementById('mon02-rh-pkt-stats');
+        try {
+            ws = new WebSocket(wsUrl);
+            ws.binaryType = 'arraybuffer';
+            ws.onopen = () => {
+                if (wsBadge) {
+                    wsBadge.innerText = `WS: LIVE (${u.id})`;
+                    wsBadge.style.color = '#22c55e';
+                    wsBadge.style.borderColor = '#22c55e';
+                }
+            };
+            ws.onmessage = (ev) => {
+                pktCount += 1;
+                lastPktTs = Date.now();
+                const len = ev.data instanceof ArrayBuffer ? ev.data.byteLength : String(ev.data || '').length;
+                pktBytes += len;
+                if (pktStats) pktStats.innerText = `PKTS: ${pktCount} // ${(pktBytes / 1024).toFixed(1)} KB`;
+                // Add real-time radar echo blips along current sweep angle from live packet
+                const r = 74;
+                for (let k = 0; k < 4; k++) {
+                    const dist = 10 + Math.random() * (r - 14);
+                    echoes.push({
+                        x: 80 + Math.cos(sweepAngle + (Math.random() - 0.5) * 0.15) * dist,
+                        y: 80 + Math.sin(sweepAngle + (Math.random() - 0.5) * 0.15) * dist,
+                        alpha: 1.0
+                    });
+                }
+            };
+            ws.onerror = () => {
+                if (wsBadge) {
+                    wsBadge.innerText = 'WS: RETRYING';
+                    wsBadge.style.color = '#f87171';
+                }
+            };
+            ws.onclose = () => {
+                if (wsBadge && wsBadge.innerText.includes('LIVE')) {
+                    wsBadge.innerText = 'WS: CLOSED';
+                    wsBadge.style.color = '#94a3b8';
+                }
+            };
+        } catch (_) {}
+
+        // Unit switcher buttons inside MON-02
+        target.querySelectorAll('.mon02-rh-unit').forEach(btn => {
+            btn.onclick = () => {
+                const nextId = btn.getAttribute('data-rh-id');
+                if (nextId && nextId !== u.id) window.openMobileDopplerInMon02(nextId);
+            };
+        });
+
+        // In-MON-02 embedded raw scope toggle
+        const embedBtn = document.getElementById('mon02-rh-embed-btn');
+        const nativeBody = document.getElementById('mon02-rh-native-body');
+        const iframeBody = document.getElementById('mon02-rh-iframe-body');
+        const iframeEl = document.getElementById('mon02-rh-iframe');
+        let embedMode = false;
+        if (embedBtn && nativeBody && iframeBody && iframeEl) {
+            embedBtn.onclick = () => {
+                embedMode = !embedMode;
+                nativeBody.style.display = embedMode ? 'none' : 'grid';
+                iframeBody.style.display = embedMode ? 'block' : 'none';
+                embedBtn.innerText = embedMode ? '📊 NATIVE COCKPIT' : '🖥️ RAW SCOPE';
+                if (embedMode && (!iframeEl.src || iframeEl.src === 'about:blank')) {
+                    iframeEl.src = u.archiveUrl || `https://radarhub.arrc.ou.edu/archive/${u.id}/`;
+                }
+            };
+        }
+
+        window._mon02DopplerCleanup = () => {
+            clearInterval(ppiTimer);
+            if (ws) {
+                try { ws.close(); } catch (_) {}
+            }
+        };
     };
 
     if (document.readyState === 'loading') {

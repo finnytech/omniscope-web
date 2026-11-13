@@ -830,48 +830,78 @@ let radarHubCache = { ts: 0, data: null };
 async function handleRadarHub(url) {
   const pathwayParam = (url.searchParams.get("pathway") || "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
   const now = new Date();
-  const defaultMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-  const month = /^\d{4}-\d{2}$/.test(url.searchParams.get("month") || "") ? url.searchParams.get("month") : defaultMonth;
+  const defaultMonth = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const rawMonth = (url.searchParams.get("month") || "").replace(/-/g, "");
+  const month = /^\d{6}$/.test(rawMonth) ? rawMonth : defaultMonth;
+  const reqDay = /^\d{8}$/.test(url.searchParams.get("day") || "") ? url.searchParams.get("day") : null;
 
   const UNITS = [
-    { id: "px1000", name: "PX-1000 (Polarimetric X-Band)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/px1000/", wsGroup: "PX-1000" },
-    { id: "raxpol", name: "RaXPol (Rapid-Scan Mobile Doppler)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/raxpol/", wsGroup: "RaXPol" },
-    { id: "px10k", name: "PX-10k (High-Power X-Band)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/px10k/", wsGroup: "PX-10k" },
-    { id: "dlroof", name: "Lidar-Roof (ARRC Doppler Lidar)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/dlroof/", wsGroup: "Lidar-Roof" },
-    { id: "bs1", name: "Bistatic-1 (Bistatic Receiver)", lat: 35.1818, lon: -97.4394, archiveUrl: "https://radarhub.arrc.ou.edu/archive/bs1/", wsGroup: "Bistatic-1" }
+    { id: "px1000", name: "PX-1000 (Polarimetric X-Band)", lat: 35.1818, lon: -97.4394, wsGroup: "PX-1000" },
+    { id: "raxpol", name: "RaXPol (Rapid-Scan Mobile Doppler)", lat: 35.1818, lon: -97.4394, wsGroup: "RaXPol" },
+    { id: "px10k", name: "PX-10k (High-Power X-Band)", lat: 35.1818, lon: -97.4394, wsGroup: "PX-10k" },
+    { id: "dlroof", name: "Lidar-Roof (ARRC Doppler Lidar)", lat: 35.1818, lon: -97.4394, wsGroup: "Lidar-Roof" },
+    { id: "bs1", name: "Bistatic-1 (Bistatic Receiver)", lat: 35.1818, lon: -97.4394, wsGroup: "Bistatic-1" }
   ];
 
   const selectedUnits = pathwayParam ? UNITS.filter(u => u.id === pathwayParam) : UNITS;
-  if (!pathwayParam && Date.now() - radarHubCache.ts < 55000 && radarHubCache.data) {
+  if (!pathwayParam && !reqDay && Date.now() - radarHubCache.ts < 55000 && radarHubCache.data) {
     return jsonResponse(radarHubCache.data);
   }
 
+  const rhHeaders = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "Accept-Encoding": "gzip, deflate",
+    "Accept": "application/json,*/*"
+  };
+
   const results = await Promise.all(selectedUnits.map(async (unit) => {
     const dataUrl = `https://radarhub.arrc.ou.edu/data/month/${unit.id}/${month}/`;
-    let payload = null;
+    let monthMap = {};
+    let activeDays = [];
+    let latestDay = reqDay;
+    let hourlyCounts = [];
+    let latestSweeps = [];
     let reachable = false;
     try {
-      const r = await chaserFetchT(dataUrl, 4500, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          "Referer": unit.archiveUrl,
-          "Accept": "application/json,text/html,*/*"
-        }
-      });
+      const r = await chaserFetchT(dataUrl, 4500, { headers: rhHeaders });
       if (r.ok) {
         reachable = true;
-        const txt = await r.text();
-        try { payload = JSON.parse(txt); } catch (_) { payload = { raw_length: txt.length }; }
+        monthMap = await r.json();
+        activeDays = Object.keys(monthMap).filter(k => Number(monthMap[k]) > 0).sort();
+        if (!latestDay && activeDays.length > 0) latestDay = activeDays[activeDays.length - 1];
+      }
+      if (latestDay) {
+        const cr = await chaserFetchT(`https://radarhub.arrc.ou.edu/data/count/${unit.id}/${latestDay}/`, 4000, { headers: rhHeaders });
+        if (cr.ok) {
+          const cd = await cr.json();
+          hourlyCounts = Array.isArray(cd.count) ? cd.count : [];
+          let lastHr = -1;
+          for (let h = hourlyCounts.length - 1; h >= 0; h--) {
+            if (hourlyCounts[h] > 0) { lastHr = h; break; }
+          }
+          if (lastHr >= 0) {
+            const hhmm = `${String(lastHr).padStart(2, "0")}00`;
+            const tr = await chaserFetchT(`https://radarhub.arrc.ou.edu/data/table/${unit.id}/${latestDay}-${hhmm}/`, 4000, { headers: rhHeaders });
+            if (tr.ok) {
+              const td = await tr.json();
+              latestSweeps = Array.isArray(td.items) ? td.items.slice(-24).reverse() : [];
+            }
+          }
+        }
       }
     } catch (_) {}
     return {
       ...unit,
       month,
       dataUrl,
-      wsUrl: "wss://radarhub.arrc.ou.edu/ws/user/",
+      wsUrl: `wss://radarhub.arrc.ou.edu/ws/${unit.id}/`,
       pollIntervalSec: 60,
       reachable,
-      latestData: payload
+      activeDays,
+      monthMap,
+      latestDay,
+      hourlyCounts,
+      latestSweeps
     };
   }));
 
@@ -880,12 +910,11 @@ async function handleRadarHub(url) {
     source: "OU ARRC RadarHub",
     month,
     poll_interval_sec: 60,
-    websocket_url: "wss://radarhub.arrc.ou.edu/ws/user/",
     count: results.length,
     units: results,
     updatedAt: new Date().toISOString()
   };
-  if (!pathwayParam) radarHubCache = { ts: Date.now(), data: out };
+  if (!pathwayParam && !reqDay) radarHubCache = { ts: Date.now(), data: out };
   return jsonResponse(out);
 }
 
