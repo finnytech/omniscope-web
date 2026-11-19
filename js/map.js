@@ -1276,7 +1276,11 @@ class OperationsMap {
             } else {
                 this.isFlightsEnabled = true;
                 this.fetchFlights();
-                setInterval(() => this.fetchFlights(), 15000);
+                setInterval(() => {
+                    if (!document.hidden && this.map && this.map.hasLayer(this.flightsLayer)) {
+                        this.fetchFlights();
+                    }
+                }, 30000);
             }
 
             // 2. Tomorrow.io / Air Quality
@@ -1823,6 +1827,22 @@ class OperationsMap {
                             } else {
                                 this.renderChasers(this.rawChasers);
                             }
+                        } else if (mapping.topId === 'layer-mobile-doppler' && this.mobileDopplerLayer.getLayers().length === 0) {
+                            this.fetchMobileDoppler();
+                        } else if (mapping.topId === 'layer-spotter-reports' && this.spotterReportsLayer.getLayers().length === 0) {
+                            this.fetchSpotterReports();
+                        } else if (mapping.topId === 'layer-eol-aprs' && this.eolAprsLayer.getLayers().length === 0) {
+                            this.fetchEolAndAprs();
+                        } else if (mapping.topId === 'layer-spc-outlook' && this.spcOutlookLayer.getLayers().length === 0) {
+                            this.fetchSpcOutlook();
+                        } else if (mapping.topId === 'layer-lsr-reports' && this.lsrReportsLayer.getLayers().length === 0) {
+                            this.fetchLsrReports();
+                        } else if (mapping.topId === 'layer-mil-flights' && this.milFlightsLayer.getLayers().length === 0) {
+                            this.fetchMilitaryFlights();
+                        } else if (mapping.topId === 'layer-cyber-outages' && this.cyberOutagesLayer.getLayers().length === 0) {
+                            this.fetchCyberOutages();
+                        } else if (mapping.topId === 'layer-eonet' && this.eonetLayer.getLayers().length === 0) {
+                            this.fetchEonetEvents();
                         }
                     } else {
                         if (mapping.topId === 'layer-alerts' || mapping.topId === 'layer-tornado-ground') {
@@ -5014,101 +5034,58 @@ class OperationsMap {
         }
     }
 
+    _schedulePoll(fn, intervalMs, layerRef = null, initialDelayMs = 0) {
+        const run = () => {
+            if (document.hidden) return;
+            if (layerRef && this.map && !this.map.hasLayer(layerRef)) return;
+            fn();
+        };
+        if (initialDelayMs > 0) setTimeout(run, initialDelayMs);
+        else run();
+        return setInterval(run, intervalMs);
+    }
+
     startLiveTelemetry() {
-        // 1. ISS Tracking (every 5 seconds)
-        this.fetchISS();
-        setInterval(() => this.fetchISS(), 5000);
+        // Tier 1: Core real-time situational layers (immediate startup)
+        this._schedulePoll(() => this.fetchISS(), 5000, this.issLayer, 0);
+        this._schedulePoll(() => this.fetchEarthquakes(), 60000, this.quakesLayer, 0);
+        this._schedulePoll(() => this.fetchSevereAlerts(), 60000, this.alertsLayer, 0);
+        this._schedulePoll(() => this.fetchNoaaUsaWeather(), 60000, this.noaaStationsLayer, 200);
+        this._schedulePoll(() => this.fetchChasers(), 60000, this.chasersLayer, 200);
+        this._schedulePoll(() => this.fetchBlitzortungClusters(), 30000, this.blitzortungLayer, 300);
 
-        // 2. Digitraffic AIS Marine Vessels (every 25 seconds)
-        this.fetchVessels();
-        setInterval(() => this.fetchVessels(), 25000);
-
-        // 5. USGS Global Earthquakes (every 60 seconds)
-        this.fetchEarthquakes();
-        setInterval(() => this.fetchEarthquakes(), 60000);
-
-        // 6. NOAA Severe Weather Warnings & Radar Polygons (every 60 seconds)
-        this.fetchSevereAlerts();
-        setInterval(() => this.fetchSevereAlerts(), 60000);
-
-        // 7. European Rail Transit on Map (every 30 seconds)
-        this.fetchTrains();
-        setInterval(() => this.fetchTrains(), 30000);
-
-        // 8. NOAA Live USA Weather Observations & Radar Stations (every 60 seconds)
-        this.fetchNoaaUsaWeather();
-        setInterval(() => this.fetchNoaaUsaWeather(), 60000);
-
-        // 9. Submarine Fiber Cables (TeleGeography live dataset)
-        this.fetchSubmarineCables();
-
-        // 10. UN/EU GDACS Multi-Hazard Alerts (every 90s)
-        this.fetchGdacsDisasters();
-        setInterval(() => this.fetchGdacsDisasters(), 90000);
-
-        // 10b. Baltic AIS Realtime Vessel Tracking (Digitraffic live dataset)
-        this.fetchBalticAis();
-        setInterval(() => this.fetchBalticAis(), 30000);
-
-        // 11. Safecast Global Radiation Telemetry (every 90s)
-        this.fetchSafecastRadiation();
-        setInterval(() => this.fetchSafecastRadiation(), 90000);
-
-        // 12. Aviation Weather Center (AWC) METAR Observations (every 120s)
-        this.fetchMetarStations();
-        setInterval(() => this.fetchMetarStations(), 120000);
-
-        // 13. Public KiwiSDR HF Radio Receivers (every 300s)
-        this.fetchKiwiSdr();
-        setInterval(() => this.fetchKiwiSdr(), 300000);
-
-        // 14. US CBP Land Border Wait Times (every 120s)
-        this.fetchBorderWaitTimes();
-        setInterval(() => this.fetchBorderWaitTimes(), 120000);
-
-        // 15. Tor Project Relays & Exit Nodes (every 300s)
-        this.fetchTorRelays();
-        setInterval(() => this.fetchTorRelays(), 300000);
-
-        // 15b. v2.3.0 Mega-Tactical Layers
-        this.fetchVolcanoCalderas();
-        setInterval(() => this.fetchVolcanoCalderas(), 180000);
-
-        this.fetchTsunamiBuoys();
-        setInterval(() => this.fetchTsunamiBuoys(), 120000);
-
-        this.fetchBlitzortungClusters();
-        setInterval(() => this.fetchBlitzortungClusters(), 30000);
-
-        this.fetchSpaceTrackingDishes();
-        this.fetchEnergyTerminals();
-        this.fetchGeomagneticStations();
-        setInterval(() => this.fetchGeomagneticStations(), 300000);
-
-        // 15c. Storm Chasers: live GPS + verified live streams (every 60s)
-        this.fetchChasers();
-        setInterval(() => this.fetchChasers(), 60000);
-
-        // 15d. OU ARRC RadarHub, FARM/DOW Live, Spotter Reports, NCAR/EOL & APRS-IS (every 60s)
-        this.fetchMobileDoppler();
-        setInterval(() => this.fetchMobileDoppler(), 60000);
-        this.fetchSpotterReports();
-        setInterval(() => this.fetchSpotterReports(), 60000);
-        this.fetchEolAndAprs();
-        setInterval(() => this.fetchEolAndAprs(), 60000);
+        // Tier 2: Active Severe & Doppler Feeds (staggered 600-1400ms to prevent startup connection starvation)
+        this._schedulePoll(() => this.fetchMobileDoppler(), 60000, this.mobileDopplerLayer, 600);
+        this._schedulePoll(() => this.fetchSpotterReports(), 60000, this.spotterReportsLayer, 800);
+        this._schedulePoll(() => this.fetchSpcOutlook(), 300000, this.spcOutlookLayer, 900);
+        this._schedulePoll(() => this.fetchLsrReports(), 120000, this.lsrReportsLayer, 1000);
+        this._schedulePoll(() => this.fetchEolAndAprs(), 60000, this.eolAprsLayer, 1200);
         this.initRadarHubWebSocket();
 
-        // 15e. v2.10 New Keyless Providers: SPC Outlooks, IEM LSRs, Military ADS-B, IODA/OONI/Feodo Cyber Outages & NASA EONET
-        this.fetchSpcOutlook();
-        setInterval(() => this.fetchSpcOutlook(), 300000);
-        this.fetchLsrReports();
-        setInterval(() => this.fetchLsrReports(), 120000);
-        this.fetchMilitaryFlights();
-        setInterval(() => this.fetchMilitaryFlights(), 45000);
-        this.fetchCyberOutages();
-        setInterval(() => this.fetchCyberOutages(), 180000);
-        this.fetchEonetEvents();
-        setInterval(() => this.fetchEonetEvents(), 300000);
+        // Tier 3: Global Aviation, Maritime, Rail & Heavy OSINT Layers (staggered 1400-3200ms, skipped when hidden/unchecked)
+        this._schedulePoll(() => this.fetchMilitaryFlights(), 45000, this.milFlightsLayer, 1400);
+        this._schedulePoll(() => this.fetchVessels(), 25000, this.vesselsLayer, 1500);
+        this._schedulePoll(() => this.fetchTrains(), 30000, this.trainsLayer, 1700);
+        this._schedulePoll(() => this.fetchBalticAis(), 30000, this.balticAisLayer, 1800);
+        this._schedulePoll(() => this.fetchGdacsDisasters(), 90000, this.gdacsLayer, 2000);
+        this._schedulePoll(() => this.fetchEonetEvents(), 300000, this.eonetLayer, 2100);
+        this._schedulePoll(() => this.fetchSafecastRadiation(), 90000, this.safecastLayer, 2200);
+        this._schedulePoll(() => this.fetchMetarStations(), 120000, this.metarLayer, 2400);
+        this._schedulePoll(() => this.fetchVolcanoCalderas(), 180000, this.volcanoLayer, 2500);
+        this._schedulePoll(() => this.fetchTsunamiBuoys(), 120000, this.buoyLayer, 2600);
+        this._schedulePoll(() => this.fetchBorderWaitTimes(), 120000, this.bordersLayer, 2700);
+        this._schedulePoll(() => this.fetchCyberOutages(), 180000, this.cyberOutagesLayer, 2800);
+        this._schedulePoll(() => this.fetchKiwiSdr(), 300000, this.kiwiSdrLayer, 3000);
+        this._schedulePoll(() => this.fetchTorRelays(), 300000, this.torLayer, 3200);
+        this._schedulePoll(() => this.fetchGeomagneticStations(), 300000, this.geomagLayer, 3400);
+
+        setTimeout(() => {
+            if (!document.hidden) {
+                if (this.map && this.map.hasLayer(this.cablesLayer)) this.fetchSubmarineCables();
+                if (this.map && this.map.hasLayer(this.spaceDishLayer)) this.fetchSpaceTrackingDishes();
+                if (this.map && this.map.hasLayer(this.energyLayer)) this.fetchEnergyTerminals();
+            }
+        }, 2800);
 
         // 16. OSINT Tactical Tools Workbench Drawer
         this.initOsintToolsDrawer();
@@ -6056,22 +6033,23 @@ class OperationsMap {
 
         if (tbody) tbody.innerHTML = '';
 
+        const escFire = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
         displayFires.slice(0, 40).forEach(fire => {
-            const lat = fire.lat || fire.latitude;
-            const lon = fire.lon || fire.longitude;
-            const brightness = fire.brightness || 320;
-            const sat = fire.satellite || "Terra/MODIS";
-            const conf = fire.confidence || "High";
-            const date = fire.acq_date || "Today";
+            const lat = Number(fire.lat || fire.latitude);
+            const lon = Number(fire.lon || fire.longitude);
+            const brightness = escFire(fire.brightness || 320);
+            const sat = escFire(fire.satellite || "Terra/MODIS");
+            const conf = escFire(fire.confidence || "High");
+            const date = escFire(fire.acq_date || "Today");
 
-            if (lat && lon) {
+            if (isFinite(lat) && isFinite(lon)) {
                 const circle = L.circleMarker([lat, lon], {
                     radius: 4,
                     color: '#ef4444',
                     fillColor: '#f97316',
                     fillOpacity: 0.85,
                     weight: 1
-                }).bindPopup(`<strong>NASA FIRMS FIRE ANOMALY</strong><br>Lat: ${lat}, Lon: ${lon}<br>Brightness: ${brightness} K<br>Satellite: ${sat}<br><span style="color:#f97316;font-size:11px;">[CLICK TO OPEN DOSSIER]</span>`)
+                }).bindPopup(`<strong>NASA FIRMS FIRE ANOMALY</strong><br>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}<br>Brightness: ${brightness} K<br>Satellite: ${sat}<br><span style="color:#f97316;font-size:11px;">[CLICK TO OPEN DOSSIER]</span>`)
                   .addTo(this.firmsLayer);
 
                 const openDossier = (e) => {

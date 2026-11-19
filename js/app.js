@@ -54,25 +54,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const fpsDotEl = document.getElementById('fps-dot');
 
     function fpsLoop(now) {
-        frameCount++;
-        const delta = now - lastFpsTime;
-        if (delta >= 400) {
-            const currentFps = Math.min(240, Math.round((frameCount * 1000) / delta));
-            if (fpsValEl) {
-                fpsValEl.innerText = `${currentFps} FPS`;
-                if (currentFps >= 90) {
-                    fpsValEl.style.color = '#34d399';
-                    if (fpsDotEl) fpsDotEl.style.background = '#10b981';
-                } else if (currentFps >= 50) {
-                    fpsValEl.style.color = '#38bdf8';
-                    if (fpsDotEl) fpsDotEl.style.background = '#38bdf8';
-                } else {
-                    fpsValEl.style.color = '#f59e0b';
-                    if (fpsDotEl) fpsDotEl.style.background = '#f59e0b';
+        if (!document.hidden) {
+            frameCount++;
+            const delta = now - lastFpsTime;
+            if (delta >= 400) {
+                const currentFps = Math.min(240, Math.round((frameCount * 1000) / delta));
+                if (fpsValEl) {
+                    fpsValEl.innerText = `${currentFps} FPS`;
+                    if (currentFps >= 90) {
+                        fpsValEl.style.color = '#34d399';
+                        if (fpsDotEl) fpsDotEl.style.background = '#10b981';
+                    } else if (currentFps >= 50) {
+                        fpsValEl.style.color = '#38bdf8';
+                        if (fpsDotEl) fpsDotEl.style.background = '#38bdf8';
+                    } else {
+                        fpsValEl.style.color = '#f59e0b';
+                        if (fpsDotEl) fpsDotEl.style.background = '#f59e0b';
+                    }
                 }
+                frameCount = 0;
+                lastFpsTime = now;
             }
-            frameCount = 0;
-            lastFpsTime = now;
         }
         requestAnimationFrame(fpsLoop);
     }
@@ -469,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateSevereWeather();
-    setInterval(updateSevereWeather, 60000);
+    setInterval(() => { if (!document.hidden) updateSevereWeather(); }, 60000);
 
     // Multi-Sensor Intelligence Event Log (MON-07)
     async function updateEventLog() {
@@ -572,7 +574,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     updateEventLog();
-    setInterval(updateEventLog, 8000);
+    setInterval(() => { if (!document.hidden) updateEventLog(); }, 30000);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            updateEventLog();
+            updateSevereWeather();
+        }
+    });
 
     // =========================================================================
     // MONITOR 13: Global OSINT News Desk (GDELT, UN ReliefWeb, EMSC Euro-Med)

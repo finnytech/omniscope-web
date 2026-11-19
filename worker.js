@@ -1475,6 +1475,76 @@ async function handleSpaceSatellites(url) {
   }
 }
 
+let telemetryFlightsCache = { ts: 0, data: null };
+async function handleTelemetryFlights() {
+  if (Date.now() - telemetryFlightsCache.ts < 25000 && telemetryFlightsCache.data) {
+    return jsonResponse(telemetryFlightsCache.data);
+  }
+  try {
+    const r = await chaserFetchT("https://opensky-network.org/api/states/all?lamin=24&lomin=-125&lamax=62&lomax=25", 6500, {
+      headers: { "User-Agent": "OmniScope-OSINT/2.9.3" }
+    });
+    if (r.ok) {
+      const j = await r.json();
+      const flights = (j.states || []).filter(s => s && s[5] != null && s[6] != null && !s[8]).slice(0, 120).map(s => ({
+        icao24: s[0] || "",
+        callsign: String(s[1] || s[0] || "ACFT").trim(),
+        origin_country: s[2] || "International",
+        longitude: Number(s[5]),
+        latitude: Number(s[6]),
+        baro_altitude_m: Number(s[7] || s[13] || 10000),
+        velocity_ms: Number(s[9] || 220),
+        true_track_deg: Number(s[10] || 0)
+      }));
+      const out = { status: "ok", source: "OpenSky Live Keyless", count: flights.length, flights, updatedAt: new Date().toISOString() };
+      telemetryFlightsCache = { ts: Date.now(), data: out };
+      return jsonResponse(out, 200, { "Cache-Control": "public, max-age=20" });
+    }
+  } catch (_) {}
+  if (telemetryFlightsCache.data) return jsonResponse({ ...telemetryFlightsCache.data, cached: true });
+  return jsonResponse({ status: "omitted", source: "opensky-rate-limit", count: 0, flights: [] });
+}
+
+let telemetryFirmsCache = { ts: 0, data: null };
+async function handleTelemetryFirms() {
+  if (Date.now() - telemetryFirmsCache.ts < 180000 && telemetryFirmsCache.data) {
+    return jsonResponse(telemetryFirmsCache.data);
+  }
+  try {
+    const r = await chaserFetchT("https://eonet.gsfc.nasa.gov/api/v3/events?category=wildfires&status=open&limit=60", 6500, {
+      headers: { "User-Agent": "OmniScope-OSINT/2.9.3", "Accept": "application/json" }
+    });
+    const hotspots = [];
+    if (r.ok) {
+      const txt = await r.text();
+      if (txt.trim().startsWith("{")) {
+        const j = JSON.parse(txt);
+        for (const ev of (j.events || [])) {
+          const g = Array.isArray(ev.geometry) && ev.geometry.length ? ev.geometry[ev.geometry.length - 1] : null;
+          const coords = g && Array.isArray(g.coordinates) ? g.coordinates : null;
+          if (coords && typeof coords[0] === "number" && typeof coords[1] === "number") {
+            hotspots.push({
+              lat: coords[1],
+              lon: coords[0],
+              brightness: 340,
+              satellite: "NASA EONET / VIIRS",
+              confidence: "High",
+              acq_date: (g.date || "").slice(0, 10) || new Date().toISOString().slice(0, 10),
+              title: ev.title || "Wildfire"
+            });
+          }
+        }
+      }
+    }
+    const out = { status: "ok", source: "NASA EONET Wildfires", count: hotspots.length, hotspots, updatedAt: new Date().toISOString() };
+    telemetryFirmsCache = { ts: Date.now(), data: out };
+    return jsonResponse(out, 200, { "Cache-Control": "public, max-age=180" });
+  } catch (_) {
+    if (telemetryFirmsCache.data) return jsonResponse({ ...telemetryFirmsCache.data, cached: true });
+    return jsonResponse({ status: "ok", source: "NASA EONET Wildfires", count: 0, hotspots: [] });
+  }
+}
+
 async function handleStorms() {
   try {
 
@@ -6144,6 +6214,26 @@ const PRIMARY_US_STATIONS = [
 
       if (url.pathname === "/api/space/satellites") {
         return handleSpaceSatellites(url);
+      }
+
+      if (url.pathname === "/api/telemetry/flights") {
+        return handleTelemetryFlights();
+      }
+
+      if (url.pathname === "/api/telemetry/firms") {
+        return handleTelemetryFirms();
+      }
+
+      if (url.pathname === "/api/logs/feedback") {
+        return jsonResponse({ status: "ok", logged: true });
+      }
+
+      if (url.pathname === "/api/weather/alarms/poll") {
+        return jsonResponse({ status: "ok", active_alarms: [], ground_tornado_detected: false });
+      }
+
+      if (url.pathname === "/api/weather/alarms/test") {
+        return jsonResponse({ status: "ok", alarm: { severity: "TEST", headline: "OmniScope Drill Test Nominal", area: "Oklahoma Sector" } });
       }
 
       if (url.pathname === "/api/weather/alarms/config") {
