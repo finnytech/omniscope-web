@@ -827,8 +827,8 @@
 
 
             if (!filtered.length) {
-
-                grid.innerHTML = `<div style="text-align:center;padding:24px 12px;color:#94a3b8;font-size:0.76rem;">Kein Live-Sender für "${this.searchQuery}" in dieser Kategorie gefunden.<br><button id="btn-reset-tv-filter" class="ops-btn" style="margin-top:8px;background:#10b981;color:#022c22;border:none;font-weight:bold;cursor:pointer;">Alle 108 Sender anzeigen</button></div>`;
+                const safeQuery = String(this.searchQuery || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+                grid.innerHTML = `<div style="text-align:center;padding:24px 12px;color:#94a3b8;font-size:0.76rem;">Kein Live-Sender für "${safeQuery}" in dieser Kategorie gefunden.<br><button id="btn-reset-tv-filter" class="ops-btn" style="margin-top:8px;background:#10b981;color:#022c22;border:none;font-weight:bold;cursor:pointer;">Alle 108 Sender anzeigen</button></div>`;
 
                 grid.querySelector('#btn-reset-tv-filter')?.addEventListener('click', () => {
 

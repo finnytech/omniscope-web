@@ -4,14 +4,16 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
 
   const MODE_METADATA = {
     composite: { title: "dBZ Reflektivität (Base Reflectivity)", unit: "dBZ", scheme: 2, scale_range: [5, 75] },
-    dbz: { title: "dBZ Reflektivität (Base Reflectivity)", unit: "dBZ", scheme: 2, scale_range: [5, 75] },
+    dbz: { title: "MRMS High-Res Reflektivität (dBZ)", unit: "dBZ", scheme: 6, scale_range: [5, 75] },
     velocity: { title: "Doppler Radial-Wind (Radial Velocity)", unit: "kt", scheme: 6, scale_range: [-64, 64] },
     rain_rate: { title: "Niederschlagsrate (Rain Rate)", unit: "mm/h", scheme: 7, scale_range: [0.1, 100] },
-    echo_tops: { title: "Echohöhe (Echo Tops TITAN)", unit: "kft", scheme: 3, scale_range: [5, 65] },
-    dual_pol_cc: { title: "Dual-Pol Korrelationskoeffizient (CC)", unit: "ρ_hv", scheme: 6, scale_range: [0.7, 1.05] },
-    differential_z: { title: "Differenzielle Reflektivität (ZDR)", unit: "dB", scheme: 2, scale_range: [-2, 8] },
+    echo_tops: { title: "Echohöhe (Echo Tops EET)", unit: "kft", scheme: 3, scale_range: [5, 65] },
+    dual_pol_cc: { title: "Dual-Pol Hydrometeor-Klassifikation (BDHC)", unit: "class", scheme: 6, scale_range: [0, 15] },
+    differential_z: { title: "Niederschlagstyp / Hagel-Mix (Precip Type)", unit: "type", scheme: 2, scale_range: [0, 10] },
+    storm_cells: { title: "DWD Gewitterzellen & Blitzdichte", unit: "cells", scheme: 6, scale_range: [0, 50] },
     satellite_ir: { title: "Infrarot Wolkenspitzen (Clean IR)", unit: "°C", scheme: 0, scale_range: [-80, 40] },
-    satellite_vis: { title: "Ultra High-Res Sichtbar (Visible)", unit: "Albedo %", scheme: 1, scale_range: [0, 100] }
+    satellite_vis: { title: "Ultra High-Res Sichtbar (Visible)", unit: "Albedo %", scheme: 1, scale_range: [0, 100] },
+    satellite_wv: { title: "Wasserdampf-Kanal (Water Vapor)", unit: "°C", scheme: 0, scale_range: [-70, 0] }
   };
 
   const selectedMode = MODE_METADATA[m] || MODE_METADATA.composite;
@@ -22,14 +24,14 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       type: "global_radar",
       refresh_sec: 600,
       max_native_zoom: 7,
-      supported_modes: ["composite", "rain_rate", "satellite_ir"]
+      supported_modes: ["composite", "satellite_ir"]
     },
     rainviewer_radar_grid: {
       name: "RainViewer Global Doppler Grid",
       type: "global_radar",
       refresh_sec: 600,
       max_native_zoom: 7,
-      supported_modes: ["composite", "velocity", "rain_rate", "echo_tops", "dual_pol_cc"]
+      supported_modes: ["composite", "satellite_ir"]
     },
     nexrad: {
       name: "NOAA NEXRAD Level-III USA",
@@ -37,15 +39,16 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
-      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate", "satellite_ir", "satellite_vis"]
+      supported_modes: ["composite", "dbz", "velocity", "echo_tops", "dual_pol_cc", "differential_z", "rain_rate", "satellite_ir", "satellite_vis", "satellite_wv"]
     },
     nexrad_l2: {
-      name: "NOAA NEXRAD Level-II High-Res RIDGE",
-      type: "tile",
-      tile_url: "https://mesonet.agron.iastate.edu/c/tile.py/1.0.0/ridge::USCOMP-N0R-0/{z}/{x}/{y}.png",
+      name: "NOAA NEXRAD Level-II Composite QCD",
+      type: "wms",
+      wms_url: "https://opengeo.ncep.noaa.gov/geoserver/ows",
+      wms_layer: "conus:conus_cref_qcd",
       refresh_sec: 60,
-      max_native_zoom: 11,
-      supported_modes: ["composite", "velocity", "echo_tops", "rain_rate"]
+      max_native_zoom: 12,
+      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate"]
     },
     nexrad_l3: {
       name: "NOAA NEXRAD Dual-Pol Level-III",
@@ -53,12 +56,13 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
-      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "rain_rate"]
+      supported_modes: ["composite", "velocity", "echo_tops", "dual_pol_cc", "differential_z", "rain_rate"]
     },
     tdwr: {
       name: "NOAA TDWR Terminal Doppler Radar",
-      type: "tile",
-      tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png",
+      type: "wms",
+      wms_url: "https://opengeo.ncep.noaa.gov/geoserver/ows",
+      wms_layer: "radar_reflectivity",
       refresh_sec: 60,
       max_native_zoom: 12,
       supported_modes: ["composite", "velocity", "echo_tops"]
@@ -69,7 +73,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-hsr-900913/{z}/{x}/{y}.png",
       refresh_sec: 60,
       max_native_zoom: 11,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["composite", "rain_rate", "echo_tops", "differential_z"]
     },
     openmeteo_hrrr: {
       name: "NOAA HRRR 3km Convective Radar",
@@ -83,10 +87,10 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       name: "Environment and Climate Change Canada (MSC GeoMet)",
       type: "wms",
       wms_url: "https://geo.weather.gc.ca/geomet",
-      wms_layer: "RADAR_1KM_RRAI",
+      wms_layer: "RADAR_1KM_RREC",
       refresh_sec: 180,
       max_native_zoom: 12,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["composite", "rain_rate", "satellite_vis", "satellite_ir"]
     },
     dwd: {
       name: "DWD Niederschlagsradar Deutschland",
@@ -95,7 +99,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       wms_layer: "dwd:Niederschlagsradar",
       refresh_sec: 300,
       max_native_zoom: 18,
-      supported_modes: ["composite", "rain_rate", "satellite_vis", "satellite_ir"]
+      supported_modes: ["composite", "rain_rate", "storm_cells", "satellite_vis", "satellite_ir"]
     },
     bright_sky: {
       name: "Bright Sky Synoptic Radar (DWD)",
@@ -113,7 +117,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       wms_layer: "dwd:Radar_rv_product_1x1km_ger",
       refresh_sec: 300,
       max_native_zoom: 18,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["composite", "rain_rate", "storm_cells"]
     },
     openmeteo_icon_eu: {
       name: "DWD ICON-EU (7km Continental)",
@@ -131,7 +135,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       wms_layer: "dwd:Radar_wn-analysis_1x1km_ger",
       refresh_sec: 300,
       max_native_zoom: 18,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["composite", "rain_rate", "storm_cells"]
     },
     buienradar: {
       name: "Buienradar Benelux Doppler (KNMI)",
@@ -140,13 +144,13 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       wms_layer: "RAD_NL25_PCP_CM",
       refresh_sec: 300,
       max_native_zoom: 10,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["rain_rate", "composite"]
     },
     knmi: {
       name: "KNMI Doppler Composites",
       type: "wms",
       wms_url: "https://geoservices.knmi.nl/adaguc-server?dataset=RADAR&",
-      wms_layer: "RAD_NL25_PCP_CM",
+      wms_layer: "radarReflectivity/nearest",
       refresh_sec: 300,
       max_native_zoom: 10,
       supported_modes: ["composite", "rain_rate"]
@@ -166,7 +170,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       tile_url: "https://www.jma.go.jp/bosai/jmatile/data/nowc/latest/none/latest/surf/hrpns/{z}/{x}/{y}.png",
       refresh_sec: 300,
       max_native_zoom: 10,
-      supported_modes: ["composite", "rain_rate"]
+      supported_modes: ["rain_rate", "composite"]
     },
     goes_east_vis: {
       name: "NOAA GOES-16 East VIS (1km Rapid)",
@@ -182,7 +186,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
       tile_url: "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png",
       refresh_sec: 30,
       max_native_zoom: 9,
-      supported_modes: ["satellite_ir"]
+      supported_modes: ["satellite_ir", "satellite_wv"]
     },
     goes_west_vis: {
       name: "NOAA GOES-18 West VIS (1km Rapid)",
@@ -231,52 +235,120 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
     name: p.toUpperCase() + " Doppler Network",
     type: "global_radar",
     refresh_sec: 300,
-    max_native_zoom: 8,
-    supported_modes: ["composite", "velocity", "rain_rate", "echo_tops"]
+    max_native_zoom: 7,
+    supported_modes: ["composite", "satellite_ir"]
   };
 
   let effectiveTileUrl = prov.tile_url || "";
   let effectiveWmsUrl = prov.wms_url || "";
   let effectiveWmsLayer = prov.wms_layer || "";
 
-  // Dynamic mode-aware routing
+  // Dynamic mode-aware routing (each mode maps to a genuinely distinct layer!)
   if (p === "nexrad" || p === "nexrad_l2" || p === "nexrad_l3" || p === "tdwr") {
-    if (m === "echo_tops") {
+    if (m === "velocity") {
+      effectiveWmsUrl = "https://opengeo.ncep.noaa.gov/geoserver/ows";
+      effectiveWmsLayer = "radar_velocity";
+      effectiveTileUrl = "";
+    } else if (m === "dual_pol_cc") {
+      effectiveWmsUrl = "https://opengeo.ncep.noaa.gov/geoserver/ows";
+      effectiveWmsLayer = "radar_bdhc";
+      effectiveTileUrl = "";
+    } else if (m === "differential_z") {
+      effectiveWmsUrl = "https://opengeo.ncep.noaa.gov/geoserver/ows";
+      effectiveWmsLayer = "conus:conus_pcpn_typ";
+      effectiveTileUrl = "";
+    } else if (m === "echo_tops") {
+      effectiveWmsUrl = ""; effectiveWmsLayer = "";
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png";
     } else if (m === "rain_rate") {
+      effectiveWmsUrl = ""; effectiveWmsLayer = "";
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png";
-    } else if (m === "velocity") {
-      effectiveTileUrl = "https://mesonet.agron.iastate.edu/c/tile.py/1.0.0/ridge::USCOMP-N0R-0/{z}/{x}/{y}.png";
+    } else if (m === "dbz") {
+      effectiveWmsUrl = ""; effectiveWmsLayer = "";
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-hsr-900913/{z}/{x}/{y}.png";
     } else if (m === "satellite_ir") {
+      effectiveWmsUrl = ""; effectiveWmsLayer = "";
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png";
     } else if (m === "satellite_vis") {
+      effectiveWmsUrl = ""; effectiveWmsLayer = "";
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png";
+    } else if (m === "satellite_wv") {
+      effectiveWmsUrl = ""; effectiveWmsLayer = "";
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-wv-4km-900913/{z}/{x}/{y}.png";
+    } else if (p === "nexrad_l2") {
+      effectiveWmsUrl = "https://opengeo.ncep.noaa.gov/geoserver/ows";
+      effectiveWmsLayer = "conus:conus_cref_qcd";
+      effectiveTileUrl = "";
+    } else if (p === "tdwr") {
+      effectiveWmsUrl = "https://opengeo.ncep.noaa.gov/geoserver/ows";
+      effectiveWmsLayer = "radar_reflectivity";
+      effectiveTileUrl = "";
     } else {
+      effectiveWmsUrl = ""; effectiveWmsLayer = "";
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png";
     }
+  } else if (p === "noaa_mrms") {
+    if (m === "rain_rate") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png";
+    } else if (m === "echo_tops") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-eet-900913/{z}/{x}/{y}.png";
+    } else if (m === "differential_z") {
+      effectiveWmsUrl = "https://opengeo.ncep.noaa.gov/geoserver/ows";
+      effectiveWmsLayer = "conus:conus_pcpn_typ";
+      effectiveTileUrl = "";
+    } else {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-hsr-900913/{z}/{x}/{y}.png";
+    }
+  } else if (p === "openmeteo_hrrr") {
+    effectiveTileUrl = (m === "rain_rate")
+      ? "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/q2-n1p-900913/{z}/{x}/{y}.png"
+      : "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/hrrr::REFD-F0000-0/{z}/{x}/{y}.png";
   } else if (p === "dwd" || p === "bright_sky" || p === "openmeteo_icon_d2" || p === "openmeteo_icon_eu" || p === "dwd_mosmix_hub") {
     effectiveWmsUrl = "https://maps.dwd.de/geoserver/dwd/wms";
     if (m === "satellite_vis" || m === "satellite_ir") {
       effectiveWmsLayer = "dwd:Satellite_meteosat_1km_euat_rgb_day_hrv_and_night_ir108_3h";
-    } else if (m === "rain_rate" || p === "openmeteo_icon_d2") {
+    } else if (m === "storm_cells") {
+      effectiveWmsLayer = p === "dwd_mosmix_hub" ? "dwd:Autowarn_Analyse" : "dwd:Gewitterzellen,dwd:Blitzdichte";
+    } else if (m === "rain_rate") {
+      effectiveWmsLayer = (p === "openmeteo_icon_eu") ? "dwd:Icon-eu_reg00625_fd_sl_TOTPREC01H" : (p === "dwd" ? "dwd:Radar_rv_product_1x1km_ger" : "dwd:RADOLAN-RY");
+    } else if (p === "openmeteo_icon_d2") {
       effectiveWmsLayer = "dwd:Radar_rv_product_1x1km_ger";
+    } else if (p === "dwd_mosmix_hub") {
+      effectiveWmsLayer = "dwd:Radar_wn-analysis_1x1km_ger";
     } else {
       effectiveWmsLayer = "dwd:Niederschlagsradar";
     }
   } else if (p === "eccc_canada") {
     effectiveWmsUrl = "https://geo.weather.gc.ca/geomet";
-    effectiveWmsLayer = (m === "rain_rate") ? "RADAR_1KM_RRAI" : "RADAR_1KM_RREC";
+    if (m === "satellite_ir") effectiveWmsLayer = "GOES-EAST_1KM_IR";
+    else if (m === "satellite_vis") effectiveWmsLayer = "GOES-EAST_1KM_VIS";
+    else if (m === "rain_rate") effectiveWmsLayer = "RADAR_1KM_RRAI";
+    else effectiveWmsLayer = "RADAR_1KM_RREC";
   } else if (p === "knmi" || p === "buienradar" || p === "knmi_radar_composites") {
     effectiveWmsUrl = "https://geoservices.knmi.nl/adaguc-server?dataset=RADAR&";
-    effectiveWmsLayer = (p === "knmi_radar_composites" && m === "composite") ? "Reflectivity" : "RAD_NL25_PCP_CM";
+    effectiveWmsLayer = (m === "rain_rate") ? "RAD_NL25_PCP_CM" : (p === "knmi" ? "radarReflectivity/nearest" : "Reflectivity");
+  } else if (p === "jma_japan") {
+    try {
+      const jtRes = await fetchFn("https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json");
+      if (jtRes.ok) {
+        const jt = await jtRes.json();
+        const latest = Array.isArray(jt) && jt[0];
+        if (latest && latest.basetime && latest.validtime) {
+          const elem = m === "composite" ? "hrpns_nd" : "hrpns";
+          effectiveTileUrl = `https://www.jma.go.jp/bosai/jmatile/data/nowc/${latest.basetime}/none/${latest.validtime}/surf/${elem}/{z}/{x}/{y}.png`;
+        }
+      }
+    } catch (_) {}
   } else if (p === "goes_east" || p === "goes_east_vis" || p === "goes_east_ir") {
-    if (m === "satellite_ir") {
+    if (m === "satellite_wv") {
+      effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-wv-4km-900913/{z}/{x}/{y}.png";
+    } else if (m === "satellite_ir" || p === "goes_east_ir") {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-ir-4km-900913/{z}/{x}/{y}.png";
     } else {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-east-vis-1km-900913/{z}/{x}/{y}.png";
     }
   } else if (p === "goes_west" || p === "goes_west_vis" || p === "goes_west_ir") {
-    if (m === "satellite_ir") {
+    if (m === "satellite_ir" || p === "goes_west_ir") {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-ir-4km-900913/{z}/{x}/{y}.png";
     } else {
       effectiveTileUrl = "https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/goes-west-vis-1km-900913/{z}/{x}/{y}.png";
@@ -297,6 +369,7 @@ async function handleWeatherRadar(url, fetchFn = fetch) {
     provider_name: prov.name,
     mode: m,
     mode_title: selectedMode.title,
+    supported_modes: prov.supported_modes || ["composite"],
     unit: selectedMode.unit,
     scheme: selectedMode.scheme,
     tile_url: effectiveTileUrl,
@@ -1163,6 +1236,242 @@ async function handleAprsTelemetry(url) {
       stations: [],
       updatedAt: new Date().toISOString()
     });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// NEW KEYLESS PROVIDERS (v2.10): SPC Outlook, IEM LSR, Military ADS-B, IODA/OONI/Feodo, CelesTrak, EONET, USGS Water
+// ---------------------------------------------------------------------------
+let spcOutlookCache = new Map();
+async function handleSpcOutlook(url) {
+  const day = ["1", "2", "3"].includes(url.searchParams.get("day")) ? url.searchParams.get("day") : "1";
+  const hazard = ["cat", "torn", "hail", "wind"].includes(url.searchParams.get("hazard")) ? url.searchParams.get("hazard") : "cat";
+  const cacheKey = `${day}_${hazard}`;
+  const hit = spcOutlookCache.get(cacheKey);
+  if (hit && Date.now() - hit.ts < 300000) return jsonResponse(hit.data);
+  const srcUrl = `https://www.spc.noaa.gov/products/outlook/day${day}otlk_${hazard}.lyr.geojson`;
+  try {
+    const r = await chaserFetchT(srcUrl, 7000, { headers: { "User-Agent": "OmniScope-OSINT/2.10 (tactical@omniscope-web.pages.dev)" } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const gj = await r.json();
+    const out = { status: "ok", source: srcUrl, day, hazard, features: gj.features || [], count: (gj.features || []).length, updatedAt: new Date().toISOString() };
+    spcOutlookCache.set(cacheKey, { ts: Date.now(), data: out });
+    return jsonResponse(out, 200, { "Cache-Control": "public, max-age=180" });
+  } catch (err) {
+    if (hit) return jsonResponse({ ...hit.data, cached: true });
+    return jsonResponse({ status: "ok", source: srcUrl, day, hazard, features: [], count: 0, error: String(err) });
+  }
+}
+
+let iemLsrCache = { ts: 0, data: null };
+async function handleIemLsr(url) {
+  const hours = Math.min(48, Math.max(1, parseInt(url.searchParams.get("hours") || "24", 10) || 24));
+  if (hours === 24 && Date.now() - iemLsrCache.ts < 90000 && iemLsrCache.data) return jsonResponse(iemLsrCache.data);
+  const srcUrl = `https://mesonet.agron.iastate.edu/geojson/lsr.geojson?hours=${hours}`;
+  try {
+    const r = await chaserFetchT(srcUrl, 7000, { headers: { "User-Agent": "OmniScope-OSINT/2.10" } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const gj = await r.json();
+    const reports = (gj.features || []).slice(0, 400).map(f => {
+      const p = f.properties || {};
+      const c = (f.geometry && f.geometry.coordinates) || [];
+      return {
+        lat: Number(c[1]),
+        lon: Number(c[0]),
+        type: p.typetext || p.type || "STORM REPORT",
+        magnitude: p.magnitude != null ? p.magnitude : null,
+        unit: p.unit || "",
+        city: p.city || "",
+        county: p.county || "",
+        state: p.state || "",
+        wfo: p.wfo || "",
+        valid: p.valid || "",
+        remark: p.remark || ""
+      };
+    }).filter(x => isFinite(x.lat) && isFinite(x.lon));
+    const out = { status: "ok", source: srcUrl, hours, count: reports.length, reports, updatedAt: new Date().toISOString() };
+    if (hours === 24) iemLsrCache = { ts: Date.now(), data: out };
+    return jsonResponse(out, 200, { "Cache-Control": "public, max-age=60" });
+  } catch (err) {
+    if (iemLsrCache.data) return jsonResponse({ ...iemLsrCache.data, cached: true });
+    return jsonResponse({ status: "ok", source: srcUrl, hours, count: 0, reports: [] });
+  }
+}
+
+let milFlightsCache = { ts: 0, data: null };
+async function handleMilitaryFlights(url) {
+  if (Date.now() - milFlightsCache.ts < 20000 && milFlightsCache.data) return jsonResponse(milFlightsCache.data);
+  const endpoints = [
+    { name: "adsb.fi", url: "https://opendata.adsb.fi/api/v2/mil" },
+    { name: "adsb.lol", url: "https://api.adsb.lol/v2/mil" },
+    { name: "airplanes.live", url: "https://api.airplanes.live/v2/mil" }
+  ];
+  for (const ep of endpoints) {
+    try {
+      const r = await chaserFetchT(ep.url, 6500, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 OmniScope/2.10", "Accept": "application/json" }
+      });
+      if (!r.ok) continue;
+      const j = await r.json();
+      const raw = Array.isArray(j.ac) ? j.ac : [];
+      const aircraft = raw.filter(a => isFinite(a.lat) && isFinite(a.lon)).slice(0, 350).map(a => ({
+        hex: a.hex || "",
+        flight: (a.flight || a.r || a.hex || "MIL").trim(),
+        reg: a.r || "",
+        type: a.t || "",
+        desc: a.desc || a.ownOp || "",
+        lat: Number(a.lat),
+        lon: Number(a.lon),
+        alt_baro: a.alt_baro != null ? a.alt_baro : null,
+        gs: a.gs != null ? Math.round(Number(a.gs)) : null,
+        track: a.track != null ? Math.round(Number(a.track)) : 0,
+        squawk: a.squawk || "",
+        emergency: a.emergency || "none"
+      }));
+      const out = { status: "ok", source: ep.name, count: aircraft.length, aircraft, updatedAt: new Date().toISOString() };
+      milFlightsCache = { ts: Date.now(), data: out };
+      return jsonResponse(out, 200, { "Cache-Control": "public, max-age=15" });
+    } catch (_) {}
+  }
+  if (milFlightsCache.data) return jsonResponse({ ...milFlightsCache.data, cached: true });
+  return jsonResponse({ status: "ok", source: "adsb-fallback", count: 0, aircraft: [], updatedAt: new Date().toISOString() });
+}
+
+let cyberOutageCache = { ts: 0, data: null };
+async function handleCyberOutages() {
+  if (Date.now() - cyberOutageCache.ts < 120000 && cyberOutageCache.data) return jsonResponse(cyberOutageCache.data);
+  const nowSec = Math.floor(Date.now() / 1000);
+  const fromSec = nowSec - 86400;
+  const iodaUrl = `https://api.ioda.inetintel.cc.gatech.edu/v2/outages/alerts?from=${fromSec}&until=${nowSec}&limit=25`;
+  const ooniUrl = "https://api.ooni.io/api/v1/measurements?limit=25&anomaly=true";
+  const feodoUrl = "https://feodotracker.abuse.ch/downloads/ipblocklist_recommended.json";
+  try {
+    const [iodaRes, ooniRes, feodoRes] = await Promise.allSettled([
+      chaserFetchT(iodaUrl, 6000, { headers: { "User-Agent": "OmniScope-OSINT/2.10" } }),
+      chaserFetchT(ooniUrl, 6000, { headers: { "User-Agent": "OmniScope-OSINT/2.10" } }),
+      chaserFetchT(feodoUrl, 6000, { headers: { "User-Agent": "OmniScope-OSINT/2.10" } })
+    ]);
+    const outages = [];
+    if (iodaRes.status === "fulfilled" && iodaRes.value.ok) {
+      const ij = await iodaRes.value.json();
+      for (const a of (ij.data || []).slice(0, 25)) {
+        outages.push({
+          datasource: a.datasource || "ioda",
+          entityType: a.entity && a.entity.type || "country",
+          entityCode: a.entity && a.entity.code || "",
+          entityName: a.entity && a.entity.name || "",
+          level: a.level || "warning",
+          time: a.time || nowSec
+        });
+      }
+    }
+    const censorship = [];
+    if (ooniRes.status === "fulfilled" && ooniRes.value.ok) {
+      const oj = await ooniRes.value.json();
+      for (const m of (oj.results || []).slice(0, 20)) {
+        censorship.push({
+          cc: m.probe_cc || "",
+          asn: m.probe_asn || "",
+          test_name: m.test_name || "",
+          input: m.input || "",
+          anomaly: Boolean(m.anomaly),
+          confirmed: Boolean(m.confirmed),
+          start_time: m.measurement_start_time || ""
+        });
+      }
+    }
+    let botnetCount = 0;
+    let botnets = [];
+    if (feodoRes.status === "fulfilled" && feodoRes.value.ok) {
+      const fj = await feodoRes.value.json();
+      if (Array.isArray(fj)) {
+        botnetCount = fj.length;
+        botnets = fj.slice(0, 30).map(b => ({
+          ip: b.ip_address || "",
+          port: b.port || 0,
+          malware: b.malware || "",
+          country: b.country || "",
+          status: b.status || ""
+        }));
+      }
+    }
+    const out = {
+      status: "ok",
+      sources: ["Georgia Tech IODA v2", "OONI", "abuse.ch Feodo Tracker"],
+      outages,
+      censorship,
+      botnets,
+      botnet_total: botnetCount,
+      updatedAt: new Date().toISOString()
+    };
+    cyberOutageCache = { ts: Date.now(), data: out };
+    return jsonResponse(out, 200, { "Cache-Control": "public, max-age=120" });
+  } catch (err) {
+    if (cyberOutageCache.data) return jsonResponse({ ...cyberOutageCache.data, cached: true });
+    return jsonResponse({ status: "ok", outages: [], censorship: [], botnets: [], botnet_total: 0 });
+  }
+}
+
+let eonetCache = { ts: 0, data: null };
+async function handleNasaEonet() {
+  if (Date.now() - eonetCache.ts < 180000 && eonetCache.data) return jsonResponse(eonetCache.data);
+  const srcUrl = "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=60";
+  try {
+    const r = await chaserFetchT(srcUrl, 7000, { headers: { "User-Agent": "OmniScope-OSINT/2.10", "Accept": "application/json" } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const text = await r.text();
+    const events = [];
+    if (text.trim().startsWith("{")) {
+      const j = JSON.parse(text);
+      for (const ev of (j.events || [])) {
+        const g = Array.isArray(ev.geometry) && ev.geometry.length ? ev.geometry[ev.geometry.length - 1] : null;
+        const coords = g && Array.isArray(g.coordinates) ? g.coordinates : null;
+        const lon = coords && typeof coords[0] === "number" ? coords[0] : null;
+        const lat = coords && typeof coords[1] === "number" ? coords[1] : null;
+        if (isFinite(lat) && isFinite(lon)) {
+          events.push({
+            id: ev.id,
+            title: ev.title,
+            category: (ev.categories && ev.categories[0] && ev.categories[0].title) || "Natural Event",
+            lat, lon,
+            date: g.date || "",
+            link: ev.link || ""
+          });
+        }
+      }
+    }
+    const out = { status: "ok", source: "NASA EONET v3", count: events.length, events, updatedAt: new Date().toISOString() };
+    eonetCache = { ts: Date.now(), data: out };
+    return jsonResponse(out, 200, { "Cache-Control": "public, max-age=180" });
+  } catch (_) {
+    if (eonetCache.data) return jsonResponse({ ...eonetCache.data, cached: true });
+    return jsonResponse({ status: "ok", source: "NASA EONET v3", count: 0, events: [] });
+  }
+}
+
+let celestrakCache = { ts: 0, data: null };
+async function handleSpaceSatellites(url) {
+  const group = ["weather", "stations", "starlink", "noaa", "goes"].includes(url.searchParams.get("group")) ? url.searchParams.get("group") : "weather";
+  if (group === "weather" && Date.now() - celestrakCache.ts < 300000 && celestrakCache.data) return jsonResponse(celestrakCache.data);
+  const srcUrl = `https://celestrak.org/NORAD/elements/gp.php?GROUP=${encodeURIComponent(group)}&FORMAT=json`;
+  try {
+    const r = await chaserFetchT(srcUrl, 7000, { headers: { "User-Agent": "OmniScope-OSINT/2.10" } });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const list = await r.json();
+    const sats = Array.isArray(list) ? list.slice(0, 120).map(s => ({
+      name: s.OBJECT_NAME || "",
+      norad_id: s.NORAD_CAT_ID || 0,
+      epoch: s.EPOCH || "",
+      inclination: s.INCLINATION || 0,
+      mean_motion: s.MEAN_MOTION || 0,
+      eccentricity: s.ECCENTRICITY || 0
+    })) : [];
+    const out = { status: "ok", source: "CelesTrak NORAD GP", group, count: sats.length, satellites: sats, updatedAt: new Date().toISOString() };
+    if (group === "weather") celestrakCache = { ts: Date.now(), data: out };
+    return jsonResponse(out, 200, { "Cache-Control": "public, max-age=300" });
+  } catch (_) {
+    if (celestrakCache.data) return jsonResponse({ ...celestrakCache.data, cached: true });
+    return jsonResponse({ status: "ok", source: "CelesTrak NORAD GP", group, count: 0, satellites: [] });
   }
 }
 
@@ -3693,77 +4002,74 @@ async function handleOsintNews(url) {
 // ---------------------------------------------------------------------------
 
 async function handleTelemetryEvents(url) {
-
   const limit = Math.min(parseInt(url.searchParams.get("limit") || "40", 10), 60);
-
-  const now = Math.floor(Date.now() / 1000);
-
   const events = [];
-
-
-
-  // Generate verified dynamic sensor events from active networks
-
-  const templates = [
-
-    { source: "SEISMIC", icon: "🌋", severity: "warning", text: "USGS: M4.3 Seismic event detected in Pacific Rim corridor" },
-
-    { source: "NOAA", icon: "⚡", severity: "critical", text: "NWS Radar: Severe Convective Supercell warned in Central Plains" },
-
-    { source: "MARITIME", icon: "🚢", severity: "info", text: "Baltic AIS: Tanker convoy navigating Gulf of Finland TSS" },
-
-    { source: "RADIATION", icon: "☢️", severity: "info", text: "Safecast: Central European sensor grid confirms normal 0.12 µSv/h background" },
-
-    { source: "ORBIT", icon: "🛰️", severity: "info", text: "ISS Tracking: Space Station crossing orbital daylight terminator at 27,600 km/h" },
-
-    { source: "CYBER", icon: "🛡️", severity: "warning", text: "Tor Onionoo: Guard node consensus refresh across 7,800 active relays" },
-
-    { source: "METAR", icon: "✈️", severity: "info", text: "AWC Aviation: Frankfurt EDDF reporting QNH 1018 hPa, Cavok, wind 240/12kt" },
-
-    { source: "WILDFIRE", icon: "🔥", severity: "warning", text: "NASA FIRMS: Thermal anomaly cluster registered in Mediterranean basin" }
-
-  ];
-
-
-
-  for (let i = 0; i < limit; i++) {
-
-    const t = templates[i % templates.length];
-
-    const offsetSec = i * 45 + Math.floor(Math.random() * 20);
-
-    const evTime = now - offsetSec;
-
-    const date = new Date(evTime * 1000);
-
+  const pushEv = (id, tsMs, source, icon, severity, text) => {
+    const tsSec = Math.floor((tsMs || Date.now()) / 1000);
+    const d = new Date(tsSec * 1000);
     events.push({
-
-      id: `ev_${evTime}_${i}`,
-
-      timestamp: evTime,
-
-      source: t.source,
-
-      category: t.source,
-
-      icon: t.icon,
-
-      severity: t.severity,
-
-      time_str: date.toTimeString().substr(0, 8),
-
-      title: t.text,
-
-      message: t.text
-
+      id: String(id),
+      timestamp: tsSec,
+      source,
+      category: source,
+      icon,
+      severity,
+      time_str: d.toISOString().substr(11, 8) + "Z",
+      title: text,
+      message: text
     });
+  };
 
-  }
+  try {
+    const [usgsRes, nwsRes, lsrRes, gdacsRes] = await Promise.allSettled([
+      chaserFetchT("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson", 4500),
+      chaserFetchT("https://api.weather.gov/alerts/active?status=actual&message_type=alert", 4500, {
+        headers: { "User-Agent": "OmniScope-OSINT/2.10 (tactical@omniscope-web.pages.dev)", "Accept": "application/geo+json" }
+      }),
+      chaserFetchT("https://mesonet.agron.iastate.edu/geojson/lsr.geojson?hours=6", 4500),
+      chaserFetchT("https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP", 4500)
+    ]);
 
+    if (usgsRes.status === "fulfilled" && usgsRes.value.ok) {
+      const uj = await usgsRes.value.json();
+      for (const f of (uj.features || []).slice(0, 12)) {
+        const p = f.properties || {};
+        const mag = Number(p.mag || 0).toFixed(1);
+        pushEv(`usgs_${f.id}`, p.time, "SEISMIC", "🌋", Number(mag) >= 5.5 ? "critical" : "warning", `USGS M${mag}: ${p.place || "Seismic Event"}`);
+      }
+    }
 
+    if (nwsRes.status === "fulfilled" && nwsRes.value.ok) {
+      const nj = await nwsRes.value.json();
+      for (const f of (nj.features || []).slice(0, 15)) {
+        const p = f.properties || {};
+        const evName = p.event || "Weather Advisory";
+        const sev = /Tornado|Extreme|Hurricane/i.test(evName) ? "critical" : (/Severe|Warning/i.test(evName) ? "warning" : "info");
+        pushEv(`nws_${f.id || p.id}`, Date.parse(p.sent || p.effective || "") || Date.now(), "NOAA", "⚡", sev, `NWS ${evName}: ${p.areaDesc || ""}`.slice(0, 140));
+      }
+    }
 
-  return jsonResponse({ status: "success", count: events.length, events: events }, 200, { "Cache-Control": "public, max-age=15" });
+    if (lsrRes.status === "fulfilled" && lsrRes.value.ok) {
+      const lj = await lsrRes.value.json();
+      for (const f of (lj.features || []).slice(0, 10)) {
+        const p = f.properties || {};
+        const magTxt = p.magnitude != null ? ` (${p.magnitude} ${p.unit || ""})` : "";
+        pushEv(`lsr_${p.valid}_${p.city}`, Date.parse(p.valid || "") || Date.now(), "SPOTTER", "🌪️", /TORNADO/i.test(p.typetext || "") ? "critical" : "warning", `IEM LSR ${p.typetext || "Report"}${magTxt}: ${p.city || ""}, ${p.state || ""}`);
+      }
+    }
 
+    if (gdacsRes.status === "fulfilled" && gdacsRes.value.ok) {
+      const gj = await gdacsRes.value.json();
+      for (const f of (gj.features || []).slice(0, 8)) {
+        const p = f.properties || {};
+        pushEv(`gdacs_${p.eventid || p.name}`, Date.parse(p.fromdate || "") || Date.now(), "GDACS", "⚠️", p.alertlevel === "Red" ? "critical" : "warning", `GDACS ${p.eventtype || ""}: ${p.name || p.country || "Global Hazard"}`);
+      }
+    }
+  } catch (_) {}
+
+  events.sort((a, b) => b.timestamp - a.timestamp);
+  const sliced = events.slice(0, limit);
+  return jsonResponse({ status: "success", source: "live_multi_sensor_aggregation", count: sliced.length, events: sliced }, 200, { "Cache-Control": "public, max-age=30" });
 }
 
 
@@ -5814,6 +6120,30 @@ const PRIMARY_US_STATIONS = [
 
       if (url.pathname === "/api/telemetry/aprs") {
         return handleAprsTelemetry(url);
+      }
+
+      if (url.pathname === "/api/weather/spc-outlook") {
+        return handleSpcOutlook(url);
+      }
+
+      if (url.pathname === "/api/weather/lsr") {
+        return handleIemLsr(url);
+      }
+
+      if (url.pathname === "/api/aviation/military") {
+        return handleMilitaryFlights(url);
+      }
+
+      if (url.pathname === "/api/cyber/outages") {
+        return handleCyberOutages();
+      }
+
+      if (url.pathname === "/api/disasters/eonet") {
+        return handleNasaEonet();
+      }
+
+      if (url.pathname === "/api/space/satellites") {
+        return handleSpaceSatellites(url);
       }
 
       if (url.pathname === "/api/weather/alarms/config") {
