@@ -22,11 +22,43 @@
 
     var STORAGE_KEY_CHAIN = 'omni_failover_chain';
     var STORAGE_KEY_DEGRADED = 'omni_degraded_nodes_ttl';
+    var STORAGE_KEY_REFERRER = 'omni_entry_referrer';
+    var STORAGE_KEY_BEACON_SENT = 'omni_beacon_sent_v1';
     var TTL_MS = 10 * 60 * 1000; // 10 minutes degradation cache
+
+    window.OMNISCOPE_ADAPTIVE_SCALE = 1;
 
     // 2. Localhost & Development Guard
     var hostname = window.location.hostname || '';
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || window.location.protocol === 'file:') {
+    var isLocal = (hostname === 'localhost' || hostname === '127.0.0.1' || window.location.protocol === 'file:');
+
+    // Capture true external entry referrer BEFORE any client-side redirect strips or overwrites it
+    var urlParamsPre = new URLSearchParams(window.location.search || '');
+    var entryRefHost = '';
+    try {
+        var existingRef = sessionStorage.getItem(STORAGE_KEY_REFERRER) || '';
+        var paramRef = urlParamsPre.get('fb_ref') || '';
+        var rawRef = paramRef || document.referrer || '';
+        if (!existingRef && rawRef) {
+            try {
+                var parsedRef = new URL(rawRef.includes('://') ? rawRef : ('https://' + rawRef));
+                var refHost = (parsedRef.hostname || '').replace(/^www\./, '').toLowerCase();
+                if (refHost && !/pages\.dev$|workers\.dev$|vercel\.app$|netlify\.app$|localhost$|127\.0\.0\.1$/.test(refHost)) {
+                    existingRef = refHost;
+                }
+            } catch (_) {}
+        }
+        if (!existingRef) {
+            var utmSrc = urlParamsPre.get('utm_source') || urlParamsPre.get('ref') || '';
+            if (utmSrc) existingRef = String(utmSrc).slice(0, 64).toLowerCase();
+        }
+        if (existingRef) {
+            sessionStorage.setItem(STORAGE_KEY_REFERRER, existingRef);
+            entryRefHost = existingRef;
+        }
+    } catch (_) {}
+
+    if (isLocal) {
         console.log('[OmniEdgeBalancer] Local development environment detected. Failover bypassed.');
         return;
     }
@@ -102,11 +134,14 @@
             sessionStorage.setItem(STORAGE_KEY_DEGRADED, JSON.stringify(degradedMap));
         } catch (_) {}
 
-        // Construct destination URL preserving path, search and hash
+        // Construct destination URL preserving path, search, hash and true entry referrer
         var targetUrl = new URL(candidate.origin + window.location.pathname);
         urlParams.set('fb_chain', visitedNodes.join(','));
         urlParams.set('fb_from', currentNode.id);
         urlParams.set('fb_ts', Date.now().toString());
+        if (entryRefHost && !urlParams.has('fb_ref')) {
+            urlParams.set('fb_ref', entryRefHost);
+        }
         targetUrl.search = urlParams.toString();
         targetUrl.hash = window.location.hash || '';
 
@@ -129,12 +164,12 @@
         return;
     }
 
-    // 9. Lightweight Early Health & Quota Probe
-    // Fires instantly before DOM parsing; aborts after 1400ms
+    // 9. Lightweight Early Health, Adaptive Scale & Referrer Beacon Probe
     var probeController = new AbortController();
     var probeTimeout = setTimeout(function () {
         probeController.abort();
-    }, 1400);
+    }, 1800);
+    var probeStart = performance.now ? performance.now() : Date.now();
 
     fetch('/api/health?_probe=1', {
         method: 'GET',
@@ -142,26 +177,52 @@
         signal: probeController.signal
     }).then(function (res) {
         clearTimeout(probeTimeout);
+        var probeMs = (performance.now ? performance.now() : Date.now()) - probeStart;
         if (res.status === 429 || res.status === 503 || res.status === 1027 || res.status === 1015) {
             failoverToNextNode('HTTP ' + res.status + ' (Rate Limit / Quota Exceeded)');
             return;
         }
-        // Healthy response! Clean up URL parameters if landed after failover
-        if (urlParams.has('fb_chain')) {
+        var recScale = parseInt(res.headers.get('X-Omni-Recommended-Scale') || '1', 10);
+        if (probeMs > 1200 && recScale < 2) recScale = 2;
+        window.OMNISCOPE_ADAPTIVE_SCALE = Math.min(3, Math.max(1, isNaN(recScale) ? 1 : recScale));
+
+        // Clean failover query params cleanly after landing
+        if (urlParams.has('fb_chain') || urlParams.has('fb_ref')) {
             urlParams.delete('fb_chain');
             urlParams.delete('fb_from');
             urlParams.delete('fb_ts');
+            urlParams.delete('fb_ref');
             var cleanUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '') + window.location.hash;
             if (window.history && window.history.replaceState) {
                 window.history.replaceState({}, document.title, cleanUrl);
             }
         }
-        // Expose telemetry
-        console.log('[OmniEdgeBalancer] Active node [' + currentNode.name + '] Healthy (200 OK).');
+
+        // Send 1x privacy-first referrer & cloud-node telemetry beacon per session
+        try {
+            if (!sessionStorage.getItem(STORAGE_KEY_BEACON_SENT)) {
+                sessionStorage.setItem(STORAGE_KEY_BEACON_SENT, '1');
+                var beaconPayload = JSON.stringify({
+                    referrer_host: entryRefHost || 'direct',
+                    cloud_node: currentNode ? currentNode.id : 'cloudflare',
+                    path: window.location.pathname || '/',
+                    lang: (navigator.language || 'en').slice(0, 12),
+                    vw: window.innerWidth || 0
+                });
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon('/api/ops/beacon', new Blob([beaconPayload], { type: 'application/json' }));
+                } else {
+                    fetch('/api/ops/beacon', { method: 'POST', body: beaconPayload, keepalive: true }).catch(function () {});
+                }
+            }
+        } catch (_) {}
+
+        console.log('[OmniEdgeBalancer] Active node [' + currentNode.name + '] Healthy (200 OK, scale=' + window.OMNISCOPE_ADAPTIVE_SCALE + 'x).');
     }).catch(function (err) {
         clearTimeout(probeTimeout);
         if (err && err.name === 'AbortError') {
-            console.warn('[OmniEdgeBalancer] Health probe timeout (1400ms). Node may be congested, continuing with local execution.');
+            window.OMNISCOPE_ADAPTIVE_SCALE = 2;
+            console.warn('[OmniEdgeBalancer] Health probe timeout (1800ms). Enabling 2x adaptive poll throttling.');
         }
     });
 

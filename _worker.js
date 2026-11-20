@@ -420,45 +420,181 @@ let memoryWeatherProviders = null;
 
 
 const corsHeaders = {
-
   "Access-Control-Allow-Origin": "*",
-
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Omniscope-Client",
-
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Omniscope-Client, X-Omni-Ops-Key, X-Omni-Signature",
+  "Access-Control-Expose-Headers": "X-Omni-Edge-Cache, X-Omni-Load-State, X-Omni-Recommended-Scale, X-Omni-Cloud-Node",
   "Access-Control-Max-Age": "86400",
-
   "X-Content-Type-Options": "nosniff",
-
   "Referrer-Policy": "strict-origin-when-cross-origin",
-
   "Permissions-Policy": "geolocation=(), microphone=(), camera=()"
-
 };
 
+// ---------------------------------------------------------------------------
+// EDGE SCALING TELEMETRY, REFERRER TRACKER & AES-256-GCM OPS ENCRYPTION
+// ---------------------------------------------------------------------------
+const OPS_STATE = {
+  startedAt: Date.now(),
+  totalRequests: 0,
+  edgeHits: 0,
+  edgeMisses: 0,
+  beacons: 0,
+  recentTs: [],
+  referrers: new Map(),
+  countries: new Map(),
+  cloudNodes: new Map(),
+  endpoints: new Map()
+};
 
+function _bumpCounter(map, key, maxKeys = 60) {
+  if (!key) return;
+  const k = String(key).slice(0, 80);
+  map.set(k, (map.get(k) || 0) + 1);
+  if (map.size > maxKeys) {
+    const firstKey = map.keys().next().value;
+    if (firstKey !== undefined) map.delete(firstKey);
+  }
+}
+
+function _recordEdgeHitMeta(request, url) {
+  const now = Date.now();
+  OPS_STATE.totalRequests += 1;
+  OPS_STATE.recentTs.push(now);
+  while (OPS_STATE.recentTs.length && now - OPS_STATE.recentTs[0] > 60000) {
+    OPS_STATE.recentTs.shift();
+  }
+  const cc = (request.cf && request.cf.country) || request.headers.get("cf-ipcountry") || "XX";
+  _bumpCounter(OPS_STATE.countries, cc, 80);
+  _bumpCounter(OPS_STATE.endpoints, url.pathname, 80);
+
+  const rawRef = request.headers.get("referer") || "";
+  if (rawRef && !url.pathname.startsWith("/api/")) {
+    try {
+      const refHost = new URL(rawRef).hostname.replace(/^www\./, "").toLowerCase();
+      if (refHost && refHost !== url.hostname.toLowerCase()) {
+        _bumpCounter(OPS_STATE.referrers, refHost, 80);
+      }
+    } catch (_) {}
+  }
+}
+
+function _getLoadMetrics() {
+  const now = Date.now();
+  while (OPS_STATE.recentTs.length && now - OPS_STATE.recentTs[0] > 60000) {
+    OPS_STATE.recentTs.shift();
+  }
+  const rpm = OPS_STATE.recentTs.length;
+  let state = "normal";
+  let scale = 1;
+  if (rpm >= 250) {
+    state = "critical";
+    scale = 3;
+  } else if (rpm >= 100) {
+    state = "elevated";
+    scale = 2;
+  }
+  return { rpm, state, scale };
+}
+
+function _getEdgeCacheTtl(pathname) {
+  if (pathname === "/api/telemetry/iss") return 15;
+  if (pathname === "/api/telemetry/chasers" || pathname === "/api/chaser-cams" || pathname === "/api/telemetry/flights" || pathname === "/api/aviation/military" || pathname === "/api/telemetry/events") return 30;
+  if (pathname === "/api/radarhub" || pathname === "/api/dow-live" || pathname === "/api/spotter-reports" || pathname === "/api/telemetry/aprs" || pathname === "/api/telemetry/vessels" || pathname === "/api/maritime/baltic-ais") return 45;
+  if (pathname.startsWith("/api/weather/") || pathname === "/api/storms" || pathname === "/api/seismic" || pathname === "/api/space-weather" || pathname === "/api/space/weather") return 60;
+  if (pathname === "/api/webcams" || pathname.startsWith("/api/cameras") || pathname === "/api/disasters/eonet" || pathname === "/api/disasters/gdacs" || pathname === "/api/telemetry/firms" || pathname === "/api/cyber/outages") return 180;
+  if (pathname === "/api/cyber/cables" || pathname === "/api/cyber/landing-points" || pathname === "/api/cyber/tor-relays" || pathname === "/api/rf/kiwisdr" || pathname === "/api/space/satellites") return 600;
+  return 60;
+}
+
+async function _aesEncryptJson(secretStr, payloadObj) {
+  const enc = new TextEncoder();
+  const keyHash = await crypto.subtle.digest("SHA-256", enc.encode(secretStr));
+  const aesKey = await crypto.subtle.importKey("raw", keyHash, { name: "AES-GCM" }, false, ["encrypt"]);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cipherBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, enc.encode(JSON.stringify(payloadObj)));
+  const toB64 = (buf) => {
+    const bytes = new Uint8Array(buf);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  };
+  return {
+    alg: "AES-256-GCM",
+    iv: toB64(iv),
+    ciphertext: toB64(cipherBuf)
+  };
+}
+
+function _constTimeEq(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function handleApiWithEdgeCache(url, pathname, request, env, ctx) {
+  const bypass =
+    request.method !== "GET" ||
+    url.searchParams.has("_probe") ||
+    url.searchParams.has("test_quota") ||
+    pathname.startsWith("/api/ops/") ||
+    pathname.startsWith("/api/proxy/") ||
+    pathname === "/api/logs/feedback";
+
+  const load = _getLoadMetrics();
+  const cacheStorage = (typeof caches !== "undefined" && caches.default) ? caches.default : null;
+  let cacheKey = null;
+
+  if (!bypass && cacheStorage) {
+    cacheKey = new Request(url.toString(), { method: "GET" });
+    try {
+      const hit = await cacheStorage.match(cacheKey);
+      if (hit) {
+        OPS_STATE.edgeHits += 1;
+        const hitHeaders = new Headers(hit.headers);
+        hitHeaders.set("X-Omni-Edge-Cache", "HIT");
+        hitHeaders.set("X-Omni-Load-State", load.state);
+        hitHeaders.set("X-Omni-Recommended-Scale", String(load.scale));
+        hitHeaders.set("X-Omni-Cloud-Node", "cloudflare");
+        return new Response(hit.body, { status: hit.status, statusText: hit.statusText, headers: hitHeaders });
+      }
+    } catch (_) {}
+  }
+
+  OPS_STATE.edgeMisses += 1;
+  const res = await routeApiRequest(url, pathname, request, env);
+  const ttl = _getEdgeCacheTtl(pathname);
+
+  const outHeaders = new Headers(res.headers);
+  outHeaders.set("X-Omni-Edge-Cache", bypass ? "BYPASS" : "MISS");
+  outHeaders.set("X-Omni-Load-State", load.state);
+  outHeaders.set("X-Omni-Recommended-Scale", String(load.scale));
+  outHeaders.set("X-Omni-Cloud-Node", "cloudflare");
+  if (!bypass && res.status === 200) {
+    outHeaders.set("Cache-Control", `public, max-age=${ttl}, s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}`);
+  }
+
+  const finalRes = new Response(res.body, { status: res.status, statusText: res.statusText, headers: outHeaders });
+  if (!bypass && cacheStorage && cacheKey && res.status === 200 && ctx && typeof ctx.waitUntil === "function") {
+    ctx.waitUntil(cacheStorage.put(cacheKey, finalRes.clone()).catch(() => {}));
+  }
+  return finalRes;
+}
 
 function jsonResponse(data, status = 200, extraHeaders = {}) {
-
+  const load = _getLoadMetrics();
   return new Response(JSON.stringify(data, null, 2), {
-
     status,
-
     headers: {
-
       ...corsHeaders,
-
       "Content-Type": "application/json; charset=utf-8",
-
       "Cache-Control": "public, max-age=60",
-
+      "X-Omni-Load-State": load.state,
+      "X-Omni-Recommended-Scale": String(load.scale),
+      "X-Omni-Cloud-Node": "cloudflare",
       ...extraHeaders
-
     }
-
   });
-
 }
 
 
@@ -5004,6 +5140,7 @@ async function handleRequest(request, env, ctx) {
     const userAgent = request.headers.get("user-agent") || "";
     const lowerUA = userAgent.toLowerCase();
     const pathname = (url.pathname.length > 1 && url.pathname.endsWith("/")) ? url.pathname.slice(0, -1) : url.pathname;
+    _recordEdgeHitMeta(request, url);
 
 
 
@@ -5628,10 +5765,185 @@ Available at: https://omniscope-web.pages.dev/openapi.json
 
 
 
-    // 5. REST API Endpoints (/api/*)
-
+    // 5. REST API Endpoints (/api/*) via Cloudflare Edge Cache (caches.default)
     if (url.pathname.startsWith("/api/")) {
+      return handleApiWithEdgeCache(url, pathname, request, env, ctx);
+    }
 
+    // 6. Anti-AI Scraper Protection on HTML UI (Bypassed for APIs & Agents above)
+
+
+    const searchEngineBots = [
+
+      "googlebot", "google-inspectiontool", "bingbot", "msnbot", "duckduckbot",
+
+      "applebot", "slurp", "baiduspider", "yandexbot", "qwantify", "seznambot",
+
+      "bravebot", "oai-searchbot", "perplexitybot", "chatgpt-user", "perplexity-user"
+
+    ];
+
+    const isSearchEngine = searchEngineBots.some(bot => lowerUA.includes(bot)) && !lowerUA.includes("applebot-extended");
+
+
+
+    const blockedScrapers = [
+
+      "gptbot", "claudebot", "anthropic-ai", "claude-web", "ccbot",
+
+      "bytespider", "facebookbot", "meta-externalagent", "cohere-ai",
+
+      "cohere-training-data-crawler", "diffbot", "amazonbot", "google-extended",
+
+      "applebot-extended", "quora", "poe-bot", "poe", "scrapy", "omgili",
+
+      "omgilibot", "imagesiftbot", "kangaroo", "timpibot", "velenpublicwebcrawler",
+
+      "webzio", "youbot", "semanticscholarbot"
+
+    ];
+
+
+
+    if (!isSearchEngine) {
+
+      const isBlockedScraper = blockedScrapers.some(bad => lowerUA.includes(bad));
+
+      if (isBlockedScraper) {
+
+        return new Response(
+
+          `<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <title>403 FORBIDDEN // OMNISCOPE ANTI-SCRAPER DEFENSE</title>
+
+  <style>
+
+    body { background: #07090e; color: #ff0055; font-family: 'Consolas', 'Courier New', monospace; padding: 40px; text-align: center; }
+
+    .card { max-width: 650px; margin: 40px auto; border: 1px solid #ff0055; box-shadow: 0 0 25px rgba(255, 0, 85, 0.4); padding: 30px; background: #0c0f17; }
+
+    h1 { font-size: 20px; letter-spacing: 2px; text-shadow: 0 0 10px #ff0055; }
+
+    p { color: #8892b0; font-size: 14px; line-height: 1.6; }
+
+    .badge { display: inline-block; padding: 4px 10px; background: rgba(255,0,85,0.15); border: 1px solid #ff0055; font-size: 11px; margin-top: 15px; }
+
+    .info { color: #00ffff; font-size: 12px; margin-top: 20px; }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="card">
+
+    <h1>[ACCESS DENIED: 403 FORBIDDEN]</h1>
+
+    <p>Automated AI scrapers, LLM training crawlers and unauthorized content extraction bots are strictly blocked by OmniScope Tactical Edge Security.</p>
+
+    <p>Legitimate AI Agents and developers should use the official Model Context Protocol (MCP) endpoint at /mcp or REST APIs at /api/*.</p>
+
+    <div class="badge">SECURITY RULE: ZERO-HARVESTING & ANTI-AI-SCRAPER ENFORCED</div>
+
+    <div class="info">User-Agent Detected: ${userAgent.replace(/</g, "&lt;")}</div>
+
+  </div>
+
+</body>
+
+</html>`,
+
+          {
+
+            status: 403,
+
+            statusText: "Forbidden - AI Scraper Blocked",
+
+            headers: {
+
+              "Content-Type": "text/html; charset=utf-8",
+
+              "X-Robots-Tag": "noindex, nofollow, noarchive, noai, noimageai",
+
+              "Access-Control-Allow-Origin": "*"
+
+            }
+
+          }
+
+        );
+
+      }
+
+    }
+
+
+
+    // 7. Forward legitimate requests to static assets (SPA Fallback & Fault Tolerance)
+    let response;
+    try {
+      if (env && env.ASSETS && typeof env.ASSETS.fetch === "function") {
+        response = await env.ASSETS.fetch(request);
+        if (response.status === 404 && !url.pathname.includes(".")) {
+          const indexUrl = new URL("/index.html", request.url);
+          response = await env.ASSETS.fetch(new Request(indexUrl, request));
+        }
+      } else {
+        // Standalone Worker: Transparent proxy from canonical Cloudflare Pages edge
+        const targetUrl = new URL(url.pathname + url.search, "https://omniscope-web.pages.dev");
+        const proxyHeaders = new Headers(request.headers);
+        proxyHeaders.delete("host");
+        response = await fetch(targetUrl.toString(), {
+          method: request.method,
+          headers: proxyHeaders
+        });
+      }
+    } catch (assetErr) {
+      if (url.pathname === "/favicon.ico") {
+        return new Response(null, { status: 204, headers: corsHeaders });
+      }
+      return new Response("<!DOCTYPE html><html><head><title>OmniScope OSINT</title><meta http-equiv='refresh' content='1;url=https://omniscope-web.pages.dev/'></head><body style='background:#07090e;color:#00ffff;font-family:monospace;padding:2rem;text-align:center;'><h2>OmniScope OSINT // Edge Node Recovery</h2><p>Redirecting to primary cluster...</p></body></html>", {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" }
+      });
+    }
+
+    if (url.pathname === "/favicon.ico" && (!response || response.status >= 400)) {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
+
+    if (!response || response.status >= 500) {
+      return new Response("<!DOCTYPE html><html><head><title>OmniScope OSINT</title><meta http-equiv='refresh' content='2;url=https://omniscope-web.pages.dev/'></head><body style='background:#07090e;color:#00ffff;font-family:monospace;padding:2rem;text-align:center;'><h2>OmniScope OSINT // Edge Node Sync</h2><p>Cluster synchronized. <a href='https://omniscope-web.pages.dev/' style='color:#00ffff;'>Continue to OmniScope</a></p></body></html>", {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" }
+      });
+    }
+
+    const newHeaders = new Headers(response.headers);
+    newHeaders.set("X-Robots-Tag", "noai, noimageai");
+    newHeaders.set("X-Content-Type-Options", "nosniff");
+    newHeaders.set("X-Frame-Options", "SAMEORIGIN");
+    newHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    if (url.pathname === "/" || url.pathname === "/index.html" || !url.pathname.includes(".")) {
+      newHeaders.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: newHeaders
+    });
+  }
+
+async function routeApiRequest(url, pathname, request, env) {
       // 5.1 /api/capabilities & /api/health
       if (url.pathname === "/api/health" && url.searchParams.get("test_quota") === "1") {
         return jsonResponse({
@@ -6497,185 +6809,65 @@ const PRIMARY_US_STATIONS = [
         return handleNoaaRadarStations(url);
       }
 
-      // Unknown /api route
+      // 5.27 /api/ops/beacon & /api/ops/telemetry (Referrer-Host + Encrypted OmniScope Management API)
+      if (url.pathname === "/api/ops/beacon") {
+        let payload = {};
+        try { payload = await request.json(); } catch (_) {}
+        const ref = (payload && payload.referrer_host) ? String(payload.referrer_host).replace(/^https?:\/\//, "").split("/")[0].toLowerCase() : "direct";
+        const node = (payload && payload.cloud_node) ? String(payload.cloud_node).toLowerCase() : "cloudflare";
+        OPS_STATE.beacons += 1;
+        _bumpCounter(OPS_STATE.referrers, ref || "direct", 80);
+        _bumpCounter(OPS_STATE.cloudNodes, node, 10);
+        return jsonResponse({ status: "ok", recorded: true }, 200, { "Cache-Control": "no-store" });
+      }
 
+      if (url.pathname === "/api/ops/load") {
+        const load = _getLoadMetrics();
+        const total = OPS_STATE.edgeHits + OPS_STATE.edgeMisses;
+        return jsonResponse({
+          status: "ok",
+          cloud_node: "cloudflare",
+          load_state: load.state,
+          recommended_scale: load.scale,
+          edge_cache_hit_pct: total > 0 ? Math.round((OPS_STATE.edgeHits / total) * 1000) / 10 : 0
+        }, 200, { "Cache-Control": "no-store" });
+      }
+
+      if (url.pathname === "/api/ops/telemetry") {
+        const secret = env && env.OMNISCOPE_OPS_SECRET ? String(env.OMNISCOPE_OPS_SECRET) : "";
+        if (!secret) {
+          return jsonResponse({ status: "locked", message: "Set OMNISCOPE_OPS_SECRET via wrangler secret put OMNISCOPE_OPS_SECRET to unlock encrypted telemetry." }, 403, { "Cache-Control": "no-store" });
+        }
+        const supplied = (request.headers.get("x-omni-ops-key") || request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
+        if (!_constTimeEq(supplied, secret)) {
+          return jsonResponse({ status: "unauthorized" }, 401, { "Cache-Control": "no-store" });
+        }
+        const toSorted = (m) => Array.from(m.entries()).sort((a, b) => b[1] - a[1]).slice(0, 25).map(([key, count]) => ({ key, count }));
+        const load = _getLoadMetrics();
+        const totalCacheable = OPS_STATE.edgeHits + OPS_STATE.edgeMisses;
+        const snapshot = {
+          generated_at: new Date().toISOString(),
+          uptime_sec: Math.round((Date.now() - OPS_STATE.startedAt) / 1000),
+          isolate_requests: OPS_STATE.totalRequests,
+          beacons: OPS_STATE.beacons,
+          rpm_1m: load.rpm,
+          load_state: load.state,
+          recommended_scale: load.scale,
+          edge_cache: { hits: OPS_STATE.edgeHits, misses: OPS_STATE.edgeMisses, hit_rate_pct: totalCacheable > 0 ? Math.round((OPS_STATE.edgeHits / totalCacheable) * 1000) / 10 : 0 },
+          top_referrers: toSorted(OPS_STATE.referrers),
+          top_countries: toSorted(OPS_STATE.countries),
+          cloud_nodes: toSorted(OPS_STATE.cloudNodes),
+          top_endpoints: toSorted(OPS_STATE.endpoints)
+        };
+        const encrypted = await _aesEncryptJson(secret, snapshot);
+        return jsonResponse({ status: "ok", encrypted }, 200, { "Cache-Control": "no-store" });
+      }
+
+      // Unknown /api route
       return jsonResponse({ status: "error", message: `Unknown API endpoint: ${url.pathname}` }, 404);
 
-    }
+}
 
-
-
-    // 6. Anti-AI Scraper Protection on HTML UI (Bypassed for APIs & Agents above)
-
-    const searchEngineBots = [
-
-      "googlebot", "google-inspectiontool", "bingbot", "msnbot", "duckduckbot",
-
-      "applebot", "slurp", "baiduspider", "yandexbot", "qwantify", "seznambot",
-
-      "bravebot", "oai-searchbot", "perplexitybot", "chatgpt-user", "perplexity-user"
-
-    ];
-
-    const isSearchEngine = searchEngineBots.some(bot => lowerUA.includes(bot)) && !lowerUA.includes("applebot-extended");
-
-
-
-    const blockedScrapers = [
-
-      "gptbot", "claudebot", "anthropic-ai", "claude-web", "ccbot",
-
-      "bytespider", "facebookbot", "meta-externalagent", "cohere-ai",
-
-      "cohere-training-data-crawler", "diffbot", "amazonbot", "google-extended",
-
-      "applebot-extended", "quora", "poe-bot", "poe", "scrapy", "omgili",
-
-      "omgilibot", "imagesiftbot", "kangaroo", "timpibot", "velenpublicwebcrawler",
-
-      "webzio", "youbot", "semanticscholarbot"
-
-    ];
-
-
-
-    if (!isSearchEngine) {
-
-      const isBlockedScraper = blockedScrapers.some(bad => lowerUA.includes(bad));
-
-      if (isBlockedScraper) {
-
-        return new Response(
-
-          `<!DOCTYPE html>
-
-<html lang="en">
-
-<head>
-
-  <meta charset="utf-8">
-
-  <title>403 FORBIDDEN // OMNISCOPE ANTI-SCRAPER DEFENSE</title>
-
-  <style>
-
-    body { background: #07090e; color: #ff0055; font-family: 'Consolas', 'Courier New', monospace; padding: 40px; text-align: center; }
-
-    .card { max-width: 650px; margin: 40px auto; border: 1px solid #ff0055; box-shadow: 0 0 25px rgba(255, 0, 85, 0.4); padding: 30px; background: #0c0f17; }
-
-    h1 { font-size: 20px; letter-spacing: 2px; text-shadow: 0 0 10px #ff0055; }
-
-    p { color: #8892b0; font-size: 14px; line-height: 1.6; }
-
-    .badge { display: inline-block; padding: 4px 10px; background: rgba(255,0,85,0.15); border: 1px solid #ff0055; font-size: 11px; margin-top: 15px; }
-
-    .info { color: #00ffff; font-size: 12px; margin-top: 20px; }
-
-  </style>
-
-</head>
-
-<body>
-
-  <div class="card">
-
-    <h1>[ACCESS DENIED: 403 FORBIDDEN]</h1>
-
-    <p>Automated AI scrapers, LLM training crawlers and unauthorized content extraction bots are strictly blocked by OmniScope Tactical Edge Security.</p>
-
-    <p>Legitimate AI Agents and developers should use the official Model Context Protocol (MCP) endpoint at /mcp or REST APIs at /api/*.</p>
-
-    <div class="badge">SECURITY RULE: ZERO-HARVESTING & ANTI-AI-SCRAPER ENFORCED</div>
-
-    <div class="info">User-Agent Detected: ${userAgent.replace(/</g, "&lt;")}</div>
-
-  </div>
-
-</body>
-
-</html>`,
-
-          {
-
-            status: 403,
-
-            statusText: "Forbidden - AI Scraper Blocked",
-
-            headers: {
-
-              "Content-Type": "text/html; charset=utf-8",
-
-              "X-Robots-Tag": "noindex, nofollow, noarchive, noai, noimageai",
-
-              "Access-Control-Allow-Origin": "*"
-
-            }
-
-          }
-
-        );
-
-      }
-
-    }
-
-
-
-    // 7. Forward legitimate requests to static assets (SPA Fallback & Fault Tolerance)
-    let response;
-    try {
-      if (env && env.ASSETS && typeof env.ASSETS.fetch === "function") {
-        response = await env.ASSETS.fetch(request);
-        if (response.status === 404 && !url.pathname.includes(".")) {
-          const indexUrl = new URL("/index.html", request.url);
-          response = await env.ASSETS.fetch(new Request(indexUrl, request));
-        }
-      } else {
-        // Standalone Worker: Transparent proxy from canonical Cloudflare Pages edge
-        const targetUrl = new URL(url.pathname + url.search, "https://omniscope-web.pages.dev");
-        const proxyHeaders = new Headers(request.headers);
-        proxyHeaders.delete("host");
-        response = await fetch(targetUrl.toString(), {
-          method: request.method,
-          headers: proxyHeaders
-        });
-      }
-    } catch (assetErr) {
-      if (url.pathname === "/favicon.ico") {
-        return new Response(null, { status: 204, headers: corsHeaders });
-      }
-      return new Response("<!DOCTYPE html><html><head><title>OmniScope OSINT</title><meta http-equiv='refresh' content='1;url=https://omniscope-web.pages.dev/'></head><body style='background:#07090e;color:#00ffff;font-family:monospace;padding:2rem;text-align:center;'><h2>OmniScope OSINT // Edge Node Recovery</h2><p>Redirecting to primary cluster...</p></body></html>", {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" }
-      });
-    }
-
-    if (url.pathname === "/favicon.ico" && (!response || response.status >= 400)) {
-      return new Response(null, { status: 204, headers: corsHeaders });
-    }
-
-    if (!response || response.status >= 500) {
-      return new Response("<!DOCTYPE html><html><head><title>OmniScope OSINT</title><meta http-equiv='refresh' content='2;url=https://omniscope-web.pages.dev/'></head><body style='background:#07090e;color:#00ffff;font-family:monospace;padding:2rem;text-align:center;'><h2>OmniScope OSINT // Edge Node Sync</h2><p>Cluster synchronized. <a href='https://omniscope-web.pages.dev/' style='color:#00ffff;'>Continue to OmniScope</a></p></body></html>", {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "text/html; charset=utf-8" }
-      });
-    }
-
-    const newHeaders = new Headers(response.headers);
-    newHeaders.set("X-Robots-Tag", "noai, noimageai");
-    newHeaders.set("X-Content-Type-Options", "nosniff");
-    newHeaders.set("X-Frame-Options", "SAMEORIGIN");
-    newHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
-    if (url.pathname === "/" || url.pathname === "/index.html" || !url.pathname.includes(".")) {
-      newHeaders.set("Cache-Control", "no-cache, no-store, must-revalidate");
-    }
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: newHeaders
-    });
-  }
 async function handleBlitzortungStations(url) {
   const stations = [
     { id: 'blitz_berlin', name: 'Blitzortung Station Berlin', city: 'Berlin', country: 'DE', lat: 52.520, lon: 13.405 },

@@ -5035,14 +5035,23 @@ class OperationsMap {
     }
 
     _schedulePoll(fn, intervalMs, layerRef = null, initialDelayMs = 0) {
-        const run = () => {
-            if (document.hidden) return;
-            if (layerRef && this.map && !this.map.hasLayer(layerRef)) return;
-            fn();
+        const tick = () => {
+            const scale = Math.min(3, Math.max(1, Number(window.OMNISCOPE_ADAPTIVE_SCALE || 1)));
+            setTimeout(() => {
+                if (!document.hidden && (!layerRef || !this.map || this.map.hasLayer(layerRef))) {
+                    fn();
+                }
+                tick();
+            }, intervalMs * scale);
         };
-        if (initialDelayMs > 0) setTimeout(run, initialDelayMs);
-        else run();
-        return setInterval(run, intervalMs);
+        const bootRun = () => {
+            if (!document.hidden && (!layerRef || !this.map || this.map.hasLayer(layerRef))) {
+                fn();
+            }
+            tick();
+        };
+        if (initialDelayMs > 0) setTimeout(bootRun, initialDelayMs);
+        else bootRun();
     }
 
     startLiveTelemetry() {

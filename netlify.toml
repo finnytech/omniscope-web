@@ -6,6 +6,12 @@
   command = ""
 
 [[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=60, stale-while-revalidate=300"
+    X-Omni-Cloud-Node = "netlify"
+
+[[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "SAMEORIGIN"
