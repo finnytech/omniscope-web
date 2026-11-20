@@ -2,16 +2,26 @@
 /**
  * OmniScope Encrypted Edge Telemetry Reader (AES-256-GCM)
  * Usage:
- *   set OMNISCOPE_OPS_SECRET=your-secret
  *   node ops_telemetry.mjs [https://omniscope-web.pages.dev]
+ * Reads OMNISCOPE_OPS_SECRET from env or gitignored local file `.ops_secret.local`.
  */
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const baseUrl = (process.argv[2] || "https://omniscope-web.pages.dev").replace(/\/$/, "");
-const secret = process.env.OMNISCOPE_OPS_SECRET || "";
+let secret = (process.env.OMNISCOPE_OPS_SECRET || "").trim();
 
 if (!secret) {
-  console.error("Missing OMNISCOPE_OPS_SECRET env var. Set secret first with: npx wrangler secret put OMNISCOPE_OPS_SECRET");
+  const localSecretPath = path.join(path.dirname(fileURLToPath(import.meta.url)), ".ops_secret.local");
+  if (fs.existsSync(localSecretPath)) {
+    secret = fs.readFileSync(localSecretPath, "utf8").trim();
+  }
+}
+
+if (!secret) {
+  console.error("Missing OMNISCOPE_OPS_SECRET env var or gitignored .ops_secret.local file.");
   process.exit(1);
 }
 

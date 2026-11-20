@@ -19,6 +19,14 @@ deploy.ps1
 deploy.bat
 *.ps1
 *.bat
+.ops_secret*
+.dev.vars
+.dev.vars.*
+.env
+.env.*
+*.env
+*.key
+*.pem
 
 # Agent & Teamwork State
 .agents/

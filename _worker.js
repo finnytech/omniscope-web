@@ -434,7 +434,7 @@ const corsHeaders = {
 // EDGE SCALING TELEMETRY, REFERRER TRACKER & AES-256-GCM OPS ENCRYPTION
 // ---------------------------------------------------------------------------
 const OPS_STATE = {
-  startedAt: Date.now(),
+  startedAt: 0,
   totalRequests: 0,
   edgeHits: 0,
   edgeMisses: 0,
@@ -458,6 +458,7 @@ function _bumpCounter(map, key, maxKeys = 60) {
 
 function _recordEdgeHitMeta(request, url) {
   const now = Date.now();
+  if (!OPS_STATE.startedAt) OPS_STATE.startedAt = now;
   OPS_STATE.totalRequests += 1;
   OPS_STATE.recentTs.push(now);
   while (OPS_STATE.recentTs.length && now - OPS_STATE.recentTs[0] > 60000) {
