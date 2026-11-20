@@ -422,7 +422,7 @@ let memoryWeatherProviders = null;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Omniscope-Client, X-Omni-Ops-Key, X-Omni-Signature",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Omniscope-Client",
   "Access-Control-Expose-Headers": "X-Omni-Edge-Cache, X-Omni-Load-State, X-Omni-Recommended-Scale, X-Omni-Cloud-Node",
   "Access-Control-Max-Age": "86400",
   "X-Content-Type-Options": "nosniff",
@@ -431,60 +431,24 @@ const corsHeaders = {
 };
 
 // ---------------------------------------------------------------------------
-// EDGE SCALING TELEMETRY, REFERRER TRACKER & AES-256-GCM OPS ENCRYPTION
+// EDGE CACHE & ADAPTIVE LOAD SCALING (Zero-PII Sliding Window)
 // ---------------------------------------------------------------------------
-const OPS_STATE = {
-  startedAt: 0,
-  totalRequests: 0,
-  edgeHits: 0,
-  edgeMisses: 0,
-  beacons: 0,
-  recentTs: [],
-  referrers: new Map(),
-  countries: new Map(),
-  cloudNodes: new Map(),
-  endpoints: new Map()
-};
+const EDGE_RECENT_TS = [];
 
-function _bumpCounter(map, key, maxKeys = 60) {
-  if (!key) return;
-  const k = String(key).slice(0, 80);
-  map.set(k, (map.get(k) || 0) + 1);
-  if (map.size > maxKeys) {
-    const firstKey = map.keys().next().value;
-    if (firstKey !== undefined) map.delete(firstKey);
-  }
-}
-
-function _recordEdgeHitMeta(request, url) {
+function _recordLoadTick() {
   const now = Date.now();
-  if (!OPS_STATE.startedAt) OPS_STATE.startedAt = now;
-  OPS_STATE.totalRequests += 1;
-  OPS_STATE.recentTs.push(now);
-  while (OPS_STATE.recentTs.length && now - OPS_STATE.recentTs[0] > 60000) {
-    OPS_STATE.recentTs.shift();
-  }
-  const cc = (request.cf && request.cf.country) || request.headers.get("cf-ipcountry") || "XX";
-  _bumpCounter(OPS_STATE.countries, cc, 80);
-  _bumpCounter(OPS_STATE.endpoints, url.pathname, 80);
-
-  const rawRef = request.headers.get("referer") || "";
-  if (rawRef && !url.pathname.startsWith("/api/")) {
-    try {
-      const refHost = new URL(rawRef).hostname.replace(/^www\./, "").toLowerCase();
-      if (refHost && refHost !== url.hostname.toLowerCase()) {
-        _bumpCounter(OPS_STATE.referrers, refHost, 80);
-      }
-    } catch (_) {}
+  EDGE_RECENT_TS.push(now);
+  while (EDGE_RECENT_TS.length && now - EDGE_RECENT_TS[0] > 60000) {
+    EDGE_RECENT_TS.shift();
   }
 }
 
 function _getLoadMetrics() {
   const now = Date.now();
-  while (OPS_STATE.recentTs.length && now - OPS_STATE.recentTs[0] > 60000) {
-    OPS_STATE.recentTs.shift();
+  while (EDGE_RECENT_TS.length && now - EDGE_RECENT_TS[0] > 60000) {
+    EDGE_RECENT_TS.shift();
   }
-  const rpm = OPS_STATE.recentTs.length;
+  const rpm = EDGE_RECENT_TS.length;
   let state = "normal";
   let scale = 1;
   if (rpm >= 250) {
@@ -507,38 +471,11 @@ function _getEdgeCacheTtl(pathname) {
   return 60;
 }
 
-async function _aesEncryptJson(secretStr, payloadObj) {
-  const enc = new TextEncoder();
-  const keyHash = await crypto.subtle.digest("SHA-256", enc.encode(secretStr));
-  const aesKey = await crypto.subtle.importKey("raw", keyHash, { name: "AES-GCM" }, false, ["encrypt"]);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const cipherBuf = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, aesKey, enc.encode(JSON.stringify(payloadObj)));
-  const toB64 = (buf) => {
-    const bytes = new Uint8Array(buf);
-    let bin = "";
-    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-    return btoa(bin);
-  };
-  return {
-    alg: "AES-256-GCM",
-    iv: toB64(iv),
-    ciphertext: toB64(cipherBuf)
-  };
-}
-
-function _constTimeEq(a, b) {
-  if (!a || !b || a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}
-
 async function handleApiWithEdgeCache(url, pathname, request, env, ctx) {
   const bypass =
     request.method !== "GET" ||
     url.searchParams.has("_probe") ||
     url.searchParams.has("test_quota") ||
-    pathname.startsWith("/api/ops/") ||
     pathname.startsWith("/api/proxy/") ||
     pathname === "/api/logs/feedback";
 
@@ -551,7 +488,6 @@ async function handleApiWithEdgeCache(url, pathname, request, env, ctx) {
     try {
       const hit = await cacheStorage.match(cacheKey);
       if (hit) {
-        OPS_STATE.edgeHits += 1;
         const hitHeaders = new Headers(hit.headers);
         hitHeaders.set("X-Omni-Edge-Cache", "HIT");
         hitHeaders.set("X-Omni-Load-State", load.state);
@@ -562,7 +498,6 @@ async function handleApiWithEdgeCache(url, pathname, request, env, ctx) {
     } catch (_) {}
   }
 
-  OPS_STATE.edgeMisses += 1;
   const res = await routeApiRequest(url, pathname, request, env);
   const ttl = _getEdgeCacheTtl(pathname);
 
@@ -5141,7 +5076,7 @@ async function handleRequest(request, env, ctx) {
     const userAgent = request.headers.get("user-agent") || "";
     const lowerUA = userAgent.toLowerCase();
     const pathname = (url.pathname.length > 1 && url.pathname.endsWith("/")) ? url.pathname.slice(0, -1) : url.pathname;
-    _recordEdgeHitMeta(request, url);
+    _recordLoadTick();
 
 
 
@@ -6808,60 +6743,6 @@ const PRIMARY_US_STATIONS = [
       // 5.26 /api/weather/noaa/radar-stations
       if (url.pathname === "/api/weather/noaa/radar-stations") {
         return handleNoaaRadarStations(url);
-      }
-
-      // 5.27 /api/ops/beacon & /api/ops/telemetry (Referrer-Host + Encrypted OmniScope Management API)
-      if (url.pathname === "/api/ops/beacon") {
-        let payload = {};
-        try { payload = await request.json(); } catch (_) {}
-        const ref = (payload && payload.referrer_host) ? String(payload.referrer_host).replace(/^https?:\/\//, "").split("/")[0].toLowerCase() : "direct";
-        const node = (payload && payload.cloud_node) ? String(payload.cloud_node).toLowerCase() : "cloudflare";
-        OPS_STATE.beacons += 1;
-        _bumpCounter(OPS_STATE.referrers, ref || "direct", 80);
-        _bumpCounter(OPS_STATE.cloudNodes, node, 10);
-        return jsonResponse({ status: "ok", recorded: true }, 200, { "Cache-Control": "no-store" });
-      }
-
-      if (url.pathname === "/api/ops/load") {
-        const load = _getLoadMetrics();
-        const total = OPS_STATE.edgeHits + OPS_STATE.edgeMisses;
-        return jsonResponse({
-          status: "ok",
-          cloud_node: "cloudflare",
-          load_state: load.state,
-          recommended_scale: load.scale,
-          edge_cache_hit_pct: total > 0 ? Math.round((OPS_STATE.edgeHits / total) * 1000) / 10 : 0
-        }, 200, { "Cache-Control": "no-store" });
-      }
-
-      if (url.pathname === "/api/ops/telemetry") {
-        const secret = env && env.OMNISCOPE_OPS_SECRET ? String(env.OMNISCOPE_OPS_SECRET) : "";
-        if (!secret) {
-          return jsonResponse({ status: "locked", message: "Set OMNISCOPE_OPS_SECRET via wrangler secret put OMNISCOPE_OPS_SECRET to unlock encrypted telemetry." }, 403, { "Cache-Control": "no-store" });
-        }
-        const supplied = (request.headers.get("x-omni-ops-key") || request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "").trim();
-        if (!_constTimeEq(supplied, secret)) {
-          return jsonResponse({ status: "unauthorized" }, 401, { "Cache-Control": "no-store" });
-        }
-        const toSorted = (m) => Array.from(m.entries()).sort((a, b) => b[1] - a[1]).slice(0, 25).map(([key, count]) => ({ key, count }));
-        const load = _getLoadMetrics();
-        const totalCacheable = OPS_STATE.edgeHits + OPS_STATE.edgeMisses;
-        const snapshot = {
-          generated_at: new Date().toISOString(),
-          uptime_sec: Math.round((Date.now() - OPS_STATE.startedAt) / 1000),
-          isolate_requests: OPS_STATE.totalRequests,
-          beacons: OPS_STATE.beacons,
-          rpm_1m: load.rpm,
-          load_state: load.state,
-          recommended_scale: load.scale,
-          edge_cache: { hits: OPS_STATE.edgeHits, misses: OPS_STATE.edgeMisses, hit_rate_pct: totalCacheable > 0 ? Math.round((OPS_STATE.edgeHits / totalCacheable) * 1000) / 10 : 0 },
-          top_referrers: toSorted(OPS_STATE.referrers),
-          top_countries: toSorted(OPS_STATE.countries),
-          cloud_nodes: toSorted(OPS_STATE.cloudNodes),
-          top_endpoints: toSorted(OPS_STATE.endpoints)
-        };
-        const encrypted = await _aesEncryptJson(secret, snapshot);
-        return jsonResponse({ status: "ok", encrypted }, 200, { "Cache-Control": "no-store" });
       }
 
       // Unknown /api route
